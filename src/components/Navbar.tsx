@@ -64,15 +64,14 @@ export const Navbar: React.FC = () => {
     }>
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-4">
-          <div className="flex items-center">
+          <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
             <Bot size={32} className={
               (isDarkMode ? 'text-blue-400' : 'text-blue-600')
             } />
             <span className="ml-2 text-xl font-bold">Zuno</span>
-          </div>
+          </Link>
 
           <div className="hidden md:flex space-x-4 items-center">
-            <NavLink to="/" icon={<Home size={20} />} label="Home" />
             <NavLink to="/webdev" icon={<Code size={20} />} label="Web Dev" />
             <NavLink to="/corecs" icon={<Database size={20} />} label="Core CS" />
             <NavLink to="/dsa" icon={<Brain size={20} />} label="DSA" />
@@ -81,18 +80,7 @@ export const Navbar: React.FC = () => {
             <NavLink to="/leaderboard" icon={<Trophy size={20} />} label="Leaderboard" />
             {currentUser && <NavLink to="/profile" icon={<User size={20} />} label="Profile" />} {/* Only show profile if logged in */}
             
-            {currentUser ? (
-              <button
-                onClick={handleLogout}
-                className={
-                  "flex items-center px-4 py-2 rounded-md font-semibold " +
-                  (isDarkMode ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-500 hover:bg-red-600 text-white')
-                }
-              >
-                <LogOut size={20} className="mr-2" />
-                Logout
-              </button>
-            ) : (
+            {!currentUser && (
               <button
                 onClick={() => setShowLoginModal(true)}
                 className={

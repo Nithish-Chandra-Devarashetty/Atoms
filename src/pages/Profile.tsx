@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
@@ -13,12 +14,24 @@ import {
   BookOpen,
   Code,
   Brain,
-  Calculator
+  Calculator,
+  LogOut
 } from 'lucide-react';
 
 export const Profile: React.FC = () => {
-  const { currentUser } = useAuth();
+  const { currentUser, logout } = useAuth();
   const { isDarkMode } = useTheme();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Failed to log out', error);
+    }
+  };
+
   const userStats = {
     name: currentUser?.displayName || 'Anonymous User',
     username: currentUser?.email || '@user',
@@ -282,6 +295,21 @@ export const Profile: React.FC = () => {
                 </div>
               </div>
             </div>
+          </div>
+          
+          {/* Logout Button */}
+          <div className="mt-12 text-center">
+            <button
+              onClick={handleLogout}
+              className={`flex items-center justify-center mx-auto px-8 py-3 rounded-lg font-semibold text-lg transition-colors ${
+                isDarkMode 
+                  ? 'bg-red-600 hover:bg-red-700 text-white' 
+                  : 'bg-red-500 hover:bg-red-600 text-white'
+              }`}
+            >
+              <LogOut size={20} className="mr-2" />
+              Logout
+            </button>
           </div>
         </div>
       </div>

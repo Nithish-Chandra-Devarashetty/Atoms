@@ -10,71 +10,58 @@ import {
   Star,
   Filter
 } from 'lucide-react';
+import { DsaProblem, dsaProblems } from '../data/dsaProblems';
 
-interface Problem {
-  Topic: string;
-  Name: string;
-  Link: string;
-  Difficulty: string;
+interface Problem extends DsaProblem {
+  solved?: boolean;
 }
 
 export const DSA: React.FC = () => {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [topics, setTopics] = useState<{[key: string]: Problem[]}>({});
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('All');
+  const [solvedProblems, setSolvedProblems] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    // Parse CSV data from the file
-    const csvData = `Topic,Name,Link,Difficulty
-Arrays,Move Zeroes,https://leetcode.com/problems/move-zeroes/,Easy
-Arrays,Majority Element,https://leetcode.com/problems/majority-element/,Easy
-Arrays,Remove Duplicates from Sorted Array,https://leetcode.com/problems/remove-duplicates-from-sorted-array/,Easy
-Arrays,Best Time to Buy and Sell Stock,https://leetcode.com/problems/best-time-to-buy-and-sell-stock/,Easy
-Arrays,Rotate Array,https://leetcode.com/problems/rotate-array/,Medium
-Arrays,Product of Array Except Self,https://leetcode.com/problems/product-of-array-except-self/,Medium
-Strings,Is Subsequence,https://leetcode.com/problems/is-subsequence/,Easy
-Strings,Valid Palindrome,https://leetcode.com/problems/valid-palindrome/,Easy
-Strings,Longest Common Prefix,https://leetcode.com/problems/longest-common-prefix/,Easy
-Two Pointers,Merge Sorted Array,https://leetcode.com/problems/merge-sorted-array/,Easy
-Two Pointers,Two Sum II - Input Array Is Sorted,https://leetcode.com/problems/two-sum-ii-input-array-is-sorted/,Medium
-Two Pointers,Container With Most Water,https://leetcode.com/problems/container-with-most-water/,Medium
-Linked List,Intersection of Two Linked Lists,https://leetcode.com/problems/intersection-of-two-linked-lists/,Easy
-Linked List,Remove Nth Node From End of List,https://leetcode.com/problems/remove-nth-node-from-end-of-list/,Medium
-Binary Search,Search Insert Position,https://leetcode.com/problems/search-insert-position/,Easy
-Binary Search,Find First and Last Position of Element in Sorted Array,https://leetcode.com/problems/find-first-and-last-position-of-element-in-sorted-array/,Medium
-Dynamic Programming,Climbing Stairs,https://leetcode.com/problems/climbing-stairs/,Easy
-Dynamic Programming,House Robber,https://leetcode.com/problems/house-robber/,Medium
-Trees,Binary Tree Level Order Traversal,https://leetcode.com/problems/binary-tree-level-order-traversal/,Medium
-Trees,Same Tree,https://leetcode.com/problems/same-tree/,Easy`;
-
-    const lines = csvData.trim().split('\n');
-    const headers = lines[0].split(',');
-    const parsedProblems: Problem[] = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const values = lines[i].split(',');
-      if (values.length === headers.length) {
-        parsedProblems.push({
-          Topic: values[0],
-          Name: values[1],
-          Link: values[2],
-          Difficulty: values[3]
-        });
+    // Load solved problems from localStorage
+    const savedSolved = localStorage.getItem('solvedProblems');
+    let solvedSet = new Set<string>();
+    let savedProblems: string[] = [];
+    
+    if (savedSolved) {
+      try {
+        const parsed = JSON.parse(savedSolved);
+        // Ensure we have an array of strings
+        savedProblems = Array.isArray(parsed) 
+          ? parsed.filter((item): item is string => typeof item === 'string')
+          : typeof parsed === 'object' && parsed !== null
+            ? Object.keys(parsed).filter(key => parsed[key] === true)
+            : [];
+        savedProblems.forEach(problem => solvedSet.add(problem));
+      } catch (e) {
+        console.error('Error parsing solved problems:', e);
       }
     }
+    
+    setSolvedProblems(solvedSet);
 
-    setProblems(parsedProblems);
+    // Process problems data
+    const problemsData: Problem[] = dsaProblems.map(problem => ({
+      ...problem,
+      solved: savedProblems.includes(problem.Name) // Changed from problem.Link to problem.Name
+    }));
 
-    // Group problems by topic
-    const groupedTopics: {[key: string]: Problem[]} = {};
-    parsedProblems.forEach(problem => {
-      if (!groupedTopics[problem.Topic]) {
-        groupedTopics[problem.Topic] = [];
+    setProblems(problemsData);
+
+    // Group by topic
+    const topicsData: {[key: string]: Problem[]} = {};
+    problemsData.forEach(problem => {
+      if (!topicsData[problem.Topic]) {
+        topicsData[problem.Topic] = [];
       }
-      groupedTopics[problem.Topic].push(problem);
+      topicsData[problem.Topic].push(problem);
     });
-
-    setTopics(groupedTopics);
+    setTopics(topicsData);
   }, []);
 
   const getDifficultyColor = (difficulty: string) => {
@@ -84,6 +71,14 @@ Trees,Same Tree,https://leetcode.com/problems/same-tree/,Easy`;
       case 'Hard': return 'text-red-600 bg-red-100';
       default: return 'text-gray-600 bg-gray-100';
     }
+  };
+
+  const getSolvedCount = (topic: string) => {
+    return problems.filter(p => p.Topic === topic && solvedProblems.has(p.Link)).length;
+  };
+
+  const getTotalSolved = () => {
+    return solvedProblems.size;
   };
 
   const getTopicIcon = (topic: string) => {
@@ -128,8 +123,8 @@ Trees,Same Tree,https://leetcode.com/problems/same-tree/,Easy`;
               <div className="text-gray-600">Total Problems</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-green-600 mb-2">12</div>
-              <div className="text-gray-600">Solved</div>
+              <div className="text-3xl font-bold text-green-600 mb-2">{getTotalSolved()}</div>
+              <div className="text-gray-600">Solved ({problems.length > 0 ? Math.round((getTotalSolved() / problems.length) * 100) : 0}%)</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-bold text-blue-600 mb-2">{Object.keys(topics).length}</div>
@@ -204,7 +199,7 @@ Trees,Same Tree,https://leetcode.com/problems/same-tree/,Easy`;
                 </div>
                 <div className="flex items-center space-x-2">
                   <Star className="w-5 h-5 text-yellow-500" />
-                  <span className="text-sm text-gray-600">2/5 solved</span>
+                  <span className="text-sm text-gray-600">{getSolvedCount(topic)}/{topicProblems.length} solved</span>
                 </div>
               </div>
 
@@ -212,7 +207,7 @@ Trees,Same Tree,https://leetcode.com/problems/same-tree/,Easy`;
                 {topicProblems.slice(0, 3).map((problem, index) => (
                   <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center space-x-3">
-                      <CheckCircle className="w-4 h-4 text-green-500" />
+                      {problem.solved ? <CheckCircle className="w-4 h-4 text-green-500" /> : <Clock className="w-4 h-4 text-gray-500" />}
                       <span className="text-sm font-medium text-gray-900 truncate">
                         {problem.Name}
                       </span>
@@ -229,8 +224,8 @@ Trees,Same Tree,https://leetcode.com/problems/same-tree/,Easy`;
                 )}
               </div>
 
-              <Link
-                to={`/dsa/${topic.toLowerCase().replace(/\s+/g, '-')}`}
+              <Link 
+                to={`/dsa/${topic}/all`} 
                 className="block w-full text-center py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-semibold hover:shadow-lg transform hover:scale-105 transition-all duration-200"
               >
                 Start Practicing

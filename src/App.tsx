@@ -31,6 +31,7 @@ function App() {
                 <Route path="/core" element={<CoreCS />} />
                 <Route path="/core/:subject" element={<SubjectPage />} />
                 <Route path="/dsa" element={<DSA />} />
+                <Route path="/dsa/:topic/:difficulty" element={<DSATopicPage />} />
                 <Route path="/dsa/:topic" element={<DSATopicPage />} />
                 <Route path="/aptitude" element={<Aptitude />} />
                 <Route path="/aptitude/:topic" element={<AptitudeTopicPage />} />
