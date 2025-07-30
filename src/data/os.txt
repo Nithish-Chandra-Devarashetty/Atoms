@@ -1,0 +1,155 @@
+for operating system page
+https://youtu.be/8XBtAjKwCm4
+Here’s a 25-question operating system (OS) quiz, formatted for interviews, with four answer options for each and the correct answer marked. The questions cover frequently asked topics including OS basics, process management, memory management, scheduling, deadlocks, and more[1][2][3].
+
+### Operating System Quiz: 25 Most Asked Interview Questions
+
+#### 1. What is the primary purpose of an operating system?
+- a) Provide hardware only
+- b) Manage system resources ✔️
+- c) Create web applications
+- d) Perform calculations
+
+#### 2. Which of the following best defines a process?
+- a) A running program ✔️
+- b) A static program file
+- c) A peripheral device
+- d) A command
+
+#### 3. Which of the following is NOT a function of an OS?
+- a) Memory management
+- b) Process scheduling
+- c) Virus scanning ✔️
+- d) File management
+
+#### 4. What is a deadlock?
+- a) Program error
+- b) Infinite loop
+- c) Two or more processes waiting for each other indefinitely ✔️
+- d) File write failure
+
+#### 5. Which of the following is a system call?
+- a) printf()
+- b) open() ✔️
+- c) scanf()
+- d) add()
+
+#### 6. What is the kernel?
+- a) User interface
+- b) Core part of OS managing communication between hardware & software ✔️
+- c) Device driver
+- d) File manager
+
+#### 7. What is context switching?
+- a) Switching users
+- b) Switching between processes ✔️
+- c) Opening files
+- d) Formatting disks
+
+#### 8. Which scheduling algorithm gives each process an equal, fixed time slot?
+- a) FIFO
+- b) Round Robin ✔️
+- c) SJF
+- d) Priority
+
+#### 9. Which is a non-preemptive scheduling algorithm?
+- a) SJF ✔️
+- b) Priority
+- c) Round Robin
+- d) Multilevel queue
+
+#### 10. What is virtual memory?
+- a) A backup memory
+- b) Using secondary storage as an extension of RAM ✔️
+- c) Shared memory between systems
+- d) Networked memory
+
+#### 11. Which memory allocation method suffers from external fragmentation?
+- a) Paging
+- b) Segmentation ✔️
+- c) Swapping
+- d) Virtual memory
+
+#### 12. Which file system is commonly used in Windows OS?
+- a) ext3
+- b) FAT32 ✔️
+- c) ReiserFS
+- d) HFS+
+
+#### 13. Which is NOT an interprocess communication method?
+- a) Semaphore
+- b) Message queue
+- c) Sockets
+- d) Compiler ✔️
+
+#### 14. What happens during a page fault?
+- a) Data is successfully read from memory
+- b) Required page is loaded from disk to memory ✔️
+- c) Process terminates
+- d) OS crashes
+
+#### 15. What is a semaphore used for?
+- a) File storage
+- b) Process synchronization ✔️
+- c) Memory allocation
+- d) Disk scheduling
+
+#### 16. What is a real-time operating system?
+- a) Designed for internet applications
+- b) Designed for time-critical tasks ✔️
+- c) Used for gaming only
+- d) Used only in banking
+
+#### 17. Which is an example of a multi-user OS?
+- a) MS-DOS
+- b) Windows 95
+- c) Unix ✔️
+- d) Android
+
+#### 18. What is thrashing?
+- a) High CPU usage
+- b) Excessive paging causing performance drop ✔️
+- c) Disk defragmentation
+- d) Data corruption
+
+#### 19. Which of these is used for process synchronization?
+- a) Fork
+- b) Mutex ✔️
+- c) Wait
+- d) Change
+
+#### 20. What is the role of device drivers?
+- a) Run user applications
+- b) Manage connectivity between hardware devices and OS ✔️
+- c) Network management
+- d) Database management
+
+#### 21. What is the 'init' process in Linux?
+- a) User program
+- b) The first process started by kernel ✔️
+- c) File manager
+- d) Scripting tool
+
+#### 22. What is paging?
+- a) Memory fragmentation
+- b) Dividing physical memory into blocks ✔️
+- c) Formatting drives
+- d) Virus detection
+
+#### 23. Which is NOT a valid paging replacement algorithm?
+- a) LRU
+- b) FIFO
+- c) MRU
+- d) RUN ✔️
+
+#### 24. What is a race condition?
+- a) Hardware failure
+- b) Two or more processes access shared data simultaneously ✔️
+- c) File system corruption
+- d) Page fault
+
+#### 25. Which is a function of an OS?
+- a) Weather monitoring
+- b) File system management ✔️
+- c) Social media access
+- d) Movie streaming

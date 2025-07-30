@@ -1,0 +1,153 @@
+for html page
+https://youtu.be/HcOc7P5BMi4
+
+#### 1. What does HTML stand for?
+- a) Hyper Trainer Marking Language
+- b) Hyper Text Marketing Language
+- c) Hyper Text Markup Language ✔️
+- d) Hyper Text Markup Level
+
+#### 2. Which tag is used to define the main content of an HTML document?
+- a)  ✔️
+- b) 
+- c) 
+- d) 
+
+#### 3. Which element is used for the largest heading?
+- a) 
+- b) 
+- c)  ✔️
+- d) 
+
+#### 4. How do you make a numbered list in HTML?
+- a)  ✔️
+- b) 
+- c) 
+- d) 
+
+#### 5. What is the correct way to create a hyperlink?
+- a) 
+- b)  ✔️
+- c) 
+- d) a
+
+#### 6. Which attribute provides alternative text for an image?
+- a) src
+- b) alt ✔️
+- c) title
+- d) description
+
+#### 7. Which tag is used to create a line break?
+- a) 
+- b) 
+- c)  ✔️
+- d) 
+
+#### 8. What are void elements?
+- a) Elements with both opening and closing tags
+- b) Elements needing script to execute
+- c) Elements without closing tags ✔️
+- d) Elements without content
+
+#### 9. Which element represents emphasized text?
+- a) 
+- b)  ✔️
+- c) 
+- d) 
+
+#### 10. What does the  tag usually define?
+- a) Divisions on a page
+- b) Metadata about the document ✔️
+- c) Script settings
+- d) Page title
+
+#### 11. Which tag is used to display an image?
+- a) 
+- b)  ✔️
+- c) 
+- d) 
+
+#### 12. How do you comment in HTML?
+- a) // comment
+- b) # comment
+- c)  ✔️
+- d) \* comment \*
+
+#### 13. What is the use of the  tag?
+- a) To embed media
+- b) To create navigation links
+- c) To collect user input ✔️
+- d) To display tables
+
+#### 14. What is the correct HTML for creating a checkbox?
+- a)  ✔️
+- b) 
+- c) 
+- d) 
+
+#### 15. Which tag is used to group related form elements?
+- a) 
+- b)  ✔️
+- c) 
+- d) 
+
+#### 16. To open a link in a new tab, which attribute is used?
+- a) target="_blank" ✔️
+- b) newtab
+- c) open="true"
+- d) rel="external"
+
+#### 17. Which tag is used for a horizontal rule or line?
+- a) 
+- b)  ✔️
+- c) 
+- d) 
+
+#### 18. What is the function of the  tag?
+- a) Defines a paragraph
+- b) Creates a new row in tables
+- c) Creates a block-level container ✔️
+- d) Embeds audio
+
+#### 19. Which of the following is a semantic HTML tag?
+- a) 
+- b) 
+- c)  ✔️
+- d) 
+
+#### 20. How can you embed audio in HTML5?
+- a) 
+- b)  ✔️
+- c) 
+- d) 
+
+#### 21. Which input type is used for selecting a date?
+- a) type="calendar"
+- b) type="datetime"
+- c) type="date" ✔️
+- d) type="time"
+
+#### 22. What's the difference between  and ?
+- a) Both have no difference
+- b)  is for bold,  adds semantic importance ✔️
+- c)  is italic
+- d)  is a link
+
+#### 23. Which tag is used to display tabular data?
+- a)  ✔️
+- b) 
+- c) 
+- d) 
+
+#### 24. How do you specify the character encoding for an HTML document?
+- a) 
+- b) 
+- c)  ✔️
+- d) 
+
+#### 25. What is the  tag used for in HTML5?
+- a) To display images only
+- b) To draw graphics via scripting ✔️
+- c) For audio embedding
+- d) For hyperlinks
+
