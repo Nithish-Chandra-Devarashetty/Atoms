@@ -73,7 +73,7 @@ export const Navbar: React.FC = () => {
 
           <div className="hidden md:flex space-x-4 items-center">
             <NavLink to="/webdev" icon={<Code size={20} />} label="Web Dev" />
-            <NavLink to="/corecs" icon={<Database size={20} />} label="Core CS" />
+            <NavLink to="/core" icon={<Database size={20} />} label="Core CS" />
             <NavLink to="/dsa" icon={<Brain size={20} />} label="DSA" />
             <NavLink to="/aptitude" icon={<Calculator size={20} />} label="Aptitude" />
             <NavLink to="/discussion" icon={<MessageCircle size={20} />} label="Discussion" />
@@ -116,7 +116,7 @@ export const Navbar: React.FC = () => {
           }>
             <NavLink to="/" icon={<Home size={20} />} label="Home" />
             <NavLink to="/webdev" icon={<Code size={20} />} label="Web Dev" />
-            <NavLink to="/corecs" icon={<Database size={20} />} label="Core CS" />
+            <NavLink to="/core" icon={<Database size={20} />} label="Core CS" />
             <NavLink to="/dsa" icon={<Brain size={20} />} label="DSA" />
             <NavLink to="/aptitude" icon={<Calculator size={20} />} label="Aptitude" />
              <NavLink to="/discussion" icon={<MessageCircle size={20} />} label="Discussion" />
