@@ -1,4 +1,4 @@
-```csv
+```csv,,,
 Topic,Name,Link,Difficulty
 Arrays,Move Zeroes,https://leetcode.com/problems/move-zeroes/,Easy
 Arrays,Majority Element,https://leetcode.com/problems/majority-element/,Easy
@@ -107,7 +107,7 @@ Bucket Sort,Sort Characters By Frequency,https://leetcode.com/problems/sort-char
 Bucket Sort,Top K Frequent Words,https://leetcode.com/problems/top-k-frequent-words/,Medium
 Bucket Sort,Maximum Gap,https://leetcode.com/problems/maximum-gap/,Medium
 Recursion,Merge Two Sorted Lists,https://leetcode.com/problems/merge-two-sorted-lists/,Easy
-Recursion,Pow(x, n),https://leetcode.com/problems/powx-n/,Medium
+Recursion,"Pow(x,n)",https://leetcode.com/problems/powx-n/,Medium
 Recursion,Decode String,https://leetcode.com/problems/decode-string/,Medium
 Divide and Conquer,Convert Sorted List to Binary Search Tree,https://leetcode.com/problems/convert-sorted-list-to-binary-search-tree/,Medium
 Divide and Conquer,Construct Quad Tree,https://leetcode.com/problems/construct-quad-tree/,Medium
@@ -300,4 +300,4 @@ Maths / Geometry,Max Points on a Line,https://leetcode.com/problems/max-points-o
 Line Sweep,Minimum Interval to Include Each Query,https://leetcode.com/problems/minimum-interval-to-include-each-query/,Hard
 Line Sweep,The Skyline Problem,https://leetcode.com/problems/the-skyline-problem/,Hard
 Suffix Array,Longest Duplicate Substring,https://leetcode.com/problems/longest-duplicate-substring/,Hard
-```
+```,,,
