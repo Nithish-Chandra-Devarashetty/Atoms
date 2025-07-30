@@ -1,34 +1,42 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
-import { 
-  getAuth, 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  signOut, 
+import {
+  getAuth,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
   onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   User
 } from 'firebase/auth';
 import { getStorage } from 'firebase/storage';
+import { getAnalytics } from "firebase/analytics";
 
-// Firebase configuration (you'll need to replace with your actual config)
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "your-api-key",
-  authDomain: "your-auth-domain",
-  projectId: "your-project-id",
-  storageBucket: "your-storage-bucket",
-  messagingSenderId: "your-messaging-sender-id",
-  appId: "your-app-id"
+  apiKey: "AIzaSyAWQ3C9jlfEwfxe8kZq-a9fa81MXu21_WI",
+  authDomain: "zuno-ceba7.firebaseapp.com",
+  projectId: "zuno-ceba7",
+  storageBucket: "zuno-ceba7.firebasestorage.app",
+  messagingSenderId: "508260542193",
+  appId: "1:508260542193:web:1737ee11ec26ad6a816b50",
+  measurementId: "G-5EBNBQ5Y4V"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 export const auth = getAuth(app);
 export const storage = getStorage(app);
 
 interface AuthContextType {
   currentUser: User | null;
-  login: () => Promise<void>;
+  login: () => Promise<void>; // Google login
   logout: () => Promise<void>;
+  emailSignup: (email: string, password: string) => Promise<void>; // Added email signup
+  emailLogin: (email: string, password: string) => Promise<void>;   // Added email login
   loading: boolean;
 }
 
@@ -46,9 +54,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Google Login
   const login = async () => {
     const provider = new GoogleAuthProvider();
     await signInWithPopup(auth, provider);
+  };
+
+  // Email Signup
+  const emailSignup = async (email: string, password: string) => {
+    await createUserWithEmailAndPassword(auth, email, password);
+  };
+
+  // Email Login
+  const emailLogin = async (email: string, password: string) => {
+    await signInWithEmailAndPassword(auth, email, password);
   };
 
   const logout = async () => {
@@ -65,11 +84,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const value = {
-    currentUser,
-    login,
-    logout,
-    loading
-  };
+      currentUser,
+      login,
+      logout,
+      emailSignup,
+      emailLogin,
+      loading
+    };
 
   return (
     <AuthContext.Provider value={value}>
