@@ -13,6 +13,7 @@ import { Discussion } from './pages/Discussion';
 import { Messages } from './pages/Messages';
 import { Leaderboard } from './pages/Leaderboard';
 import { SubjectPage } from './pages/SubjectPage';
+import { CoreSubjectPage } from './pages/CoreSubjectPage';
 import { DSATopicPage } from './pages/DSATopicPage';
 import { AptitudeTopicPage } from './pages/AptitudeTopicPage';
 
@@ -29,7 +30,7 @@ function App() {
                 <Route path="/webdev" element={<WebDev />} />
                 <Route path="/webdev/:subject" element={<SubjectPage />} />
                 <Route path="/core" element={<CoreCS />} />
-                <Route path="/core/:subject" element={<SubjectPage />} />
+                <Route path="/core/:subject" element={<CoreSubjectPage />} />
                 <Route path="/dsa" element={<DSA />} />
                 <Route path="/dsa/:topic/:difficulty" element={<DSATopicPage />} />
                 <Route path="/dsa/:topic" element={<DSATopicPage />} />
