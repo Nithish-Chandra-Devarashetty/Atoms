@@ -59,7 +59,7 @@ export const Home: React.FC = () => {
         <div className="max-w-7xl mx-auto text-center">
           <div className="mb-8">
             <h1 className="text-5xl md:text-7xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-6">
-              Welcome to Zuno
+              Welcome to Atoms
             </h1>
             <p className="text-xl md:text-2xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
               Your AI-powered, gamified learning companion for mastering web development, 

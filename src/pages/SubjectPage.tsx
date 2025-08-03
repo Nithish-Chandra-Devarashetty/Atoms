@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Play, CheckCircle, Clock, Award, BookOpen, Youtube, Pizza as QuizIcon, ArrowRight } from 'lucide-react';
+import { Play, CheckCircle, Clock, Award, BookOpen, Youtube, Pizza as QuizIcon, ArrowRight, Lock } from 'lucide-react';
 
 interface Video {
   id: string;
@@ -26,10 +26,17 @@ export const SubjectPage: React.FC = () => {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
+  const [isQuizPassed, setIsQuizPassed] = useState(false);
 
   useEffect(() => {
     // Load subject data based on the subject parameter
     loadSubjectData(subject || '');
+    
+    // Check if quiz was previously passed
+    const savedQuizStatus = localStorage.getItem(`quiz_${subject}_passed`);
+    if (savedQuizStatus === 'true') {
+      setIsQuizPassed(true);
+    }
   }, [subject]);
 
   const loadSubjectData = (subjectName: string) => {
@@ -41,23 +48,9 @@ export const SubjectPage: React.FC = () => {
         videos: [
           {
             id: '1',
-            title: 'HTML Basics - Introduction to HTML',
+            title: 'HTML Fundamentals - Complete Guide',
             url: 'https://youtu.be/HcOc7P5BMi4',
-            duration: '15:30',
-            watched: true
-          },
-          {
-            id: '2',
-            title: 'HTML Elements and Tags',
-            url: 'https://youtu.be/HcOc7P5BMi4',
-            duration: '12:45',
-            watched: true
-          },
-          {
-            id: '3',
-            title: 'HTML Forms and Input Elements',
-            url: 'https://youtu.be/HcOc7P5BMi4',
-            duration: '18:20',
+            duration: '25:30',
             watched: false
           }
         ],
@@ -66,21 +59,106 @@ export const SubjectPage: React.FC = () => {
             question: 'What does HTML stand for?',
             options: [
               'Hyper Trainer Marking Language',
-              'Hyper Text Marketing Language',
               'Hyper Text Markup Language',
-              'Hyper Text Markup Level'
+              'Hyper Text Marketing Language',
+              'Hyperlink Markup Language'
+            ],
+            correct: 1
+          },
+          {
+            question: 'Which tag is used to create a hyperlink in HTML?',
+            options: ['<img>', '<a>', '<link>', '<href>'],
+            correct: 1
+          },
+          {
+            question: 'Which of the following is a void (empty) element in HTML?',
+            options: ['<div>', '<p>', '<img>', '<span>'],
+            correct: 2
+          },
+          {
+            question: 'What is the correct syntax to write an HTML comment?',
+            options: [
+              '// Comment goes here',
+              '/* Comment goes here */',
+              '<!-- Comment goes here -->',
+              "' Comment goes here"
             ],
             correct: 2
           },
           {
-            question: 'Which tag is used to define the main content of an HTML document?',
-            options: ['<main>', '<body>', '<content>', '<section>'],
+            question: 'What is the function of the <meta charset="UTF-8"> tag?',
+            options: [
+              'Set the web page title',
+              'Specify the character encoding used in the document',
+              'Create a table',
+              'Link to a CSS style'
+            ],
+            correct: 1
+          },
+          {
+            question: 'Which is NOT a semantic HTML element?',
+            options: ['<article>', '<section>', '<div>', '<footer>'],
+            correct: 2
+          },
+          {
+            question: 'What does the DOCTYPE declaration do?',
+            options: [
+              'Links to the CSS file',
+              'Tells the browser which HTML or XHTML version is being used',
+              'Adds metadata to the webpage',
+              'Marks a comment'
+            ],
+            correct: 1
+          },
+          {
+            question: "What's the difference between <b> and <strong>?",
+            options: [
+              'No difference, both make text bold',
+              '<b> is for bolding, <strong> is for semantic importance and accessibility',
+              '<b> is deprecated',
+              '<strong> is only for headings'
+            ],
+            correct: 1
+          },
+          {
+            question: 'How can you embed a webpage inside another HTML page?',
+            options: ['<span>', '<iframe>', '<embed>', '<object>'],
+            correct: 1
+          },
+          {
+            question: 'Which attribute would you use to open a link in a new tab?',
+            options: ['target="_blank"', 'newtab="yes"', 'href="newtab"', 'window="open"'],
             correct: 0
           },
           {
-            question: 'Which element is used for the largest heading?',
-            options: ['<h6>', '<heading>', '<h1>', '<header>'],
+            question: 'What is the difference between "id" and "class" attributes?',
+            options: [
+              'No difference',
+              'id can appear multiple times; class only once',
+              'id is unique per page; class can be used on multiple elements',
+              'class is deprecated'
+            ],
             correct: 2
+          },
+          {
+            question: 'Which is the correct way to add a line break in HTML?',
+            options: ['<lb>', '<break>', '<br>', '<linebreak>'],
+            correct: 2
+          },
+          {
+            question: 'Which HTML element is used to define important text with emphasis, not just italic style?',
+            options: ['<i>', '<b>', '<em>', '<mark>'],
+            correct: 2
+          },
+          {
+            question: 'Which tag is used for inserting a video into HTML5?',
+            options: ['<media>', '<movie>', '<video>', '<source>'],
+            correct: 2
+          },
+          {
+            question: 'What new attribute in HTML5 helps with responsive images?',
+            options: ['data-src', 'srcset', 'lazy', 'srcnext'],
+            correct: 1
           }
         ]
       },
@@ -126,6 +204,10 @@ export const SubjectPage: React.FC = () => {
     setVideos(videos.map(video => 
       video.id === videoId ? { ...video, watched: true } : video
     ));
+    // Also update the current video if it's the one being marked as watched
+    if (currentVideo && currentVideo.id === videoId) {
+      setCurrentVideo({ ...currentVideo, watched: true });
+    }
   };
 
   const startQuiz = () => {
@@ -150,6 +232,13 @@ export const SubjectPage: React.FC = () => {
       setSelectedAnswer(null);
     } else {
       setQuizCompleted(true);
+      // Check if quiz was passed (70% or higher)
+      const finalScore = selectedAnswer === quizQuestions[currentQuestionIndex].correct ? score + 1 : score;
+      const percentage = (finalScore / quizQuestions.length) * 100;
+      if (percentage >= 70) {
+        setIsQuizPassed(true);
+        localStorage.setItem(`quiz_${subject}_passed`, 'true');
+      }
     }
   };
 
@@ -192,7 +281,7 @@ export const SubjectPage: React.FC = () => {
 
   const subjectInfo = getSubjectInfo(subject || '');
   const watchedCount = videos.filter(v => v.watched).length;
-  const progressPercentage = videos.length > 0 ? (watchedCount / videos.length) * 100 : 0;
+  const progressPercentage = isQuizPassed ? 100 : (videos.length > 0 ? (watchedCount / videos.length) * 50 : 0);
 
   if (showQuiz && !quizCompleted) {
     const currentQuestion = quizQuestions[currentQuestionIndex];
@@ -259,22 +348,34 @@ export const SubjectPage: React.FC = () => {
 
   if (quizCompleted) {
     const percentage = Math.round((score / quizQuestions.length) * 100);
+    const isPassed = percentage >= 70;
     
     return (
       <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto">
           <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 text-center">
             <div className="mb-8">
-              <div className={`w-24 h-24 bg-gradient-to-r ${subjectInfo.color} rounded-full flex items-center justify-center mx-auto mb-6`}>
-                <Award className="w-12 h-12 text-white" />
+              <div className={`w-24 h-24 bg-gradient-to-r ${isPassed ? 'from-green-500 to-emerald-500' : 'from-red-500 to-pink-500'} rounded-full flex items-center justify-center mx-auto mb-6`}>
+                {isPassed ? (
+                  <CheckCircle className="w-12 h-12 text-white" />
+                ) : (
+                  <Award className="w-12 h-12 text-white" />
+                )}
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">Quiz Completed!</h1>
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+                {isPassed ? 'Quiz Passed!' : 'Quiz Completed!'}
+              </h1>
               <p className="text-xl text-gray-600">You scored {score} out of {quizQuestions.length} questions</p>
             </div>
 
             <div className="mb-8">
-              <div className="text-4xl font-bold text-blue-600 mb-2">{percentage}%</div>
+              <div className={`text-4xl font-bold mb-2 ${isPassed ? 'text-green-600' : 'text-red-600'}`}>{percentage}%</div>
               <div className="text-gray-600">Accuracy</div>
+              {isPassed && (
+                <div className="mt-2 text-sm text-green-600 font-medium">
+                  ✓ Quiz marked as completed
+                </div>
+              )}
             </div>
 
             <div className="flex justify-center space-x-4">
@@ -330,129 +431,141 @@ export const SubjectPage: React.FC = () => {
             ></div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600 mb-2">{watchedCount}</div>
-              <div className="text-gray-600">Videos Watched</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600 mb-2">{videos.length}</div>
-              <div className="text-gray-600">Total Videos</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600 mb-2">{quizQuestions.length}</div>
-              <div className="text-gray-600">Quiz Questions</div>
-            </div>
-          </div>
+                     <div className="grid md:grid-cols-3 gap-6">
+             <div className="text-center">
+               <div className="text-2xl font-bold text-green-600 mb-2">{watchedCount}</div>
+               <div className="text-gray-600">Videos Watched</div>
+             </div>
+             <div className="text-center">
+               <div className="text-2xl font-bold text-purple-600 mb-2">1</div>
+               <div className="text-gray-600">Total Videos</div>
+             </div>
+             <div className="text-center">
+               <div className="text-2xl font-bold text-orange-600 mb-2">1</div>
+               <div className="text-gray-600">Total Quizzes</div>
+             </div>
+           </div>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
-          {/* Video List */}
+          {/* Main Video Section */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Video Lessons</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">Video Lesson</h2>
               
-              <div className="space-y-4">
-                {videos.map((video, index) => (
-                  <div
-                    key={video.id}
-                    onClick={() => setCurrentVideo(video)}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all duration-200 ${
-                      currentVideo?.id === video.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 ${
-                          video.watched ? 'bg-green-100' : 'bg-gray-100'
-                        }`}>
-                          {video.watched ? (
-                            <CheckCircle className="w-5 h-5 text-green-600" />
-                          ) : (
-                            <Play className="w-5 h-5 text-gray-600" />
-                          )}
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{video.title}</h3>
-                          <div className="flex items-center text-sm text-gray-600">
-                            <Clock className="w-4 h-4 mr-1" />
-                            {video.duration}
-                          </div>
-                        </div>
-                      </div>
-                      <span className="text-sm text-gray-500">#{index + 1}</span>
+              {currentVideo && (
+                <>
+                  <div className="mb-6">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">{currentVideo.title}</h3>
+                    <div className="flex items-center text-sm text-gray-600 mb-4">
+                      <Clock className="w-4 h-4 mr-1" />
+                      {currentVideo.duration}
                     </div>
                   </div>
-                ))}
-              </div>
+                  
+                  <div className="mb-6">
+                    <div className="relative w-full h-0 pb-[56.25%] rounded-lg overflow-hidden">
+                      <iframe
+                        src={currentVideo.url.replace('youtu.be/', 'youtube.com/embed/').replace('youtube.com/watch?v=', 'youtube.com/embed/')}
+                        title={currentVideo.title}
+                        className="absolute top-0 left-0 w-full h-full"
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                      ></iframe>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {!currentVideo.watched && (
+                      <button
+                        onClick={() => markVideoAsWatched(currentVideo.id)}
+                        className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                      >
+                        Mark as Watched
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Current Video & Actions */}
+                    {/* Quiz Section */}
           <div className="space-y-8">
-            {/* Current Video */}
-            {currentVideo && (
-              <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Now Playing</h3>
-                <div className="mb-4">
-                  <h4 className="font-semibold text-gray-900 mb-2">{currentVideo.title}</h4>
-                  <div className="flex items-center text-sm text-gray-600 mb-4">
-                    <Clock className="w-4 h-4 mr-1" />
-                    {currentVideo.duration}
+            <div className={`bg-white rounded-2xl p-8 shadow-lg border border-gray-100 relative ${!currentVideo?.watched ? 'opacity-50' : ''}`}>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Quiz</h3>
+              
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="text-2xl font-bold text-gray-900">
+                    {isQuizPassed ? 'Completed' : '15 Questions'}
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {isQuizPassed ? '100%' : 'HTML Fundamentals'}
                   </div>
                 </div>
                 
-                <div className="space-y-3">
-                  <a
-                    href={currentVideo.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                  >
-                    <Youtube className="w-5 h-5 mr-2" />
-                    Watch on YouTube
-                  </a>
-                  
-                  {!currentVideo.watched && (
-                    <button
-                      onClick={() => markVideoAsWatched(currentVideo.id)}
-                      className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      Mark as Watched
-                    </button>
-                  )}
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+                  <div 
+                    className={`h-2 bg-gradient-to-r ${subjectInfo.color} rounded-full transition-all duration-500`}
+                    style={{ width: isQuizPassed ? '100%' : '0%' }}
+                  ></div>
                 </div>
+                
+                <p className="text-gray-600 text-sm">
+                  {isQuizPassed 
+                    ? 'You have successfully completed the HTML quiz!'
+                    : 'Test your knowledge with 15 comprehensive HTML questions.'
+                  }
+                </p>
               </div>
-            )}
-
-            {/* Quiz Section */}
-            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Practice Quiz</h3>
-              <p className="text-gray-600 mb-6">
-                Test your knowledge with {quizQuestions.length} questions about {subjectInfo.title.toLowerCase()}.
-              </p>
               
-              <button
-                onClick={startQuiz}
-                disabled={quizQuestions.length === 0}
-                className="flex items-center justify-center w-full py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                <QuizIcon className="w-5 h-5 mr-2" />
-                Start Quiz
-              </button>
-            </div>
-
-            {/* Study Tips */}
-            <div className={`bg-gradient-to-r ${subjectInfo.color} rounded-2xl p-8 text-white`}>
-              <h3 className="text-xl font-bold mb-4">Study Tips</h3>
-              <ul className="space-y-2 text-sm opacity-90">
-                <li>• Watch videos in order for best understanding</li>
-                <li>• Take notes while watching</li>
-                <li>• Practice with the quiz after each video</li>
-                <li>• Review concepts you find challenging</li>
-              </ul>
+              {/* Quiz Button */}
+              <div className="relative">
+                <button
+                  onClick={currentVideo?.watched ? startQuiz : undefined}
+                  disabled={!currentVideo?.watched || quizQuestions.length === 0}
+                  className={`flex items-center justify-center w-full py-4 rounded-lg transition-all duration-300 ${
+                    isQuizPassed 
+                      ? 'bg-green-600 text-white hover:bg-green-700' 
+                      : currentVideo?.watched
+                        ? 'bg-purple-600 text-white hover:bg-purple-700'
+                        : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                  }`}
+                >
+                  {isQuizPassed ? (
+                    <>
+                      <CheckCircle className="w-6 h-6 mr-3" />
+                      Quiz Completed
+                    </>
+                  ) : (
+                    <>
+                      {currentVideo?.watched ? (
+                        <QuizIcon className="w-6 h-6 mr-3" />
+                      ) : (
+                        <Lock className="w-6 h-6 mr-3" />
+                      )}
+                      Take Quiz
+                    </>
+                  )}
+                </button>
+                
+                {/* Lock overlay when video not watched */}
+                {!currentVideo?.watched && (
+                  <div className="absolute inset-0 bg-gray-900 bg-opacity-30 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                    <Lock className="w-8 h-8 text-gray-600" />
+                  </div>
+                )}
+              </div>
+              
+                             {/* Quiz Stats */}
+               <div className="mt-6 pt-6 border-t border-gray-200">
+                 <div className="text-center">
+                   <div className="font-semibold text-gray-900">15</div>
+                   <div className="text-gray-600">Questions</div>
+                 </div>
+               </div>
             </div>
           </div>
         </div>

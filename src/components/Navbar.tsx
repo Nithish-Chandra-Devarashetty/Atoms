@@ -68,7 +68,7 @@ export const Navbar: React.FC = () => {
             <Bot size={32} className={
               (isDarkMode ? 'text-blue-400' : 'text-blue-600')
             } />
-            <span className="ml-2 text-xl font-bold">Zuno</span>
+            <span className="ml-2 text-xl font-bold">Atoms</span>
           </Link>
 
           <div className="hidden md:flex space-x-4 items-center">

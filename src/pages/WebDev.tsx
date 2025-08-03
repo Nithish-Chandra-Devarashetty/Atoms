@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   FileText, 
@@ -13,18 +13,18 @@ import {
 } from 'lucide-react';
 
 export const WebDev: React.FC = () => {
-  const subjects = [
+  const [subjects, setSubjects] = useState([
     {
       id: 'html',
       title: 'HTML',
       description: 'HyperText Markup Language - The foundation of web development',
       icon: FileText,
       color: 'from-orange-500 to-red-500',
-      progress: 85,
-      videosWatched: 12,
-      totalVideos: 15,
-      quizzesPassed: 8,
-      totalQuizzes: 10
+      progress: 0, // Will be updated based on quiz completion
+      videosWatched: 0,
+      totalVideos: 1,
+      quizzesPassed: 0,
+      totalQuizzes: 1
     },
     {
       id: 'css',
@@ -86,7 +86,20 @@ export const WebDev: React.FC = () => {
       quizzesPassed: 0,
       totalQuizzes: 6
     }
-  ];
+  ]);
+
+  useEffect(() => {
+    // Check quiz completion status for each subject
+    const updatedSubjects = subjects.map(subject => {
+      const isQuizPassed = localStorage.getItem(`quiz_${subject.id}_passed`) === 'true';
+      return {
+        ...subject,
+        progress: isQuizPassed ? 100 : 0,
+        quizzesPassed: isQuizPassed ? 1 : 0
+      };
+    });
+    setSubjects(updatedSubjects);
+  }, []);
 
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
