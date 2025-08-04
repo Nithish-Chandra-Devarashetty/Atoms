@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { Play, CheckCircle, Clock, Award, BookOpen, Youtube, Pizza as QuizIcon, ArrowRight, Lock } from 'lucide-react';
+import { PracticeProjects } from '../components/PracticeProjects';
 
 interface Video {
   id: string;
@@ -568,6 +569,13 @@ export const SubjectPage: React.FC = () => {
                </div>
             </div>
           </div>
+          
+          {/* Practice Projects Section */}
+          {subject === 'html' && (
+            <div className="mt-12">
+              <PracticeProjects />
+            </div>
+          )}
         </div>
       </div>
     </div>
