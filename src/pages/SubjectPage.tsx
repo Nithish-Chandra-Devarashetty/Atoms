@@ -7,8 +7,10 @@ import { cssData as rawCssData } from '../data/webdev/cssData';
 import { javascriptData as rawJavascriptData } from '../data/webdev/javascriptData';
 import { reactData as rawReactData } from '../data/webdev/reactData';
 import { nodeData as rawNodeData } from '../data/webdev/nodeData';
+import { mongoData as rawMongoData } from '../data/webdev/mongoData';
 import { Project as ReactProject, reactProjects } from '../data/reactProjects';
 import { Project as NodeProject, nodeProjects } from '../data/nodeProjects';
+import { Project as MongoProject, mongoProjects } from '../data/mongoProjects';
 
 const htmlData: {
   url: string;
@@ -55,6 +57,15 @@ const nodeData: {
   projectIdeas: { title: string; topics: string[] }[];
 } = rawNodeData;
 
+const mongoData: {
+  url: string;
+  title: string;
+  subjectInfo: { title: string; description: string; color: string };
+  videos: Video[];
+  quizzes: { [videoId: string]: QuizQuestion[] };
+  projectIdeas: { title: string; topics: string[] }[];
+} = rawMongoData;
+
 interface Video {
   id: string;
   title: string;
@@ -70,13 +81,17 @@ interface QuizQuestion {
 }
 
 // Helper to map projectIdeas to Project[]
-const mapProjectIdeasToProjects = (projectIdeas: { title: string; topics: string[] }[], subject: string): ReactProject[] | NodeProject[] => {
+const mapProjectIdeasToProjects = (projectIdeas: { title: string; topics: string[] }[], subject: string): ReactProject[] | NodeProject[] | MongoProject[] => {
   if (subject === 'react') {
     return reactProjects;
   }
   
   if (subject === 'nodejs') {
     return nodeProjects;
+  }
+
+  if (subject === 'mongodb') {
+    return mongoProjects;
   }
   
   return projectIdeas.map((idea, idx) => ({
@@ -89,7 +104,7 @@ const mapProjectIdeasToProjects = (projectIdeas: { title: string; topics: string
 };
 
 export const SubjectPage: React.FC = () => {
-  const { subject } = useParams<{ subject: string }>();
+  const { subject } = useParams<{ subject: 'html' | 'css' | 'javascript' | 'react' | 'nodejs' | 'mongodb' }>();
   const [videos, setVideos] = useState<Video[]>([]);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null);
@@ -113,11 +128,12 @@ export const SubjectPage: React.FC = () => {
 
   // Add a useEffect to update quizQuestions when currentVideo changes (for javascript, react, nodejs)
   useEffect(() => {
-    if ((subject === 'javascript' || subject === 'react' || subject === 'nodejs') && currentVideo) {
+    if ((subject === 'javascript' || subject === 'react' || subject === 'nodejs' || subject === 'mongodb') && currentVideo) {
       const quizzes = 
         subject === 'javascript' ? javascriptData.quizzes :
         subject === 'react' ? reactData.quizzes :
-        nodeData.quizzes;
+        subject === 'nodejs' ? nodeData.quizzes :
+        mongoData.quizzes;
       setQuizQuestions(quizzes[currentVideo.id] || []);
     }
     // For other subjects, quizQuestions are not per-video
@@ -133,7 +149,8 @@ export const SubjectPage: React.FC = () => {
       css: !!cssData,
       javascript: !!javascriptData,
       react: !!reactData,
-      node: !!nodeData
+      nodejs: !!nodeData,
+      mongodb: !!mongoData
     });
     
     switch (subjectName) {
@@ -168,6 +185,14 @@ export const SubjectPage: React.FC = () => {
           quiz: nodeData.quizzes[nodeData.videos[0]?.id] || []
         };
         console.log('Node.js data loaded:', data);
+        break;
+      case 'mongodb':
+        console.log('Loading MongoDB data:', mongoData);
+        data = {
+          videos: mongoData.videos,
+          quiz: mongoData.quizzes[mongoData.videos[0]?.id] || []
+        };
+        console.log('MongoDB data loaded:', data);
         break;
       default:
         // Fallback for other subjects (OS, etc.)
@@ -238,9 +263,8 @@ export const SubjectPage: React.FC = () => {
     }
   };
 
-  const getSubjectInfo = (subjectName: string) => {
-    // Use data from our separate files for HTML and CSS
-    switch (subjectName) {
+  const getSubjectInfo = (subject: string) => {
+    switch (subject) {
       case 'html':
         return htmlData.subjectInfo;
       case 'css':
@@ -251,31 +275,43 @@ export const SubjectPage: React.FC = () => {
         return reactData.subjectInfo;
       case 'nodejs':
         return nodeData.subjectInfo;
+      case 'mongodb':
+        return mongoData.subjectInfo;
       default:
         // Fallback for other subjects
         const info: { [key: string]: { title: string, description: string, color: string } } = {
-          javascript: {
-            title: 'JavaScript Programming',
-            description: 'Add interactivity to your web pages with JavaScript',
-            color: 'from-yellow-500 to-orange-500'
-          },
-          os: {
+          'operating-system': {
             title: 'Operating Systems',
-            description: 'Understand how operating systems manage computer resources',
+            description: 'Learn about process management, memory management, and other OS concepts',
+            color: 'from-purple-500 to-indigo-600'
+          },
+          'dbms': {
+            title: 'Database Management',
+            description: 'Master database concepts, SQL, and database design',
             color: 'from-blue-500 to-cyan-500'
           },
-          dbms: {
-            title: 'Database Management Systems',
-            description: 'Learn about databases, SQL, and data management',
+          'networking': {
+            title: 'Computer Networks',
+            description: 'Understand network protocols, architectures, and security',
             color: 'from-green-500 to-emerald-500'
           },
-          cn: {
-            title: 'Computer Networks',
-            description: 'Explore networking protocols and communication systems',
-            color: 'from-purple-500 to-pink-500'
+          'oops': {
+            title: 'Object-Oriented Programming',
+            description: 'Master OOP concepts and design patterns',
+            color: 'from-amber-500 to-orange-500'
+          },
+          'dsa': {
+            title: 'Data Structures & Algorithms',
+            description: 'Learn fundamental data structures and algorithms',
+            color: 'from-red-500 to-pink-500'
           }
         };
-        return info[subjectName] || { title: 'Subject', description: 'Learn new concepts', color: 'from-gray-500 to-gray-600' };
+        
+        return info[subject] || {
+          title: subject.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '),
+          description: `Learn about ${subject.replace('-', ' ')}`,
+          color: 'from-gray-500 to-gray-600'
+        };
     }
   };
 
@@ -589,7 +625,7 @@ export const SubjectPage: React.FC = () => {
           </div>
           
                      {/* Practice Projects Section */}
-           {(subject === 'html' || subject === 'css' || subject === 'javascript' || subject === 'react' || subject === 'nodejs') && (
+           {(subject === 'html' || subject === 'css' || subject === 'javascript' || subject === 'react' || subject === 'nodejs' || subject === 'mongodb') && (
              <div className="mt-12">
                {subject === 'html' && (
                  <PracticeProjects
@@ -619,6 +655,12 @@ export const SubjectPage: React.FC = () => {
                  <PracticeProjects
                    projects={nodeProjects}
                    subject="Node.js"
+                 />
+               )}
+               {subject === 'mongodb' && (
+                 <PracticeProjects
+                   projects={mongoProjects}
+                   subject="MongoDB"
                  />
                )}
              </div>
