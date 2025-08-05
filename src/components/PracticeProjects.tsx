@@ -4,7 +4,7 @@ interface Project {
   id: string;
   title: string;
   description: string;
-  skills: string[];
+  concepts: string[];
   features: string[];
 }
 
@@ -25,17 +25,22 @@ export const PracticeProjects: React.FC<PracticeProjectsProps> = ({ projects, su
       <h2 className="text-2xl font-bold text-gray-900 mb-6">
         {subject} Practice Projects
       </h2>
-      <div className="space-y-4">
+      <div className="space-y-6">
         {projects.map((project) => (
-          <div key={project.id} className="border border-gray-200 rounded-lg overflow-hidden">
+          <div 
+            key={project.id} 
+            className="border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+          >
             <button
-              className="w-full px-6 py-4 text-left hover:bg-gray-50 focus:outline-none"
+              className="w-full px-6 py-5 text-left hover:bg-gray-50 focus:outline-none"
               onClick={() => toggleProject(project.id)}
+              aria-expanded={expandedProject === project.id}
+              aria-controls={`project-${project.id}-content`}
             >
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">{project.title}</h3>
+                <h3 className="text-xl font-semibold text-gray-900">{project.title}</h3>
                 <svg
-                  className={`h-5 w-5 text-gray-500 transform transition-transform ${
+                  className={`h-6 w-6 text-gray-500 transform transition-transform duration-200 ${
                     expandedProject === project.id ? 'rotate-180' : ''
                   }`}
                   fill="none"
@@ -45,32 +50,45 @@ export const PracticeProjects: React.FC<PracticeProjectsProps> = ({ projects, su
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
               </div>
-              <p className="mt-1 text-sm text-gray-600">{project.description}</p>
+              <p className="mt-2 text-gray-700">{project.description}</p>
             </button>
-            {expandedProject === project.id && (
-              <div className="px-6 pb-4 pt-2 bg-gray-50">
-                <div className="mb-4">
-                  <h4 className="font-medium text-gray-900 mb-2">Concepts Practiced:</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {project.skills.map((skill, index) => (
-                      <span key={index} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {skill}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                {project.features.length > 0 && (
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Features to Include:</h4>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {project.features.map((feature, index) => (
-                        <li key={index} className="text-sm text-gray-700">{feature}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+            
+            <div 
+              id={`project-${project.id}-content`}
+              className={`px-6 pb-6 pt-2 bg-gray-50 transition-all duration-200 ${
+                expandedProject === project.id ? 'block' : 'hidden'
+              }`}
+            >
+              <div className="mb-6">
+                <h4 className="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200">
+                  Concepts Practiced:
+                </h4>
+                <ul className="space-y-2">
+                  {project.concepts.map((concept, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="text-blue-500 mr-2">•</span>
+                      <span className="text-gray-800">{concept}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-            )}
+              
+              <div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-3 pb-2 border-b border-gray-200">
+                  Features to Include:
+                </h4>
+                <ul className="space-y-2">
+                  {project.features.map((feature, index) => (
+                    <li key={index} className="flex items-start">
+                      <span className="text-green-500 mr-2">✓</span>
+                      <span className="text-gray-800">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              
+
+            </div>
           </div>
         ))}
       </div>

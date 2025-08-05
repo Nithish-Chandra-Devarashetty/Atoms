@@ -5,6 +5,10 @@ import { PracticeProjects } from '../components/PracticeProjects';
 import { htmlData as rawHtmlData } from '../data/webdev/htmlData';
 import { cssData as rawCssData } from '../data/webdev/cssData';
 import { javascriptData as rawJavascriptData } from '../data/webdev/javascriptData';
+import { reactData as rawReactData } from '../data/webdev/reactData';
+import { nodeData as rawNodeData } from '../data/webdev/nodeData';
+import { Project as ReactProject, reactProjects } from '../data/reactProjects';
+import { Project as NodeProject, nodeProjects } from '../data/nodeProjects';
 
 const htmlData: {
   url: string;
@@ -33,6 +37,24 @@ const javascriptData: {
   projectIdeas: { title: string; topics: string[] }[];
 } = rawJavascriptData;
 
+const reactData: {
+  url: string;
+  title: string;
+  subjectInfo: { title: string; description: string; color: string };
+  videos: Video[];
+  quizzes: { [videoId: string]: QuizQuestion[] };
+  projectIdeas: { title: string; topics: string[] }[];
+} = rawReactData;
+
+const nodeData: {
+  url: string;
+  title: string;
+  subjectInfo: { title: string; description: string; color: string };
+  videos: Video[];
+  quizzes: { [videoId: string]: QuizQuestion[] };
+  projectIdeas: { title: string; topics: string[] }[];
+} = rawNodeData;
+
 interface Video {
   id: string;
   title: string;
@@ -48,14 +70,23 @@ interface QuizQuestion {
 }
 
 // Helper to map projectIdeas to Project[]
-const mapProjectIdeasToProjects = (projectIdeas: { title: string; topics: string[] }[], subject: string) =>
-  projectIdeas.map((idea, idx) => ({
+const mapProjectIdeasToProjects = (projectIdeas: { title: string; topics: string[] }[], subject: string): ReactProject[] | NodeProject[] => {
+  if (subject === 'react') {
+    return reactProjects;
+  }
+  
+  if (subject === 'nodejs') {
+    return nodeProjects;
+  }
+  
+  return projectIdeas.map((idea, idx) => ({
     id: `${subject}-${idx}`,
     title: idea.title,
     description: `Build a project: ${idea.title}`,
-    skills: idea.topics,
+    concepts: idea.topics,
     features: [],
   }));
+};
 
 export const SubjectPage: React.FC = () => {
   const { subject } = useParams<{ subject: string }>();
@@ -80,17 +111,30 @@ export const SubjectPage: React.FC = () => {
     }
   }, [subject]);
 
-  // Add a useEffect to update quizQuestions when currentVideo changes (for javascript)
+  // Add a useEffect to update quizQuestions when currentVideo changes (for javascript, react, nodejs)
   useEffect(() => {
-    if (subject === 'javascript' && currentVideo) {
-      setQuizQuestions(javascriptData.quizzes[currentVideo.id] || []);
+    if ((subject === 'javascript' || subject === 'react' || subject === 'nodejs') && currentVideo) {
+      const quizzes = 
+        subject === 'javascript' ? javascriptData.quizzes :
+        subject === 'react' ? reactData.quizzes :
+        nodeData.quizzes;
+      setQuizQuestions(quizzes[currentVideo.id] || []);
     }
     // For other subjects, quizQuestions are not per-video
     // eslint-disable-next-line
   }, [currentVideo, subject]);
 
   const loadSubjectData = (subjectName: string) => {
+    console.log('Loading subject data for:', subjectName);
     let data: { videos: Video[], quiz: QuizQuestion[], quizzes?: { [videoId: string]: QuizQuestion[] } } = { videos: [], quiz: [] };
+    
+    console.log('Available subjects:', {
+      html: !!htmlData,
+      css: !!cssData,
+      javascript: !!javascriptData,
+      react: !!reactData,
+      node: !!nodeData
+    });
     
     switch (subjectName) {
       case 'html':
@@ -110,6 +154,20 @@ export const SubjectPage: React.FC = () => {
           videos: javascriptData.videos,
           quiz: javascriptData.quizzes[javascriptData.videos[0]?.id] || []
         };
+        break;
+      case 'react':
+        data = {
+          videos: reactData.videos,
+          quiz: reactData.quizzes[reactData.videos[0]?.id] || []
+        };
+        break;
+      case 'nodejs':
+        console.log('Loading Node.js data:', nodeData);
+        data = {
+          videos: nodeData.videos,
+          quiz: nodeData.quizzes[nodeData.videos[0]?.id] || []
+        };
+        console.log('Node.js data loaded:', data);
         break;
       default:
         // Fallback for other subjects (OS, etc.)
@@ -189,6 +247,10 @@ export const SubjectPage: React.FC = () => {
         return cssData.subjectInfo;
       case 'javascript':
         return javascriptData.subjectInfo;
+      case 'react':
+        return reactData.subjectInfo;
+      case 'nodejs':
+        return nodeData.subjectInfo;
       default:
         // Fallback for other subjects
         const info: { [key: string]: { title: string, description: string, color: string } } = {
@@ -527,7 +589,7 @@ export const SubjectPage: React.FC = () => {
           </div>
           
                      {/* Practice Projects Section */}
-           {(subject === 'html' || subject === 'css' || subject === 'javascript') && (
+           {(subject === 'html' || subject === 'css' || subject === 'javascript' || subject === 'react' || subject === 'nodejs') && (
              <div className="mt-12">
                {subject === 'html' && (
                  <PracticeProjects
@@ -545,6 +607,18 @@ export const SubjectPage: React.FC = () => {
                  <PracticeProjects
                    projects={mapProjectIdeasToProjects(javascriptData.projectIdeas, 'javascript')}
                    subject="JavaScript"
+                 />
+               )}
+               {subject === 'react' && (
+                 <PracticeProjects
+                   projects={mapProjectIdeasToProjects(reactData.projectIdeas, 'react')}
+                   subject="React"
+                 />
+               )}
+               {subject === 'nodejs' && (
+                 <PracticeProjects
+                   projects={nodeProjects}
+                   subject="Node.js"
                  />
                )}
              </div>
