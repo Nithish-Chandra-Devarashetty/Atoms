@@ -1,7 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { Play, CheckCircle, Clock, Award, BookOpen, Youtube, Pizza as QuizIcon, ArrowRight, Lock } from 'lucide-react';
+import { CheckCircle, Clock, Award, Pizza as QuizIcon, ArrowRight, Lock } from 'lucide-react';
 import { PracticeProjects } from '../components/PracticeProjects';
+import { htmlData as rawHtmlData } from '../data/webdev/htmlData';
+import { cssData as rawCssData } from '../data/webdev/cssData';
+import { javascriptData as rawJavascriptData } from '../data/webdev/javascriptData';
+
+const htmlData: {
+  url: string;
+  title: string;
+  subjectInfo: { title: string; description: string; color: string };
+  videos: Video[];
+  quiz: QuizQuestion[];
+  projectIdeas: { title: string; topics: string[] }[];
+} = rawHtmlData;
+
+const cssData: {
+  url: string;
+  title: string;
+  subjectInfo: { title: string; description: string; color: string };
+  videos: Video[];
+  quiz: QuizQuestion[];
+  projectIdeas: { title: string; topics: string[] }[];
+} = rawCssData;
+
+const javascriptData: {
+  url: string;
+  title: string;
+  subjectInfo: { title: string; description: string; color: string };
+  videos: Video[];
+  quizzes: { [videoId: string]: QuizQuestion[] };
+  projectIdeas: { title: string; topics: string[] }[];
+} = rawJavascriptData;
 
 interface Video {
   id: string;
@@ -16,6 +46,16 @@ interface QuizQuestion {
   options: string[];
   correct: number;
 }
+
+// Helper to map projectIdeas to Project[]
+const mapProjectIdeasToProjects = (projectIdeas: { title: string; topics: string[] }[], subject: string) =>
+  projectIdeas.map((idea, idx) => ({
+    id: `${subject}-${idx}`,
+    title: idea.title,
+    description: `Build a project: ${idea.title}`,
+    skills: idea.topics,
+    features: [],
+  }));
 
 export const SubjectPage: React.FC = () => {
   const { subject } = useParams<{ subject: string }>();
@@ -40,162 +80,59 @@ export const SubjectPage: React.FC = () => {
     }
   }, [subject]);
 
-  const loadSubjectData = (subjectName: string) => {
-    // This would normally load from the uploaded .txt files
-    // For now, using sample data
-    
-    const sampleData: { [key: string]: { videos: Video[], quiz: QuizQuestion[] } } = {
-      html: {
-        videos: [
-          {
-            id: '1',
-            title: 'HTML Fundamentals - Complete Guide',
-            url: 'https://youtu.be/HcOc7P5BMi4',
-            duration: '25:30',
-            watched: false
-          }
-        ],
-        quiz: [
-          {
-            question: 'What does HTML stand for?',
-            options: [
-              'Hyper Trainer Marking Language',
-              'Hyper Text Markup Language',
-              'Hyper Text Marketing Language',
-              'Hyperlink Markup Language'
-            ],
-            correct: 1
-          },
-          {
-            question: 'Which tag is used to create a hyperlink in HTML?',
-            options: ['<img>', '<a>', '<link>', '<href>'],
-            correct: 1
-          },
-          {
-            question: 'Which of the following is a void (empty) element in HTML?',
-            options: ['<div>', '<p>', '<img>', '<span>'],
-            correct: 2
-          },
-          {
-            question: 'What is the correct syntax to write an HTML comment?',
-            options: [
-              '// Comment goes here',
-              '/* Comment goes here */',
-              '<!-- Comment goes here -->',
-              "' Comment goes here"
-            ],
-            correct: 2
-          },
-          {
-            question: 'What is the function of the <meta charset="UTF-8"> tag?',
-            options: [
-              'Set the web page title',
-              'Specify the character encoding used in the document',
-              'Create a table',
-              'Link to a CSS style'
-            ],
-            correct: 1
-          },
-          {
-            question: 'Which is NOT a semantic HTML element?',
-            options: ['<article>', '<section>', '<div>', '<footer>'],
-            correct: 2
-          },
-          {
-            question: 'What does the DOCTYPE declaration do?',
-            options: [
-              'Links to the CSS file',
-              'Tells the browser which HTML or XHTML version is being used',
-              'Adds metadata to the webpage',
-              'Marks a comment'
-            ],
-            correct: 1
-          },
-          {
-            question: "What's the difference between <b> and <strong>?",
-            options: [
-              'No difference, both make text bold',
-              '<b> is for bolding, <strong> is for semantic importance and accessibility',
-              '<b> is deprecated',
-              '<strong> is only for headings'
-            ],
-            correct: 1
-          },
-          {
-            question: 'How can you embed a webpage inside another HTML page?',
-            options: ['<span>', '<iframe>', '<embed>', '<object>'],
-            correct: 1
-          },
-          {
-            question: 'Which attribute would you use to open a link in a new tab?',
-            options: ['target="_blank"', 'newtab="yes"', 'href="newtab"', 'window="open"'],
-            correct: 0
-          },
-          {
-            question: 'What is the difference between "id" and "class" attributes?',
-            options: [
-              'No difference',
-              'id can appear multiple times; class only once',
-              'id is unique per page; class can be used on multiple elements',
-              'class is deprecated'
-            ],
-            correct: 2
-          },
-          {
-            question: 'Which is the correct way to add a line break in HTML?',
-            options: ['<lb>', '<break>', '<br>', '<linebreak>'],
-            correct: 2
-          },
-          {
-            question: 'Which HTML element is used to define important text with emphasis, not just italic style?',
-            options: ['<i>', '<b>', '<em>', '<mark>'],
-            correct: 2
-          },
-          {
-            question: 'Which tag is used for inserting a video into HTML5?',
-            options: ['<media>', '<movie>', '<video>', '<source>'],
-            correct: 2
-          },
-          {
-            question: 'What new attribute in HTML5 helps with responsive images?',
-            options: ['data-src', 'srcset', 'lazy', 'srcnext'],
-            correct: 1
-          }
-        ]
-      },
-      os: {
-        videos: [
-          {
-            id: '1',
-            title: 'Operating Systems Overview',
-            url: 'https://youtu.be/8XBtAjKwCm4',
-            duration: '20:15',
-            watched: true
-          },
-          {
-            id: '2',
-            title: 'Process Management',
-            url: 'https://youtu.be/8XBtAjKwCm4',
-            duration: '25:30',
-            watched: false
-          }
-        ],
-        quiz: [
-          {
-            question: 'What is the primary purpose of an operating system?',
-            options: [
-              'Provide hardware only',
-              'Manage system resources',
-              'Create web applications',
-              'Perform calculations'
-            ],
-            correct: 1
-          }
-        ]
-      }
-    };
+  // Add a useEffect to update quizQuestions when currentVideo changes (for javascript)
+  useEffect(() => {
+    if (subject === 'javascript' && currentVideo) {
+      setQuizQuestions(javascriptData.quizzes[currentVideo.id] || []);
+    }
+    // For other subjects, quizQuestions are not per-video
+    // eslint-disable-next-line
+  }, [currentVideo, subject]);
 
-    const data = sampleData[subjectName] || { videos: [], quiz: [] };
+  const loadSubjectData = (subjectName: string) => {
+    let data: { videos: Video[], quiz: QuizQuestion[], quizzes?: { [videoId: string]: QuizQuestion[] } } = { videos: [], quiz: [] };
+    
+    switch (subjectName) {
+      case 'html':
+        data = {
+          videos: htmlData.videos,
+          quiz: htmlData.quiz
+        };
+        break;
+      case 'css':
+        data = {
+          videos: cssData.videos,
+          quiz: cssData.quiz
+        };
+        break;
+      case 'javascript':
+        data = {
+          videos: javascriptData.videos,
+          quiz: javascriptData.quizzes[javascriptData.videos[0]?.id] || []
+        };
+        break;
+      default:
+        // Fallback for other subjects (OS, etc.)
+        data = {
+          videos: [
+            {
+              id: '1',
+              title: 'Subject Overview',
+              url: 'https://youtu.be/example',
+              duration: '20:00',
+              watched: false
+            }
+          ],
+          quiz: [
+            {
+              question: 'Sample question for this subject?',
+              options: ['Option A', 'Option B', 'Option C', 'Option D'],
+              correct: 0
+            }
+          ]
+        };
+    }
+
     setVideos(data.videos);
     setQuizQuestions(data.quiz);
     setCurrentVideo(data.videos[0] || null);
@@ -244,40 +181,40 @@ export const SubjectPage: React.FC = () => {
   };
 
   const getSubjectInfo = (subjectName: string) => {
-    const info: { [key: string]: { title: string, description: string, color: string } } = {
-      html: {
-        title: 'HTML Fundamentals',
-        description: 'Learn the building blocks of web development with HTML',
-        color: 'from-orange-500 to-red-500'
-      },
-      css: {
-        title: 'CSS Styling',
-        description: 'Master the art of styling web pages with CSS',
-        color: 'from-blue-500 to-cyan-500'
-      },
-      javascript: {
-        title: 'JavaScript Programming',
-        description: 'Add interactivity to your web pages with JavaScript',
-        color: 'from-yellow-500 to-orange-500'
-      },
-      os: {
-        title: 'Operating Systems',
-        description: 'Understand how operating systems manage computer resources',
-        color: 'from-blue-500 to-cyan-500'
-      },
-      dbms: {
-        title: 'Database Management Systems',
-        description: 'Learn about databases, SQL, and data management',
-        color: 'from-green-500 to-emerald-500'
-      },
-      cn: {
-        title: 'Computer Networks',
-        description: 'Explore networking protocols and communication systems',
-        color: 'from-purple-500 to-pink-500'
-      }
-    };
-
-    return info[subjectName] || { title: 'Subject', description: 'Learn new concepts', color: 'from-gray-500 to-gray-600' };
+    // Use data from our separate files for HTML and CSS
+    switch (subjectName) {
+      case 'html':
+        return htmlData.subjectInfo;
+      case 'css':
+        return cssData.subjectInfo;
+      case 'javascript':
+        return javascriptData.subjectInfo;
+      default:
+        // Fallback for other subjects
+        const info: { [key: string]: { title: string, description: string, color: string } } = {
+          javascript: {
+            title: 'JavaScript Programming',
+            description: 'Add interactivity to your web pages with JavaScript',
+            color: 'from-yellow-500 to-orange-500'
+          },
+          os: {
+            title: 'Operating Systems',
+            description: 'Understand how operating systems manage computer resources',
+            color: 'from-blue-500 to-cyan-500'
+          },
+          dbms: {
+            title: 'Database Management Systems',
+            description: 'Learn about databases, SQL, and data management',
+            color: 'from-green-500 to-emerald-500'
+          },
+          cn: {
+            title: 'Computer Networks',
+            description: 'Explore networking protocols and communication systems',
+            color: 'from-purple-500 to-pink-500'
+          }
+        };
+        return info[subjectName] || { title: 'Subject', description: 'Learn new concepts', color: 'from-gray-500 to-gray-600' };
+    }
   };
 
   const subjectInfo = getSubjectInfo(subject || '');
@@ -453,6 +390,25 @@ export const SubjectPage: React.FC = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
               <h2 className="text-2xl font-bold text-gray-900 mb-6">Video Lesson</h2>
+              {/* Video Dropdown Selector */}
+              <div className="mb-6">
+                <label htmlFor="video-select" className="block mb-2 font-medium text-gray-700">Select Video:</label>
+                <select
+                  id="video-select"
+                  value={currentVideo?.id || ''}
+                  onChange={e => {
+                    const selected = videos.find(v => v.id === e.target.value);
+                    if (selected) setCurrentVideo(selected);
+                  }}
+                  className="w-full p-2 border rounded"
+                >
+                  {videos.map(video => (
+                    <option key={video.id} value={video.id}>
+                      {video.title}
+                    </option>
+                  ))}
+                </select>
+              </div>
               
               {currentVideo && (
                 <>
@@ -570,12 +526,29 @@ export const SubjectPage: React.FC = () => {
             </div>
           </div>
           
-          {/* Practice Projects Section */}
-          {subject === 'html' && (
-            <div className="mt-12">
-              <PracticeProjects />
-            </div>
-          )}
+                     {/* Practice Projects Section */}
+           {(subject === 'html' || subject === 'css' || subject === 'javascript') && (
+             <div className="mt-12">
+               {subject === 'html' && (
+                 <PracticeProjects
+                   projects={mapProjectIdeasToProjects(htmlData.projectIdeas, 'html')}
+                   subject="HTML"
+                 />
+               )}
+               {subject === 'css' && (
+                 <PracticeProjects
+                   projects={mapProjectIdeasToProjects(cssData.projectIdeas, 'css')}
+                   subject="CSS"
+                 />
+               )}
+               {subject === 'javascript' && (
+                 <PracticeProjects
+                   projects={mapProjectIdeasToProjects(javascriptData.projectIdeas, 'javascript')}
+                   subject="JavaScript"
+                 />
+               )}
+             </div>
+           )}
         </div>
       </div>
     </div>
