@@ -10,13 +10,7 @@ import {
   CheckCircle,
   X
 } from 'lucide-react';
-
-interface Question {
-  question: string;
-  options: string[];
-  correct: number;
-  explanation?: string;
-}
+import { Question, Topic, aptitudeTopics } from '../data/aptitudeData';
 
 export const AptitudeTopicPage: React.FC = () => {
   const { topic } = useParams<{ topic: string }>();
@@ -45,66 +39,33 @@ export const AptitudeTopicPage: React.FC = () => {
   }, [timeLeft, quizStarted, quizCompleted]);
 
   const loadTopicQuestions = async (topicName: string) => {
-    // In a real app, this would call the API
-    // For now, using sample questions
-    const sampleQuestions: Question[] = [
-      {
-        question: "A mixture contains wine and water in the ratio 3:2. If 5 liters of water is added to the mixture, the ratio becomes 3:3. Find the original quantity of the mixture.",
-        options: ["25 liters", "30 liters", "35 liters", "40 liters"],
-        correct: 0,
-        explanation: "Let the original quantities be 3x and 2x. After adding 5L water: 3x:(2x+5) = 3:3. Solving: 3x = 2x+5, so x=5. Original mixture = 5x = 25L."
-      },
-      {
-        question: "In what ratio should tea costing Rs. 60 per kg be mixed with tea costing Rs. 65 per kg so that the mixture costs Rs. 62 per kg?",
-        options: ["3:2", "2:3", "1:2", "2:1"],
-        correct: 0,
-        explanation: "Using alligation: (65-62):(62-60) = 3:2. So tea costing Rs.60 should be mixed with tea costing Rs.65 in ratio 3:2."
-      },
-      {
-        question: "A vessel contains 60 liters of milk. 12 liters of milk is taken out and replaced with water. This process is repeated once more. What is the final ratio of milk to water?",
-        options: ["16:9", "9:16", "4:1", "1:4"],
-        correct: 0,
-        explanation: "After first replacement: milk = 60×(48/60) = 48L. After second: milk = 48×(48/60) = 38.4L. Water = 21.6L. Ratio = 38.4:21.6 = 16:9."
-      }
-    ];
-
-    setQuestions(sampleQuestions);
-    setAnswers(new Array(sampleQuestions.length).fill(null));
-  };
-
-  const getTopicInfo = (topicName: string) => {
-    const info: { [key: string]: { title: string, description: string, color: string, icon: string } } = {
-      'mixture-and-alligation': {
-        title: 'Mixture and Alligation',
-        description: 'Problems involving mixing of different quantities and ratios',
-        color: 'from-blue-500 to-cyan-500',
-        icon: '🧪'
-      },
-      'profit-and-loss': {
-        title: 'Profit and Loss',
-        description: 'Calculate profit, loss, cost price, and selling price',
-        color: 'from-green-500 to-emerald-500',
-        icon: '💰'
-      },
-      'pipes-and-cisterns': {
-        title: 'Pipes and Cisterns',
-        description: 'Time and work problems involving filling and emptying tanks',
-        color: 'from-purple-500 to-pink-500',
-        icon: '🚰'
-      },
-      'random': {
-        title: 'Random Practice',
-        description: 'Mixed questions from all aptitude topics',
-        color: 'from-orange-500 to-red-500',
-        icon: '🎲'
+    const loadQuestions = () => {
+      const topic = aptitudeTopics.find(t => t.id === topicName);
+      if (topic) {
+        setQuestions(topic.questions);
+        setAnswers(new Array(topic.questions.length).fill(null));
       }
     };
+    loadQuestions();
+  };
 
-    return info[topicName || ''] || { 
+  const getTopicInfo = (topicId: string) => {
+    const topic = aptitudeTopics.find(t => t.id === topicId);
+    if (topic) {
+      return {
+        title: topic.title,
+        description: topic.description,
+        color: topic.color,
+        icon: topic.icon
+      };
+    }
+    
+    // Default values if topic not found
+    return {
       title: 'Aptitude Topic', 
       description: 'Practice aptitude questions', 
       color: 'from-gray-500 to-gray-600',
-      icon: '📊'
+      icon: '📚'
     };
   };
 

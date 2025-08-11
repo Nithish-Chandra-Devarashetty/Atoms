@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Calculator, 
   Clock, 
   Target, 
   TrendingUp,
@@ -10,92 +9,21 @@ import {
   Award,
   BarChart3
 } from 'lucide-react';
+import { aptitudeTopics } from '../data/aptitudeData';
 
 export const Aptitude: React.FC = () => {
-  const [completedTopics, setCompletedTopics] = useState<string[]>(['mixture-and-alligation', 'profit-and-loss']);
+  const [completedTopics] = useState<string[]>(['mixture-and-alligation']);
 
-  const topics = [
-    {
-      id: 'mixture-and-alligation',
-      title: 'Mixture and Alligation',
-      description: 'Problems involving mixing of different quantities and ratios',
-      icon: '🧪',
-      difficulty: 'Medium',
-      questionsCount: 25,
-      avgTime: '2 min',
-      completed: completedTopics.includes('mixture-and-alligation')
-    },
-    {
-      id: 'profit-and-loss',
-      title: 'Profit and Loss',
-      description: 'Calculate profit, loss, cost price, and selling price',
-      icon: '💰',
-      difficulty: 'Easy',
-      questionsCount: 30,
-      avgTime: '1.5 min',
-      completed: completedTopics.includes('profit-and-loss')
-    },
-    {
-      id: 'pipes-and-cisterns',
-      title: 'Pipes and Cisterns',
-      description: 'Time and work problems involving filling and emptying tanks',
-      icon: '🚰',
-      difficulty: 'Medium',
-      questionsCount: 20,
-      avgTime: '2.5 min',
-      completed: false
-    },
-    {
-      id: 'age',
-      title: 'Age Problems',
-      description: 'Solve problems related to age calculations and relationships',
-      icon: '👶',
-      difficulty: 'Easy',
-      questionsCount: 22,
-      avgTime: '1.8 min',
-      completed: false
-    },
-    {
-      id: 'permutation-and-combination',
-      title: 'Permutation and Combination',
-      description: 'Arrangements and selections in different scenarios',
-      icon: '🔢',
-      difficulty: 'Hard',
-      questionsCount: 28,
-      avgTime: '3 min',
-      completed: false
-    },
-    {
-      id: 'speed-time-distance',
-      title: 'Speed Time Distance',
-      description: 'Motion problems involving speed, time, and distance calculations',
-      icon: '🏃',
-      difficulty: 'Medium',
-      questionsCount: 26,
-      avgTime: '2.2 min',
-      completed: false
-    },
-    {
-      id: 'simple-interest',
-      title: 'Simple Interest',
-      description: 'Calculate simple interest, principal, rate, and time',
-      icon: '🏦',
-      difficulty: 'Easy',
-      questionsCount: 24,
-      avgTime: '1.5 min',
-      completed: false
-    },
-    {
-      id: 'calendars',
-      title: 'Calendars',
-      description: 'Day and date calculations, leap years, and calendar problems',
-      icon: '📅',
-      difficulty: 'Medium',
-      questionsCount: 18,
-      avgTime: '2 min',
-      completed: false
-    }
-  ];
+  const topics = aptitudeTopics.map(topic => ({
+    id: topic.id,
+    title: topic.title,
+    description: topic.description,
+    icon: topic.icon,
+    difficulty: 'Medium',
+    questionsCount: topic.questions.length,
+    avgTime: '2 min',
+    completed: completedTopics.includes(topic.id)
+  }));
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
