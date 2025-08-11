@@ -48,7 +48,11 @@ export const Navbar: React.FC = () => {
     return (
       <Link
         to={to}
-        className={`flex items-center px-4 py-2 rounded-md ${isActive ? (isDarkMode ? 'bg-gray-700 text-white' : 'bg-blue-500 text-white') : (isDarkMode ? 'text-gray-300 hover:bg-gray-700' : 'text-gray-700 hover:bg-gray-200')}`}
+        className={`flex items-center px-4 py-3 transition-all duration-300 ${
+          isActive 
+            ? 'bg-gradient-to-r from-cyan-500 to-purple-600 text-white' 
+            : 'text-gray-300 hover:bg-white/10 hover:text-white'
+        }`}
         onClick={closeMenu}
       >
         {icon}
@@ -58,17 +62,15 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className={
-      (isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800') +
-      ' shadow-md fixed w-full z-30 top-0'
-    }>
+    <nav className="bg-black/20 backdrop-blur-md border-b border-white/10 fixed w-full z-30 top-0">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-4">
-          <Link to="/" className="flex items-center hover:opacity-80 transition-opacity">
-            <Bot size={32} className={
-              (isDarkMode ? 'text-blue-400' : 'text-blue-600')
-            } />
-            <span className="ml-2 text-xl font-bold">Atoms</span>
+          <Link to="/" className="flex items-center hover:opacity-80 transition-all duration-300 group">
+            <div className="relative">
+              <Bot size={32} className="text-cyan-400 group-hover:text-cyan-300 transition-colors duration-300" />
+              <div className="absolute -inset-1 bg-cyan-400/20 blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </div>
+            <span className="ml-3 text-2xl font-black text-white tracking-tight">Atoms</span>
           </Link>
 
           <div className="hidden md:flex space-x-4 items-center">
@@ -83,37 +85,31 @@ export const Navbar: React.FC = () => {
             {!currentUser && (
               <button
                 onClick={() => setShowLoginModal(true)}
-                className={
-                  "flex items-center px-4 py-2 rounded-md font-semibold " +
-                  (isDarkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white')
-                }
+                className="flex items-center px-6 py-2 bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-semibold hover:from-cyan-400 hover:to-purple-500 transition-all duration-300 transform hover:scale-105"
               >
                 <User size={20} className="mr-2" />
                 Sign In
               </button>
             )}
             
-            <button onClick={toggleDarkMode} className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
-              {isDarkMode ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-gray-600" />}
+            <button onClick={toggleDarkMode} className="p-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300">
+              {isDarkMode ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-gray-300" />}
             </button>
           </div>
 
           <div className="md:hidden flex items-center">
-             <button onClick={toggleDarkMode} className="p-2 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mr-2">
-              {isDarkMode ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-gray-600" />}
+             <button onClick={toggleDarkMode} className="p-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300 mr-2">
+              {isDarkMode ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-gray-300" />}
             </button>
-            <button onClick={toggleMenu} className="text-gray-800 focus:outline-none">
-              {isOpen ? <X size={24} className={isDarkMode ? 'text-white' : 'text-gray-800'} /> : <Menu size={24} className={isDarkMode ? 'text-white' : 'text-gray-800'} />}
+            <button onClick={toggleMenu} className="text-white focus:outline-none">
+              {isOpen ? <X size={24} className="text-white" /> : <Menu size={24} className="text-white" />}
             </button>
           </div>
         </div>
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className={
-            (isDarkMode ? 'bg-gray-800' : 'bg-white') +
-            ' flex flex-col space-y-2 px-4 py-2 md:hidden'
-          }>
+          <div className="bg-black/40 backdrop-blur-md border-t border-white/10 flex flex-col space-y-2 px-4 py-4 md:hidden">
             <NavLink to="/" icon={<Home size={20} />} label="Home" />
             <NavLink to="/webdev" icon={<Code size={20} />} label="Web Dev" />
             <NavLink to="/core" icon={<Database size={20} />} label="Core CS" />
@@ -126,10 +122,7 @@ export const Navbar: React.FC = () => {
             {currentUser ? (
               <button
                 onClick={handleLogout}
-                className={
-                  "flex items-center px-4 py-2 rounded-md font-semibold " +
-                  (isDarkMode ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-red-500 hover:bg-red-600 text-white')
-                }
+                className="flex items-center px-4 py-2 bg-red-500/80 backdrop-blur-md text-white font-semibold hover:bg-red-500 transition-all duration-300"
               >
                  <LogOut size={20} className="mr-2" />
                 Logout
@@ -137,10 +130,7 @@ export const Navbar: React.FC = () => {
             ) : (
               <button
                 onClick={() => setShowLoginModal(true)}
-                className={
-                  "flex items-center px-4 py-2 rounded-md font-semibold " +
-                  (isDarkMode ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white')
-                }
+                className="flex items-center px-4 py-2 bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-semibold hover:from-cyan-400 hover:to-purple-500 transition-all duration-300"
               >
                  <User size={20} className="mr-2" />
                 Sign In

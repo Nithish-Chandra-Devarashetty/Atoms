@@ -45,49 +45,34 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 h-screen">
-      <div className={`relative p-8 rounded-lg shadow-lg w-96 ${
-        isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'
-      }`}>
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 h-screen">
+      <div className="relative p-8 bg-white/10 backdrop-blur-md border border-white/20 w-96 shadow-2xl">
         <button
-          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+          className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors duration-300"
           onClick={onClose}
         >
-          &times;
+          <span className="text-2xl">&times;</span>
         </button>
-        <h2 className="text-2xl font-bold mb-6 text-center">{isSignUp ? 'Sign Up' : 'Login'}</h2>
+        <h2 className="text-3xl font-black mb-8 text-center text-white">{isSignUp ? 'Sign Up' : 'Login'}</h2>
 
-        {error && <p className="text-red-500 text-sm mb-4 text-center">{error}</p>}
+        {error && <p className="text-red-400 text-sm mb-6 text-center bg-red-500/10 backdrop-blur-sm border border-red-500/20 p-3">{error}</p>}
 
         {!isEmailFlow ? (
-          <div className="space-y-4">
+          <div className="space-y-6">
             <button
-              className={
-                "w-full py-3 px-4 rounded-lg font-semibold " +
-                (isDarkMode
-                  ? 'bg-blue-700 hover:bg-blue-800 text-white'
-                  : 'bg-blue-500 hover:bg-blue-600 text-white')
-              }
+              className="w-full py-4 px-6 bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-bold hover:from-cyan-400 hover:to-purple-500 transition-all duration-300 transform hover:scale-105"
               onClick={() => setIsEmailFlow(true)}
             >
               Login
             </button>
-            <div className={
-              (isDarkMode ? 'text-gray-400' : 'text-gray-500') +
-              ' text-center'
-            }>
+            <div className="text-gray-300 text-center">
               Or continue with
             </div>
             <button
-              className={
-                "w-full py-3 px-4 rounded-lg font-semibold flex items-center justify-center space-x-2 " +
-                (isDarkMode
-                  ? 'bg-red-700 hover:bg-red-800 text-white'
-                  : 'bg-red-500 hover:bg-red-600 text-white')
-              }
+              className="w-full py-4 px-6 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold hover:bg-white/20 transition-all duration-300 flex items-center justify-center space-x-3"
               onClick={handleGoogleSignIn}
             >
-              <svg className="w-5 h-5" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg className="w-6 h-6" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M43.611 20.0834H42V20H24C16.5367 20 10.4733 26.0633 10.4733 33.5267C10.4733 40.99 16.5367 47.0533 24 47.0533C30.6533 47.0533 36.2167 43.1333 38.68 37.5933L44.2033 40.8C40.1333 44.9333 35.1733 47.96 29.6667 48C17.83 48 8 38.17 8 26.3333C8 14.4967 17.83 4.66667 29.6667 4.66667C35.95 4.66667 41.1167 6.94 44.9267 10.68L39.45 16.2033C37.0433 13.92 33.6733 12.5333 29.6667 12.5333C21.5733 12.5333 15.1267 18.98 15.1267 27.0733C15.1267 35.1667 21.5733 41.6133 29.6667 41.6133C33.4333 41.6133 36.59 40.2933 39.09 37.9533C40.7767 36.3333 41.8 34.0833 41.8 31.2833H24V20.0834Z" fill="#4285F4"/>
                 <path d="M46.98 24.5333C46.98 23.12 46.86 21.7467 46.6533 20.4267H24V28.8H38.8133C38.1867 32.1333 36.0333 34.8933 33.0133 36.8333L33.08 36.8933L39.45 40.8C43.2467 37.2133 45.6767 32.4667 46.7333 27.0667C46.9333 26.2 46.98 25.36 46.98 24.5333Z" fill="#34A853"/>
                 <path d="M15.1267 27.0733C15.1267 24.4467 15.8933 21.9867 17.2933 19.9333L17.22 19.86L10.68 16.06C8.12 19.2133 6.66667 23.1333 6.66667 27.0733C6.66667 31.0133 8.12 34.9333 10.68 38.0867L17.22 34.2867L17.2933 34.22C15.8933 32.1667 15.1267 29.7067 15.1267 27.0733Z" fill="#FBBC05"/>
@@ -98,21 +83,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
           </div>
         ) : (
           <form onSubmit={handleEmailSubmit}>
-            <div className="mb-4">
+            <div className="mb-6">
               <label className="block text-sm font-semibold mb-2" htmlFor="email">
                 Email
               </label>
               <input
                 type="email"
                 id="email"
-                className={
-                  "w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 " +
-                  (isDarkMode
-                    ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-600'
-                    : 'border-gray-300 text-gray-900 focus:ring-blue-500')
-                }
+                className="w-full px-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-300"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
                 required
               />
             </div>
@@ -123,44 +104,30 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
               <input
                 type="password"
                 id="password"
-                className={
-                  "w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 " +
-                  (isDarkMode
-                    ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-600'
-                    : 'border-gray-300 text-gray-900 focus:ring-blue-500')
-                }
+                className="w-full px-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-300"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
                 required
               />
             </div>
             <button
               type="submit"
-              className={
-                "w-full py-3 px-4 rounded-lg font-semibold " +
-                (isDarkMode
-                  ? 'bg-blue-700 hover:bg-blue-800 text-white'
-                  : 'bg-blue-500 hover:bg-blue-600 text-white')
-              }
+              className="w-full py-4 px-6 bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-bold hover:from-cyan-400 hover:to-purple-500 transition-all duration-300 transform hover:scale-105"
             >
               {isSignUp ? 'Sign Up' : 'Login'}
             </button>
           </form>
         )}
 
-        <p
-          className={
-            (isDarkMode ? 'text-gray-400' : 'text-gray-500') +
-            ' text-xs text-center mt-4'
-          }
-        >
+        <p className="text-gray-300 text-sm text-center mt-6">
           {isEmailFlow
             ? isSignUp
               ? 'Already have an account? '
               : 'Don\'t have an account? '
             : ''}
           <button
-            className="text-blue-500 hover:underline ml-1"
+            className="text-cyan-400 hover:text-cyan-300 transition-colors duration-300 ml-1 font-semibold"
             onClick={() => {
               if (isEmailFlow) {
                 setIsSignUp(!isSignUp);
@@ -178,12 +145,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
         </p>
 
         {!isEmailFlow && (
-          <p
-            className={
-              (isDarkMode ? 'text-gray-400' : 'text-gray-500') +
-              ' text-xs text-center mt-2'
-            }
-          >
+          <p className="text-gray-400 text-xs text-center mt-4">
             By signing in, you agree to our Terms of Service and Privacy Policy
           </p>
         )}
