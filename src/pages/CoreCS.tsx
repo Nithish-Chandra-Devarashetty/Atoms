@@ -7,7 +7,8 @@ import {
   CheckCircle,
   Clock,
   Play,
-  BookOpen
+  BookOpen,
+  ArrowRight
 } from 'lucide-react';
 
 export const CoreCS: React.FC = () => {
