@@ -438,29 +438,36 @@ export const SubjectPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/10 blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500/10 blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/3 w-80 h-80 bg-cyan-500/10 blur-3xl animate-pulse delay-2000"></div>
+      </div>
+      
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className={`text-4xl md:text-5xl font-bold bg-gradient-to-r ${subjectInfo.color} bg-clip-text text-transparent mb-4`}>
+        <div className="text-center mb-16 relative z-10">
+          <h1 className={`text-5xl md:text-7xl font-black bg-gradient-to-r ${subjectInfo.color} bg-clip-text text-transparent mb-6 tracking-tight`}>
             {subjectInfo.title}
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto font-light">
             {subjectInfo.description}
           </p>
         </div>
 
         {/* Progress Overview */}
-        <div className="bg-white rounded-2xl p-8 mb-12 shadow-lg border border-gray-100">
+        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 mb-16 z-10">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Your Progress</h2>
+            <h2 className="text-3xl font-black text-white">Your Progress</h2>
             <div className="text-right">
-              <div className="text-2xl font-bold text-blue-600">{Math.round(progressPercentage)}%</div>
-              <div className="text-gray-600">Complete</div>
+              <div className="text-3xl font-black text-cyan-400">{Math.round(progressPercentage)}%</div>
+              <div className="text-gray-300">Complete</div>
             </div>
           </div>
           
-          <div className="w-full bg-gray-200 rounded-full h-3 mb-6">
+          <div className="w-full bg-white/20 h-3 mb-6">
             <div 
               className={`h-3 bg-gradient-to-r ${subjectInfo.color} rounded-full transition-all duration-500`}
               style={{ width: `${progressPercentage}%` }}
@@ -469,16 +476,16 @@ export const SubjectPage: React.FC = () => {
 
                      <div className="grid md:grid-cols-3 gap-6">
              <div className="text-center">
-               <div className="text-2xl font-bold text-green-600 mb-2">{watchedCount}</div>
-               <div className="text-gray-600">Videos Watched</div>
+               <div className="text-3xl font-black text-green-400 mb-2">{watchedCount}</div>
+               <div className="text-gray-300">Videos Watched</div>
              </div>
              <div className="text-center">
-               <div className="text-2xl font-bold text-purple-600 mb-2">1</div>
-               <div className="text-gray-600">Total Videos</div>
+               <div className="text-3xl font-black text-purple-400 mb-2">1</div>
+               <div className="text-gray-300">Total Videos</div>
              </div>
              <div className="text-center">
-               <div className="text-2xl font-bold text-orange-600 mb-2">1</div>
-               <div className="text-gray-600">Total Quizzes</div>
+               <div className="text-3xl font-black text-orange-400 mb-2">1</div>
+               <div className="text-gray-300">Total Quizzes</div>
              </div>
            </div>
         </div>
@@ -486,11 +493,11 @@ export const SubjectPage: React.FC = () => {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Video Section */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Video Lesson</h2>
+            <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 z-10">
+              <h2 className="text-3xl font-black text-white mb-6">Video Lesson</h2>
               {/* Video Dropdown Selector */}
               <div className="mb-6">
-                <label htmlFor="video-select" className="block mb-2 font-medium text-gray-700">Select Video:</label>
+                <label htmlFor="video-select" className="block mb-2 font-medium text-white">Select Video:</label>
                 <select
                   id="video-select"
                   value={currentVideo?.id || ''}
@@ -498,7 +505,7 @@ export const SubjectPage: React.FC = () => {
                     const selected = videos.find(v => v.id === e.target.value);
                     if (selected) setCurrentVideo(selected);
                   }}
-                  className="w-full p-2 border rounded"
+                  className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                 >
                   {videos.map(video => (
                     <option key={video.id} value={video.id}>
@@ -511,9 +518,9 @@ export const SubjectPage: React.FC = () => {
               {currentVideo && (
                 <>
                   <div className="mb-6">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">{currentVideo.title}</h3>
-                    <div className="flex items-center text-sm text-gray-600 mb-4">
-                      <Clock className="w-4 h-4 mr-1" />
+                    <h3 className="text-xl font-semibold text-white mb-2">{currentVideo.title}</h3>
+                    <div className="flex items-center text-sm text-gray-300 mb-4">
+                      <Clock className="w-4 h-4 mr-1 text-cyan-400" />
                       {currentVideo.duration}
                     </div>
                   </div>
@@ -535,7 +542,7 @@ export const SubjectPage: React.FC = () => {
                     {!currentVideo.watched && (
                       <button
                         onClick={() => markVideoAsWatched(currentVideo.id)}
-                        className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        className="w-full py-3 bg-gradient-to-r from-green-600 to-emerald-600 text-white font-black hover:shadow-lg transform hover:scale-105 transition-all duration-200"
                       >
                         Mark as Watched
                       </button>
@@ -548,27 +555,27 @@ export const SubjectPage: React.FC = () => {
 
                     {/* Quiz Section */}
           <div className="space-y-8">
-            <div className={`bg-white rounded-2xl p-8 shadow-lg border border-gray-100 relative ${!currentVideo?.watched ? 'opacity-50' : ''}`}>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Quiz</h3>
+            <div className={`relative bg-white/5 backdrop-blur-md border border-white/10 p-8 z-10 ${!currentVideo?.watched ? 'opacity-50' : ''}`}>
+              <h3 className="text-2xl font-black text-white mb-4">Quiz</h3>
               
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-2xl font-black text-white">
                     {isQuizPassed ? 'Completed' : '15 Questions'}
                   </div>
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-gray-300">
                     {isQuizPassed ? '100%' : 'HTML Fundamentals'}
                   </div>
                 </div>
                 
-                <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+                <div className="w-full bg-white/20 h-2 mb-4">
                   <div 
                     className={`h-2 bg-gradient-to-r ${subjectInfo.color} rounded-full transition-all duration-500`}
                     style={{ width: isQuizPassed ? '100%' : '0%' }}
                   ></div>
                 </div>
                 
-                <p className="text-gray-600 text-sm">
+                <p className="text-gray-300 text-sm">
                   {isQuizPassed 
                     ? 'You have successfully completed the HTML quiz!'
                     : 'Test your knowledge with 15 comprehensive HTML questions.'
@@ -583,10 +590,10 @@ export const SubjectPage: React.FC = () => {
                   disabled={!currentVideo?.watched || quizQuestions.length === 0}
                   className={`flex items-center justify-center w-full py-4 rounded-lg transition-all duration-300 ${
                     isQuizPassed 
-                      ? 'bg-green-600 text-white hover:bg-green-700' 
+                      ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white font-black hover:shadow-lg transform hover:scale-105' 
                       : currentVideo?.watched
-                        ? 'bg-purple-600 text-white hover:bg-purple-700'
-                        : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                        ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white font-black hover:shadow-lg transform hover:scale-105'
+                        : 'bg-white/20 text-gray-500 cursor-not-allowed'
                   }`}
                 >
                   {isQuizPassed ? (
@@ -608,17 +615,17 @@ export const SubjectPage: React.FC = () => {
                 
                 {/* Lock overlay when video not watched */}
                 {!currentVideo?.watched && (
-                  <div className="absolute inset-0 bg-gray-900 bg-opacity-30 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                    <Lock className="w-8 h-8 text-gray-600" />
+                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center backdrop-blur-sm">
+                    <Lock className="w-8 h-8 text-gray-400" />
                   </div>
                 )}
               </div>
               
                              {/* Quiz Stats */}
-               <div className="mt-6 pt-6 border-t border-gray-200">
+               <div className="mt-6 pt-6 border-t border-white/20">
                  <div className="text-center">
-                   <div className="font-semibold text-gray-900">15</div>
-                   <div className="text-gray-600">Questions</div>
+                   <div className="font-black text-white">15</div>
+                   <div className="text-gray-300">Questions</div>
                  </div>
                </div>
             </div>
@@ -626,7 +633,7 @@ export const SubjectPage: React.FC = () => {
           
                      {/* Practice Projects Section */}
            {(subject === 'html' || subject === 'css' || subject === 'javascript' || subject === 'react' || subject === 'nodejs' || subject === 'mongodb') && (
-             <div className="mt-12">
+             <div className="mt-12 relative z-10">
                {subject === 'html' && (
                  <PracticeProjects
                    projects={mapProjectIdeasToProjects(htmlData.projectIdeas, 'html')}
