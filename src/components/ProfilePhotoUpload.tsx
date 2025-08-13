@@ -17,7 +17,6 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
   const [uploading, setUploading] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const { currentUser } = useAuth();
-  const { isDarkMode } = useTheme();
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -63,20 +62,20 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
 
       {showUploadModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className={`${isDarkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'} rounded-2xl p-6 max-w-sm w-full mx-4`}>
+          <div className="bg-gray-800 text-white rounded-2xl p-6 max-w-sm w-full mx-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold">Update Profile Photo</h3>
               <button
                 onClick={() => setShowUploadModal(false)}
-                className={`p-1 rounded ${isDarkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
+                className="p-1 rounded hover:bg-gray-700"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             
-            <label className={`block w-full p-4 border-2 border-dashed ${isDarkMode ? 'border-gray-600 hover:border-gray-500' : 'border-gray-300 hover:border-gray-400'} rounded-lg cursor-pointer text-center transition-colors`}>
+            <label className="block w-full p-4 border-2 border-dashed border-gray-600 hover:border-gray-500 rounded-lg cursor-pointer text-center transition-colors">
               <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
-              <span className={`${isDarkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+              <span className="text-gray-300">
                 {uploading ? 'Uploading...' : 'Click to upload photo'}
               </span>
               <input

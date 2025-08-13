@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
 
 interface LoginModalProps {
   onClose: () => void;
@@ -14,7 +13,6 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
   const [isEmailFlow, setIsEmailFlow] = useState(false);
 
   const { emailLogin, emailSignup, login } = useAuth();
-  const { isDarkMode } = useTheme();
 
   useEffect(() => {
     // Clear error when switching between login and signup

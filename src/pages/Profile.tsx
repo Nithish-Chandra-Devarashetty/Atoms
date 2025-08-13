@@ -20,7 +20,6 @@ import {
 
 export const Profile: React.FC = () => {
   const { currentUser, logout } = useAuth();
-  const { isDarkMode } = useTheme();
   const navigate = useNavigate();
 
   const handleLogout = async () => {
