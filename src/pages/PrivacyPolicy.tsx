@@ -153,9 +153,9 @@ export const PrivacyPolicy: React.FC = () => {
             <div className="text-gray-300 space-y-2">
               <p>If you have any questions about this Privacy Policy, please contact us:</p>
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-4 space-y-2">
-                <p><strong>Email:</strong> privacy@atoms.dev</p>
+                <p><strong>Email:</strong> nithishchandra@gmail.com</p>
                 <p><strong>Address:</strong> Hyderabad, Telangana, India</p>
-                <p><strong>Phone:</strong> +91 98765 43210</p>
+                <p><strong>Phone:</strong> +91 93916 35482</p>
               </div>
             </div>
           </section>
