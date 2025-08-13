@@ -10,7 +10,8 @@ import {
   Award,
   Target,
   Brain,
-  Code
+  Code,
+  X
 } from 'lucide-react';
 import { osTopics, Topic } from '../data/osTopics';
 import { dbmsTopics } from '../data/dbmsTopics';
@@ -118,43 +119,59 @@ export const CoreSubjectPage: React.FC = () => {
     const currentQuestion = selectedTopic.quiz[currentQuestionIndex];
     
     return (
-      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/10 blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500/10 blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/3 w-80 h-80 bg-cyan-500/10 blur-3xl animate-pulse delay-2000"></div>
+        </div>
+        
+        <div className="max-w-4xl mx-auto relative z-10">
+          <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8">
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">Quiz: {selectedTopic.title}</h1>
-                  <p className="text-gray-600">{subjectInfo.title}</p>
+                  <h1 className="text-3xl font-black text-white">Quiz: {selectedTopic.title}</h1>
+                  <p className="text-gray-300">{subjectInfo.title}</p>
                 </div>
-                <span className="text-sm text-gray-600">
-                  Question {currentQuestionIndex + 1} of {selectedTopic.quiz.length}
-                </span>
+                <button
+                  onClick={() => setShowQuiz(false)}
+                  className="p-2 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="flex items-center justify-between text-sm text-gray-300 mb-4">
+                <span>Question {currentQuestionIndex + 1} of {selectedTopic.quiz.length}</span>
+                <span>Score: {score}/{selectedTopic.quiz.length}</span>
+              </div>
+              <div className="w-full bg-white/20 h-2">
                 <div 
-                  className={`h-2 bg-gradient-to-r ${subjectInfo.color} rounded-full transition-all duration-500`}
+                  className={`h-2 bg-gradient-to-r ${subjectInfo.color} transition-all duration-500`}
                   style={{ width: `${((currentQuestionIndex + 1) / selectedTopic.quiz.length) * 100}%` }}
                 ></div>
               </div>
             </div>
 
             <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">{currentQuestion.question}</h2>
+              <h2 className="text-xl font-semibold text-white mb-6">{currentQuestion.question}</h2>
               <div className="space-y-3">
                 {currentQuestion.options.map((option, index) => (
                   <button
                     key={index}
                     onClick={() => handleAnswerSelect(index)}
                     disabled={showExplanation}
-                    className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ${
+                    className={`w-full p-4 text-left transition-all duration-200 ${
                       selectedAnswer === index
                         ? showExplanation
                           ? index === currentQuestion.correct
-                            ? 'border-green-500 bg-green-50'
-                            : 'border-red-500 bg-red-50'
-                          : `border-blue-500 bg-blue-50`
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                            ? 'bg-green-500/20 border border-green-500/50 text-white'
+                            : 'bg-red-500/20 border border-red-500/50 text-white'
+                          : 'bg-cyan-500/20 border border-cyan-500/50 text-white'
+                        : showExplanation && index === currentQuestion.correct
+                          ? 'bg-green-500/20 border border-green-500/50 text-white'
+                          : 'bg-white/5 backdrop-blur-sm border border-white/20 text-gray-300 hover:bg-white/10 hover:border-white/30'
                     } ${showExplanation ? 'cursor-default' : 'cursor-pointer'}`}
                   >
                     <span className="font-medium">{String.fromCharCode(65 + index)}.</span> {option}
@@ -164,16 +181,16 @@ export const CoreSubjectPage: React.FC = () => {
             </div>
 
             {showExplanation && currentQuestion.explanation && (
-              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h3 className="font-semibold text-blue-900 mb-2">Explanation:</h3>
-                <p className="text-blue-800">{currentQuestion.explanation}</p>
+              <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/30 backdrop-blur-sm">
+                <h3 className="font-semibold text-blue-300 mb-2">Explanation:</h3>
+                <p className="text-blue-200">{currentQuestion.explanation}</p>
               </div>
             )}
 
             <div className="flex justify-between">
               <button
                 onClick={() => setShowQuiz(false)}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-6 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-gray-300 hover:bg-white/20 transition-colors"
               >
                 Exit Quiz
               </button>
@@ -181,7 +198,7 @@ export const CoreSubjectPage: React.FC = () => {
                 {!showExplanation && selectedAnswer !== null && (
                   <button
                     onClick={() => setShowExplanation(true)}
-                    className="px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors"
+                    className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 text-white hover:shadow-lg transform hover:scale-105 transition-all duration-200"
                   >
                     Check Answer
                   </button>
@@ -189,7 +206,7 @@ export const CoreSubjectPage: React.FC = () => {
                 {showExplanation && (
                   <button
                     onClick={handleNextQuestion}
-                    className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="flex items-center px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:shadow-lg transform hover:scale-105 transition-all duration-200"
                   >
                     {currentQuestionIndex < selectedTopic.quiz.length - 1 ? 'Next Question' : 'Finish Quiz'}
                     <ArrowRight className="w-4 h-4 ml-2" />
@@ -208,28 +225,35 @@ export const CoreSubjectPage: React.FC = () => {
     const passed = percentage >= 70;
     
     return (
-      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 text-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/10 blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500/10 blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/3 w-80 h-80 bg-cyan-500/10 blur-3xl animate-pulse delay-2000"></div>
+        </div>
+        
+        <div className="max-w-4xl mx-auto relative z-10">
+          <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 text-center">
             <div className="mb-8">
-              <div className={`w-24 h-24 bg-gradient-to-r ${passed ? 'from-green-500 to-emerald-500' : 'from-red-500 to-pink-500'} rounded-full flex items-center justify-center mx-auto mb-6`}>
+              <div className={`w-24 h-24 bg-gradient-to-r ${passed ? 'from-green-500 to-emerald-500' : 'from-red-500 to-pink-500'} flex items-center justify-center mx-auto mb-6 clip-path-hexagon`}>
                 {passed ? <Award className="w-12 h-12 text-white" /> : <Clock className="w-12 h-12 text-white" />}
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              <h1 className="text-4xl font-black text-white mb-4">
                 {passed ? 'Quiz Passed!' : 'Quiz Failed'}
               </h1>
-              <p className="text-xl text-gray-600">
+              <p className="text-xl text-gray-300">
                 You scored {score} out of {selectedTopic.quiz.length} questions
               </p>
             </div>
 
             <div className="mb-8">
-              <div className={`text-4xl font-bold mb-2 ${passed ? 'text-green-600' : 'text-red-600'}`}>
+              <div className={`text-5xl font-black mb-2 ${passed ? 'text-green-400' : 'text-red-400'}`}>
                 {percentage}%
               </div>
-              <div className="text-gray-600">Accuracy</div>
+              <div className="text-gray-300">Accuracy</div>
               {passed && (
-                <div className="mt-4 text-green-600 font-semibold">
+                <div className="mt-4 text-green-400 font-semibold">
                   ✓ Topic marked as completed!
                 </div>
               )}
@@ -242,13 +266,13 @@ export const CoreSubjectPage: React.FC = () => {
                   setQuizCompleted(false);
                   setSelectedTopic(null);
                 }}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-6 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-gray-300 hover:bg-white/20 transition-colors"
               >
                 Back to Topics
               </button>
               <button
                 onClick={() => startQuiz(selectedTopic)}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:shadow-lg transform hover:scale-105 transition-all duration-200"
               >
                 Retake Quiz
               </button>
@@ -260,102 +284,112 @@ export const CoreSubjectPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-20 left-10 w-72 h-72 bg-cyan-500/10 blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500/10 blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/3 w-80 h-80 bg-pink-500/10 blur-3xl animate-pulse delay-2000"></div>
+      </div>
+      
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-16 relative z-10">
           <div className="flex items-center justify-center mb-4">
             <Link to="/core" className="mr-4">
-              <ArrowLeft className="w-6 h-6 text-gray-600 hover:text-gray-800 transition-colors" />
+              <ArrowLeft className="w-6 h-6 text-gray-400 hover:text-white transition-colors" />
             </Link>
-            <div className={`w-16 h-16 bg-gradient-to-r ${subjectInfo.color} rounded-xl flex items-center justify-center mr-4`}>
+            <div className={`w-16 h-16 bg-gradient-to-r ${subjectInfo.color} flex items-center justify-center mr-4 clip-path-hexagon`}>
               <subjectInfo.icon className="w-8 h-8 text-white" />
             </div>
-            <h1 className={`text-4xl md:text-5xl font-bold bg-gradient-to-r ${subjectInfo.color} bg-clip-text text-transparent`}>
+            <h1 className={`text-5xl md:text-7xl font-black bg-gradient-to-r ${subjectInfo.color} bg-clip-text text-transparent tracking-tight`}>
               {subjectInfo.title}
             </h1>
           </div>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto font-light">
             {subjectInfo.description}
           </p>
         </div>
 
         {/* Progress Overview */}
-        <div className="bg-white rounded-2xl p-8 mb-12 shadow-lg border border-gray-100">
+        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 mb-16 z-10">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Your Progress</h2>
+            <h2 className="text-3xl font-black text-white">Your Progress</h2>
             <div className="text-right">
-              <div className="text-2xl font-bold text-blue-600">{Math.round(progressPercentage)}%</div>
-              <div className="text-gray-600">Complete</div>
+              <div className="text-3xl font-black text-cyan-400">{Math.round(progressPercentage)}%</div>
+              <div className="text-gray-300">Complete</div>
             </div>
           </div>
           
-          <div className="w-full bg-gray-200 rounded-full h-3 mb-6">
+          <div className="w-full bg-white/20 h-3 mb-6">
             <div 
-              className={`h-3 bg-gradient-to-r ${subjectInfo.color} rounded-full transition-all duration-500`}
+              className={`h-3 bg-gradient-to-r ${subjectInfo.color} transition-all duration-500`}
               style={{ width: `${progressPercentage}%` }}
             ></div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-green-600 mb-2">{completedTopics}</div>
-              <div className="text-gray-600">Topics Completed</div>
+              <div className="text-3xl font-black text-green-400 mb-2">{completedTopics}</div>
+              <div className="text-gray-300">Topics Completed</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-purple-600 mb-2">{topics.length}</div>
-              <div className="text-gray-600">Total Topics</div>
+              <div className="text-3xl font-black text-purple-400 mb-2">{topics.length}</div>
+              <div className="text-gray-300">Total Topics</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-orange-600 mb-2">
+              <div className="text-3xl font-black text-orange-400 mb-2">
                 {topics.reduce((acc, topic) => acc + topic.quiz.length, 0)}
               </div>
-              <div className="text-gray-600">Quiz Questions</div>
+              <div className="text-gray-300">Quiz Questions</div>
             </div>
           </div>
         </div>
 
         {/* Topics Grid */}
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid lg:grid-cols-2 gap-8 relative z-10">
           {topics.map((topic) => (
             <div
               key={topic.id}
-              className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300"
+              className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 hover:bg-white/10 transition-all duration-300 overflow-hidden"
             >
-              <div className="flex items-center justify-between mb-6">
+              {/* Hover gradient overlay */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${subjectInfo.color} opacity-0 hover:opacity-10 transition-opacity duration-500`}></div>
+              
+              <div className="flex items-center justify-between mb-6 relative z-10">
                 <div className="flex items-center">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center mr-4 ${
-                    topic.completed ? 'bg-green-100' : 'bg-gray-100'
-                  }`}>
+                  <div className={`w-12 h-12 flex items-center justify-center mr-4 ${
+                    topic.completed ? 'bg-green-500/20 border border-green-500/50' : 'bg-white/10 backdrop-blur-sm border border-white/20'
+                  } clip-path-hexagon`}>
                     {topic.completed ? (
-                      <CheckCircle className="w-6 h-6 text-green-600" />
+                      <CheckCircle className="w-6 h-6 text-green-400" />
                     ) : (
-                      <Play className="w-6 h-6 text-gray-600" />
+                      <Play className="w-6 h-6 text-gray-400" />
                     )}
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold text-gray-900">{topic.title}</h3>
-                    <p className="text-gray-600">{topic.description}</p>
+                    <h3 className="text-xl font-black text-white">{topic.title}</h3>
+                    <p className="text-gray-300">{topic.description}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm text-gray-500">{topic.quiz.length} questions</div>
+                  <div className="text-sm text-gray-400">{topic.quiz.length} questions</div>
                   {topic.completed && (
-                    <div className="text-sm text-green-600 font-semibold">Completed</div>
+                    <div className="text-sm text-green-400 font-semibold">Completed</div>
                   )}
                 </div>
               </div>
 
               {/* Concepts */}
-              <div className="mb-6">
-                <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center">
+              <div className="mb-6 relative z-10">
+                <h4 className="text-sm font-semibold text-white mb-3 flex items-center">
                   <BookOpen className="w-4 h-4 mr-1" />
                   Key Concepts
                 </h4>
                 <div className="space-y-2">
                   {topic.concepts.slice(0, 3).map((concept, index) => (
-                    <div key={index} className="text-sm text-gray-600 flex items-center">
-                      <div className="w-1 h-1 bg-gray-400 rounded-full mr-2"></div>
+                    <div key={index} className="text-sm text-gray-300 flex items-center">
+                      <div className="w-1 h-1 bg-cyan-400 mr-2"></div>
                       {concept}
                     </div>
                   ))}
@@ -368,24 +402,23 @@ export const CoreSubjectPage: React.FC = () => {
               </div>
 
               {/* Quiz and Read Buttons */}
-              <div className="flex gap-3">
+              <div className="flex gap-3 relative z-10">
                 {topic.readUrl && (
                   <a
                     href={topic.readUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-1/2 py-3 rounded-lg bg-gray-100 text-blue-700 font-semibold hover:bg-blue-100 text-center transition-colors"
-                    style={{ display: 'inline-block' }}
+                    className="flex-1 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-cyan-400 font-semibold hover:bg-white/20 text-center transition-colors"
                   >
                     Read
                   </a>
                 )}
                 <button
                   onClick={() => startQuiz(topic)}
-                  className={`w-1/2 py-3 rounded-lg transition-colors ${
+                  className={`flex-1 py-3 transition-all duration-200 ${
                     topic.completed
-                      ? 'bg-green-600 text-white hover:bg-green-700'
-                      : 'bg-blue-600 text-white hover:bg-blue-700'
+                      ? 'bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:shadow-lg transform hover:scale-105'
+                      : 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:shadow-lg transform hover:scale-105'
                   }`}
                 >
                   {topic.completed ? 'Review Quiz' : 'Take Quiz'}
@@ -396,8 +429,8 @@ export const CoreSubjectPage: React.FC = () => {
         </div>
 
         {topics.length === 0 && (
-          <div className="text-center py-12">
-            <div className="text-gray-500 text-lg">
+          <div className="text-center py-12 relative z-10">
+            <div className="text-gray-400 text-lg">
               Content for {subjectInfo.title} is coming soon!
             </div>
           </div>
@@ -405,4 +438,4 @@ export const CoreSubjectPage: React.FC = () => {
       </div>
     </div>
   );
-}; 
+};
