@@ -8,7 +8,8 @@ import {
   Clock,
   Award,
   Star,
-  Filter
+  Filter,
+  Search
 } from 'lucide-react';
 import { DsaProblem, dsaProblems } from '../data/dsaProblems';
 
@@ -20,6 +21,7 @@ export const DSA: React.FC = () => {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [topics, setTopics] = useState<{[key: string]: Problem[]}>({});
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [solvedProblems, setSolvedProblems] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -99,7 +101,11 @@ export const DSA: React.FC = () => {
       ? topicProblems 
       : topicProblems.filter(p => p.Difficulty === selectedDifficulty);
     return [topic, filtered] as [string, Problem[]];
-  }).filter(([, topicProblems]) => topicProblems.length > 0);
+  }).filter(([topic, topicProblems]) => {
+    const matchesSearch = searchQuery === '' || 
+      topic.toLowerCase().includes(searchQuery.toLowerCase());
+    return topicProblems.length > 0 && matchesSearch;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
@@ -177,7 +183,22 @@ export const DSA: React.FC = () => {
         </div>
 
         {/* Filter */}
-        <div className="mb-8 relative z-10">
+        <div className="mb-8 relative z-10 space-y-4">
+          {/* Search Bar */}
+          <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search topics..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+          
+          {/* Difficulty Filter */}
           <div className="flex items-center space-x-4">
             <Filter className="w-5 h-5 text-gray-300" />
             <span className="text-white font-medium">Filter by difficulty:</span>

@@ -16,6 +16,8 @@ import { SubjectPage } from './pages/SubjectPage';
 import { CoreSubjectPage } from './pages/CoreSubjectPage';
 import { DSATopicPage } from './pages/DSATopicPage';
 import { AptitudeTopicPage } from './pages/AptitudeTopicPage';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { Footer } from './components/Footer';
 
 function App() {
   return (
@@ -24,7 +26,7 @@ function App() {
         <Router>
           <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
             <Navbar />
-            <main className="pt-16">
+            <main>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/webdev" element={<WebDev />} />
@@ -40,8 +42,10 @@ function App() {
                 <Route path="/discussion" element={<Discussion />} />
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               </Routes>
             </main>
+            <Footer />
           </div>
         </Router>
       </AuthProvider>

@@ -62,7 +62,7 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <nav className="bg-black/20 backdrop-blur-md border-b border-white/10 fixed w-full z-30 top-0">
+    <nav className="bg-black/20 backdrop-blur-md border-b border-white/10 w-full z-30">
       <div className="container mx-auto px-4">
         <div className="flex justify-between items-center py-4">
           <Link to="/" className="flex items-center hover:opacity-80 transition-all duration-300 group">
@@ -91,16 +91,9 @@ export const Navbar: React.FC = () => {
                 Sign In
               </button>
             )}
-            
-            <button onClick={toggleDarkMode} className="p-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300">
-              {isDarkMode ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-gray-300" />}
-            </button>
           </div>
 
           <div className="md:hidden flex items-center">
-             <button onClick={toggleDarkMode} className="p-2 bg-white/10 backdrop-blur-md border border-white/20 hover:bg-white/20 transition-all duration-300 mr-2">
-              {isDarkMode ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-gray-300" />}
-            </button>
             <button onClick={toggleMenu} className="text-white focus:outline-none">
               {isOpen ? <X size={24} className="text-white" /> : <Menu size={24} className="text-white" />}
             </button>
