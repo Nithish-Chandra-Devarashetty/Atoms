@@ -1,0 +1,130 @@
+import { Response } from 'express';
+import { User } from '../models/User.js';
+import { AuthRequest } from '../middleware/auth.js';
+
+export const markProblemSolved = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    const { problemName, topic, difficulty } = req.body;
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Check if problem is already solved
+    const isAlreadySolved = user.progress.dsa.solvedProblems.includes(problemName);
+    
+    if (!isAlreadySolved) {
+      user.progress.dsa.solvedProblems.push(problemName);
+      
+      // Update topic progress
+      const currentProgress = user.progress.dsa.topicProgress.get(topic) || 0;
+      user.progress.dsa.topicProgress.set(topic, currentProgress + 1);
+
+      // Calculate points based on difficulty
+      let pointsEarned = 0;
+      switch (difficulty) {
+        case 'Easy': pointsEarned = 100; break;
+        case 'Medium': pointsEarned = 200; break;
+        case 'Hard': pointsEarned = 300; break;
+        default: pointsEarned = 100;
+      }
+
+      user.totalPoints += pointsEarned;
+
+      // Check for badges
+      const topicSolved = user.progress.dsa.topicProgress.get(topic) || 0;
+      if (topicSolved === 1 && !user.badges.includes(`${topic}-first-solve`)) {
+        user.badges.push(`${topic}-first-solve`);
+      }
+
+      await user.save();
+
+      res.json({
+        message: 'Problem marked as solved',
+        pointsEarned,
+        totalPoints: user.totalPoints,
+        topicProgress: topicSolved
+      });
+    } else {
+      res.json({
+        message: 'Problem already solved',
+        pointsEarned: 0,
+        totalPoints: user.totalPoints
+      });
+    }
+  } catch (error) {
+    console.error('Mark problem solved error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const unmarkProblemSolved = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    const { problemName, topic } = req.body;
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Remove problem from solved list
+    user.progress.dsa.solvedProblems = user.progress.dsa.solvedProblems.filter(
+      name => name !== problemName
+    );
+
+    // Update topic progress
+    const currentProgress = user.progress.dsa.topicProgress.get(topic) || 0;
+    if (currentProgress > 0) {
+      user.progress.dsa.topicProgress.set(topic, currentProgress - 1);
+    }
+
+    await user.save();
+
+    res.json({
+      message: 'Problem unmarked as solved',
+      topicProgress: user.progress.dsa.topicProgress.get(topic) || 0
+    });
+  } catch (error) {
+    console.error('Unmark problem solved error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const getDSAProgress = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
+
+    const user = await User.findById(req.user._id).select('progress.dsa totalPoints badges');
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    res.json({
+      dsaProgress: user.progress.dsa,
+      totalPoints: user.totalPoints,
+      badges: user.badges.filter(badge => badge.includes('dsa') || badge.includes('solve'))
+    });
+  } catch (error) {
+    console.error('Get DSA progress error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
