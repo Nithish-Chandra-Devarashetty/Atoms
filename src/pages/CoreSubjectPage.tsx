@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 import { 
   CheckCircle, 
   Clock, 
@@ -19,6 +21,7 @@ import { cnTopics } from '../data/cnTopics';
 
 export const CoreSubjectPage: React.FC = () => {
   const { subject } = useParams<{ subject: string }>();
+  const { currentUser } = useAuth();
   const [topics, setTopics] = useState<Topic[]>([]);
   const [selectedTopic, setSelectedTopic] = useState<Topic | null>(null);
   const [showQuiz, setShowQuiz] = useState(false);
@@ -27,10 +30,32 @@ export const CoreSubjectPage: React.FC = () => {
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [showExplanation, setShowExplanation] = useState(false);
+  const [submittingQuiz, setSubmittingQuiz] = useState(false);
 
   useEffect(() => {
     loadSubjectData(subject || '');
+    if (currentUser) {
+      loadUserProgress();
+    }
   }, [subject]);
+
+  const loadUserProgress = async () => {
+    try {
+      const response = await apiService.getProgress();
+      const coreProgress = response.progress.core[subject as keyof typeof response.progress.core];
+      if (coreProgress) {
+        // Mark topics as completed based on API data
+        setTopics(prevTopics => 
+          prevTopics.map(topic => ({
+            ...topic,
+            completed: coreProgress.topicsCompleted.includes(topic.id)
+          }))
+        );
+      }
+    } catch (error) {
+      console.error('Failed to load user progress:', error);
+    }
+  };
 
   const loadSubjectData = (subjectName: string) => {
     if (subjectName === 'os') {
@@ -104,11 +129,53 @@ export const CoreSubjectPage: React.FC = () => {
       setSelectedAnswer(null);
       setShowExplanation(false);
     } else {
-      setQuizCompleted(true);
-      if (selectedTopic && score >= (selectedTopic.quiz.length * 0.7)) {
-        markTopicAsCompleted(selectedTopic.id);
+      handleQuizComplete();
+    }
+  };
+
+  const handleQuizComplete = async () => {
+    if (!selectedTopic) return;
+    
+    setSubmittingQuiz(true);
+    
+    // Calculate final score
+    const finalScore = selectedAnswer === selectedTopic.quiz[currentQuestionIndex].correct ? score + 1 : score;
+    const percentage = (finalScore / selectedTopic.quiz.length) * 100;
+    const passed = percentage >= 70;
+    
+    setScore(finalScore);
+    setQuizCompleted(true);
+    
+    if (passed) {
+      markTopicAsCompleted(selectedTopic.id);
+    }
+
+    // Submit to API if user is logged in
+    if (currentUser && subject) {
+      try {
+        // Prepare answers array (simplified for core subjects)
+        const answers = selectedTopic.quiz.map((question, index) => ({
+          questionIndex: index,
+          selectedAnswer: index === currentQuestionIndex ? (selectedAnswer || 0) : 0,
+          isCorrect: index === currentQuestionIndex 
+            ? (selectedAnswer === question.correct)
+            : (0 === question.correct)
+        }));
+
+        await apiService.submitQuiz({
+          subject,
+          topic: selectedTopic.id,
+          score: finalScore,
+          totalQuestions: selectedTopic.quiz.length,
+          timeSpent: 300,
+          answers
+        });
+      } catch (error) {
+        console.error('Failed to submit quiz:', error);
       }
     }
+    
+    setSubmittingQuiz(false);
   };
 
   const subjectInfo = getSubjectInfo(subject || '');
@@ -206,9 +273,10 @@ export const CoreSubjectPage: React.FC = () => {
                 {showExplanation && (
                   <button
                     onClick={handleNextQuestion}
+                   disabled={submittingQuiz}
                     className="flex items-center px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:shadow-lg transform hover:scale-105 transition-all duration-200"
                   >
-                    {currentQuestionIndex < selectedTopic.quiz.length - 1 ? 'Next Question' : 'Finish Quiz'}
+                   {submittingQuiz ? 'Submitting...' : currentQuestionIndex < selectedTopic.quiz.length - 1 ? 'Next Question' : 'Finish Quiz'}
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </button>
                 )}

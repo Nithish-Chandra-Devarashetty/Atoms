@@ -9,10 +9,11 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
   const [error, setError] = useState('');
   const [isEmailFlow, setIsEmailFlow] = useState(false);
 
-  const { emailLogin, emailSignup, login } = useAuth();
+  const { emailLogin, emailSignup } = useAuth();
 
   useEffect(() => {
     // Clear error when switching between login and signup
@@ -21,21 +22,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     try {
       if (isSignUp) {
-        await emailSignup(email.trim(), password.trim());
+        if (!displayName.trim()) {
+          setError('Display name is required');
+          return;
+        }
+        await emailSignup(email.trim(), password.trim(), displayName.trim());
       } else {
         await emailLogin(email.trim(), password.trim());
       }
-      onClose();
-    } catch (error: any) {
-      setError(error.message);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    try {
-      await login();
       onClose();
     } catch (error: any) {
       setError(error.message);
@@ -66,21 +63,28 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
             <div className="text-gray-300 text-center">
               Or continue with
             </div>
-            <button
-              className="w-full py-4 px-6 bg-white/10 backdrop-blur-md border border-white/20 text-white font-semibold hover:bg-white/20 transition-all duration-300 flex items-center justify-center space-x-3"
-              onClick={handleGoogleSignIn}
-            >
-              <svg className="w-6 h-6" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M43.611 20.0834H42V20H24C16.5367 20 10.4733 26.0633 10.4733 33.5267C10.4733 40.99 16.5367 47.0533 24 47.0533C30.6533 47.0533 36.2167 43.1333 38.68 37.5933L44.2033 40.8C40.1333 44.9333 35.1733 47.96 29.6667 48C17.83 48 8 38.17 8 26.3333C8 14.4967 17.83 4.66667 29.6667 4.66667C35.95 4.66667 41.1167 6.94 44.9267 10.68L39.45 16.2033C37.0433 13.92 33.6733 12.5333 29.6667 12.5333C21.5733 12.5333 15.1267 18.98 15.1267 27.0733C15.1267 35.1667 21.5733 41.6133 29.6667 41.6133C33.4333 41.6133 36.59 40.2933 39.09 37.9533C40.7767 36.3333 41.8 34.0833 41.8 31.2833H24V20.0834Z" fill="#4285F4"/>
-                <path d="M46.98 24.5333C46.98 23.12 46.86 21.7467 46.6533 20.4267H24V28.8H38.8133C38.1867 32.1333 36.0333 34.8933 33.0133 36.8333L33.08 36.8933L39.45 40.8C43.2467 37.2133 45.6767 32.4667 46.7333 27.0667C46.9333 26.2 46.98 25.36 46.98 24.5333Z" fill="#34A853"/>
-                <path d="M15.1267 27.0733C15.1267 24.4467 15.8933 21.9867 17.2933 19.9333L17.22 19.86L10.68 16.06C8.12 19.2133 6.66667 23.1333 6.66667 27.0733C6.66667 31.0133 8.12 34.9333 10.68 38.0867L17.22 34.2867L17.2933 34.22C15.8933 32.1667 15.1267 29.7067 15.1267 27.0733Z" fill="#FBBC05"/>
-                <path d="M29.6667 12.5333C33.6733 12.5333 37.0433 13.92 39.09 17.9533L44.2033 14.8C41.1167 11.06 35.95 8.66667 29.6667 8.66667C21.5733 8.66667 15.1267 15.1133 15.1267 23.2067H24V14.8H29.6667V12.5333Z" fill="#EA4335"/>
-              </svg>
-              Continue with Google
-            </button>
+            <div className="text-center text-gray-400 text-sm">
+              Google Sign-In coming soon
+            </div>
           </div>
         ) : (
           <form onSubmit={handleEmailSubmit}>
+            {isSignUp && (
+              <div className="mb-6">
+                <label className="block text-sm font-semibold mb-2" htmlFor="displayName">
+                  Display Name
+                </label>
+                <input
+                  type="text"
+                  id="displayName"
+                  className="w-full px-4 py-3 bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all duration-300"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Enter your display name"
+                  required
+                />
+              </div>
+            )}
             <div className="mb-6">
               <label className="block text-sm font-semibold mb-2" htmlFor="email">
                 Email
@@ -129,6 +133,7 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
             onClick={() => {
               if (isEmailFlow) {
                 setIsSignUp(!isSignUp);
+                setDisplayName('');
                 setError(''); // Clear error on switch
               }
               else {

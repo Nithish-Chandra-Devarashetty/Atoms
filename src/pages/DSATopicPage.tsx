@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { DsaProblem, dsaProblems } from '../data/dsaProblems';
+import { apiService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   CheckCircle, 
   Clock, 
@@ -18,16 +20,35 @@ interface SolvedProblems {
 
 export const DSATopicPage: React.FC = () => {
   const { topic, difficulty } = useParams<{ topic: string; difficulty: string }>();
+  const { currentUser } = useAuth();
   const [solvedProblems, setSolvedProblems] = useState<SolvedProblems>({});
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>(difficulty || 'all');
 
-  // Load solved problems from localStorage on component mount
+  // Load solved problems from API or localStorage on component mount
   useEffect(() => {
-    const saved = localStorage.getItem('solvedProblems');
-    if (saved) {
-      setSolvedProblems(JSON.parse(saved));
+    if (currentUser) {
+      loadDSAProgress();
+    } else {
+      // Fallback to localStorage for non-authenticated users
+      const saved = localStorage.getItem('solvedProblems');
+      if (saved) {
+        setSolvedProblems(JSON.parse(saved));
+      }
     }
-  }, []);
+  }, [currentUser]);
+
+  const loadDSAProgress = async () => {
+    try {
+      const response = await apiService.getDSAProgress();
+      const solved: SolvedProblems = {};
+      response.dsaProgress.solvedProblems.forEach((problemName: string) => {
+        solved[problemName] = true;
+      });
+      setSolvedProblems(solved);
+    } catch (error) {
+      console.error('Failed to load DSA progress:', error);
+    }
+  };
 
   // Filter problems based on topic and difficulty
   const filteredProblems = dsaProblems.filter((problem: DsaProblem) => {
@@ -37,13 +58,36 @@ export const DSATopicPage: React.FC = () => {
   });
 
   // Toggle problem solved status
-  const toggleSolved = (problemName: string) => {
+  const toggleSolved = async (problemName: string, problemTopic: string, problemDifficulty: string) => {
+    const wasSolved = solvedProblems[problemName];
+    
+    // Optimistic update
     const newSolvedProblems = {
       ...solvedProblems,
-      [problemName]: !solvedProblems[problemName]
+      [problemName]: !wasSolved
     };
     setSolvedProblems(newSolvedProblems);
-    localStorage.setItem('solvedProblems', JSON.stringify(newSolvedProblems));
+
+    // Update API if user is logged in
+    if (currentUser) {
+      try {
+        if (wasSolved) {
+          await apiService.unmarkProblemSolved(problemName, problemTopic);
+        } else {
+          await apiService.markProblemSolved(problemName, problemTopic, problemDifficulty);
+        }
+      } catch (error) {
+        console.error('Failed to update problem status:', error);
+        // Revert optimistic update on error
+        setSolvedProblems(prev => ({
+          ...prev,
+          [problemName]: wasSolved
+        }));
+      }
+    } else {
+      // Fallback to localStorage for non-authenticated users
+      localStorage.setItem('solvedProblems', JSON.stringify(newSolvedProblems));
+    }
   };
 
   // Sort problems by difficulty: Easy -> Medium -> Hard
@@ -184,6 +228,7 @@ export const DSATopicPage: React.FC = () => {
                   </div>
                   <button
                     onClick={() => toggleSolved(problem.Name)}
+                    onClick={() => toggleSolved(problem.Name, problem.Topic, problem.Difficulty)}
                     className={`p-2 transition-colors ${
                       solvedProblems[problem.Name] 
                         ? 'text-green-400 hover:text-green-300' 

@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 import { 
   MessageCircle, 
   Heart, 
@@ -13,6 +15,7 @@ import {
 
 interface Post {
   id: string;
+  _id: string;
   author: string;
   avatar: string;
   content: string;
@@ -21,86 +24,122 @@ interface Post {
   replies: number;
   tags: string[];
   liked: boolean;
+  authorId?: string;
 }
 
 export const Discussion: React.FC = () => {
+  const { currentUser } = useAuth();
   const [posts, setPosts] = useState<Post[]>([
     {
-      id: '1',
-      author: 'Sarah Chen',
-      avatar: '👩‍💻',
-      content: 'Can someone explain the difference between let, const, and var in JavaScript? I keep getting confused about their scope and hoisting behavior.',
-      timestamp: '2 hours ago',
-      likes: 12,
-      replies: 8,
-      tags: ['JavaScript', 'Variables', 'Scope'],
-      liked: false
-    },
-    {
-      id: '2',
-      author: 'Mike Rodriguez',
-      avatar: '👨‍🔬',
-      content: 'Just solved the "Two Sum" problem on LeetCode! The key insight was using a HashMap to store complements. Here\'s my approach...',
-      timestamp: '4 hours ago',
-      likes: 25,
-      replies: 15,
-      tags: ['DSA', 'Arrays', 'HashMap'],
-      liked: true
-    },
-    {
-      id: '3',
-      author: 'Emma Wilson',
-      avatar: '👩‍🎓',
-      content: 'Struggling with CSS Grid vs Flexbox. When should I use which? Any good resources or rules of thumb?',
-      timestamp: '6 hours ago',
-      likes: 18,
-      replies: 12,
-      tags: ['CSS', 'Layout', 'Grid', 'Flexbox'],
-      liked: false
-    },
-    {
-      id: '4',
-      author: 'Alex Kumar',
-      avatar: '👨‍💼',
-      content: 'Quick tip: When working with React hooks, always put them at the top level of your component. Don\'t call them inside loops or conditions!',
-      timestamp: '1 day ago',
-      likes: 34,
-      replies: 6,
-      tags: ['React', 'Hooks', 'Best Practices'],
-      liked: true
-    }
-  ]);
 
   const [newPost, setNewPost] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   const allTags = ['JavaScript', 'React', 'CSS', 'HTML', 'DSA', 'Arrays', 'Python', 'Node.js', 'Database', 'SQL'];
 
-  const handleLike = (postId: string) => {
+  useEffect(() => {
+    loadDiscussions();
+  }, []);
+
+  const loadDiscussions = async () => {
+    try {
+      const response = await apiService.getDiscussions();
+      const formattedPosts = response.discussions.map((discussion: any) => ({
+        id: discussion._id,
+        _id: discussion._id,
+        author: discussion.author.displayName,
+        avatar: discussion.author.photoURL ? '👤' : '👤',
+        content: discussion.content,
+        timestamp: formatTimestamp(discussion.createdAt),
+        likes: discussion.likes.length,
+        replies: discussion.replies.length,
+        tags: discussion.tags,
+        liked: currentUser ? discussion.likes.includes(currentUser._id) : false,
+        authorId: discussion.author._id
+      }));
+      setPosts(formattedPosts);
+    } catch (error) {
+      console.error('Failed to load discussions:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTimestamp = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) return 'Just now';
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    if (diffInHours < 48) return '1 day ago';
+    return `${Math.floor(diffInHours / 24)} days ago`;
+  };
+
+  const handleLike = async (postId: string) => {
+    if (!currentUser) {
+      alert('Please log in to like posts');
+      return;
+    }
+
+    // Optimistic update
     setPosts(posts.map(post => 
       post.id === postId 
         ? { ...post, liked: !post.liked, likes: post.liked ? post.likes - 1 : post.likes + 1 }
         : post
     ));
+
+    try {
+      await apiService.likeDiscussion(postId);
+    } catch (error) {
+      console.error('Failed to like discussion:', error);
+      // Revert optimistic update
+      setPosts(posts.map(post => 
+        post.id === postId 
+          ? { ...post, liked: !post.liked, likes: post.liked ? post.likes - 1 : post.likes + 1 }
+          : post
+      ));
+    }
   };
 
-  const handleSubmitPost = () => {
-    if (newPost.trim()) {
-      const post: Post = {
-        id: Date.now().toString(),
-        author: 'You',
-        avatar: '👤',
+  const handleSubmitPost = async () => {
+    if (!currentUser) {
+      alert('Please log in to create posts');
+      return;
+    }
+
+    if (!newPost.trim()) return;
+
+    setSubmitting(true);
+    try {
+      const response = await apiService.createDiscussion(newPost, selectedTags);
+      
+      // Add new post to the beginning of the list
+      const newPostData: Post = {
+        id: response.discussion._id,
+        _id: response.discussion._id,
+        author: currentUser.displayName,
+        avatar: currentUser.photoURL ? '👤' : '👤',
         content: newPost,
         timestamp: 'Just now',
         likes: 0,
         replies: 0,
         tags: selectedTags,
-        liked: false
+        liked: false,
+        authorId: currentUser._id
       };
-      setPosts([post, ...posts]);
+      
+      setPosts([newPostData, ...posts]);
       setNewPost('');
       setSelectedTags([]);
+    } catch (error) {
+      console.error('Failed to create discussion:', error);
+      alert('Failed to create post. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -191,19 +230,30 @@ export const Discussion: React.FC = () => {
               </span>
               <button
                 onClick={handleSubmitPost}
-                disabled={!newPost.trim()}
+                disabled={!newPost.trim() || submitting || !currentUser}
                 className="flex items-center px-6 py-2 bg-gradient-to-r from-green-600 to-blue-600 text-white font-black hover:shadow-lg transform hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 <Plus className="w-4 h-4 mr-2" />
-                Post
+                {submitting ? 'Posting...' : 'Post'}
               </button>
             </div>
           </div>
         </div>
 
+        {!currentUser && (
+          <div className="relative bg-yellow-500/10 border border-yellow-500/30 p-4 mb-8 text-center z-10">
+            <p className="text-yellow-300">Please log in to create posts and participate in discussions.</p>
+          </div>
+        )}
+
         {/* Posts */}
         <div className="space-y-6 relative z-10">
-          {filteredPosts.map((post) => (
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="text-gray-400">Loading discussions...</div>
+            </div>
+          ) : filteredPosts.length > 0 ? (
+            filteredPosts.map((post) => (
             <div key={post.id} className="relative bg-white/5 backdrop-blur-md border border-white/10 p-6 hover:bg-white/10 transition-all duration-300 overflow-hidden">
               {/* Hover gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-blue-500/5 opacity-0 hover:opacity-100 transition-opacity duration-500"></div>
@@ -274,6 +324,12 @@ export const Discussion: React.FC = () => {
               </div>
             </div>
           ))}
+          ) : (
+            <div className="text-center py-12">
+              <MessageCircle className="w-16 h-16 text-gray-500 mx-auto mb-4" />
+              <div className="text-gray-400">No discussions found</div>
+            </div>
+          )}
         </div>
 
         {/* Load More */}

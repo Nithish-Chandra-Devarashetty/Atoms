@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 import { 
   Trophy, 
   Medal, 
@@ -13,6 +15,7 @@ import {
 
 interface LeaderboardEntry {
   rank: number;
+  _id: string;
   name: string;
   avatar: string;
   points: number;
@@ -23,111 +26,40 @@ interface LeaderboardEntry {
 }
 
 export const Leaderboard: React.FC = () => {
+  const { currentUser } = useAuth();
   const [timeframe, setTimeframe] = useState<'week' | 'month' | 'all'>('all');
   const [category, setCategory] = useState<'overall' | 'webdev' | 'core' | 'dsa' | 'aptitude'>('overall');
+  const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userRank, setUserRank] = useState<number | null>(null);
 
-  const leaderboardData: LeaderboardEntry[] = [
-    {
-      rank: 1,
-      name: 'Alex Chen',
-      avatar: '👑',
-      points: 4850,
-      badges: 15,
-      feasts: 8,
-      streak: 45,
-      change: 0
-    },
-    {
-      rank: 2,
-      name: 'Sarah Johnson',
-      avatar: '🥈',
-      points: 4720,
-      badges: 14,
-      feasts: 7,
-      streak: 38,
-      change: 1
-    },
-    {
-      rank: 3,
-      name: 'Mike Rodriguez',
-      avatar: '🥉',
-      points: 4650,
-      badges: 13,
-      feasts: 6,
-      streak: 42,
-      change: -1
-    },
-    {
-      rank: 4,
-      name: 'Emma Wilson',
-      avatar: '👩‍💻',
-      points: 4200,
-      badges: 12,
-      feasts: 5,
-      streak: 28,
-      change: 2
-    },
-    {
-      rank: 5,
-      name: 'David Kim',
-      avatar: '👨‍🔬',
-      points: 3950,
-      badges: 11,
-      feasts: 5,
-      streak: 35,
-      change: -1
-    },
-    {
-      rank: 6,
-      name: 'Lisa Zhang',
-      avatar: '👩‍🎓',
-      points: 3800,
-      badges: 10,
-      feasts: 4,
-      streak: 22,
-      change: 0
-    },
-    {
-      rank: 7,
-      name: 'James Brown',
-      avatar: '👨‍💼',
-      points: 3650,
-      badges: 9,
-      feasts: 4,
-      streak: 31,
-      change: 3
-    },
-    {
-      rank: 8,
-      name: 'Maria Garcia',
-      avatar: '👩‍🔬',
-      points: 3500,
-      badges: 8,
-      feasts: 3,
-      streak: 19,
-      change: -2
-    },
-    {
-      rank: 9,
-      name: 'Ryan Taylor',
-      avatar: '👨‍🎓',
-      points: 3350,
-      badges: 8,
-      feasts: 3,
-      streak: 26,
-      change: 1
-    },
-    {
-      rank: 10,
-      name: 'You',
-      avatar: '👤',
-      points: 2450,
-      badges: 5,
-      feasts: 2,
-      streak: 15,
-      change: 5
+  React.useEffect(() => {
+    loadLeaderboard();
+  }, [timeframe, category]);
+
+  const loadLeaderboard = async () => {
+    setLoading(true);
+    try {
+      const response = await apiService.getLeaderboard(timeframe, category);
+      const formattedData = response.leaderboard.map((entry: any, index: number) => ({
+        rank: index + 1,
+        _id: entry._id,
+        name: entry.name,
+        avatar: entry.photoURL ? '👤' : '👤',
+        points: entry.points,
+        badges: entry.badges,
+        feasts: Math.floor(entry.badges / 3), // Estimate feasts from badges
+        streak: entry.streak,
+        change: 0 // Would need historical data to calculate
+      }));
+      setLeaderboardData(formattedData);
+      setUserRank(response.userRank);
+    } catch (error) {
+      console.error('Failed to load leaderboard:', error);
+    } finally {
+      setLoading(false);
     }
-  ];
+  };
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
@@ -145,9 +77,9 @@ export const Leaderboard: React.FC = () => {
   };
 
   const getRowStyle = (rank: number, name: string) => {
-    if (name === 'You') return 'bg-blue-50 border-blue-200 border-2';
+    if (currentUser && name === currentUser.displayName) return 'bg-blue-500/10 border-blue-500/30 border-2';
     if (rank <= 3) return 'bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200';
-    return 'bg-white border border-gray-100';
+    return 'bg-white/5 border border-white/10';
   };
 
   return (
@@ -262,111 +194,119 @@ export const Leaderboard: React.FC = () => {
 
         {/* Leaderboard Table */}
         <div className="relative bg-white/5 backdrop-blur-md border border-white/10 overflow-hidden z-10">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-white/5 border-b border-white/10">
-                <tr>
-                  <th className="px-6 py-4 text-left text-sm font-black text-white">Rank</th>
-                  <th className="px-6 py-4 text-left text-sm font-black text-white">User</th>
-                  <th className="px-6 py-4 text-center text-sm font-black text-white">Points</th>
-                  <th className="px-6 py-4 text-center text-sm font-black text-white">Badges</th>
-                  <th className="px-6 py-4 text-center text-sm font-black text-white">Feasts</th>
-                  <th className="px-6 py-4 text-center text-sm font-black text-white">Streak</th>
-                  <th className="px-6 py-4 text-center text-sm font-black text-white">Change</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leaderboardData.map((entry) => (
-                  <tr 
-                    key={entry.rank}
-                    className={`${getRowStyle(entry.rank, entry.name)} hover:bg-white/10 transition-all duration-200 border-b border-white/5`}
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        {getRankIcon(entry.rank)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white mr-3 clip-path-hexagon">
-                          {entry.avatar}
-                        </div>
-                        <div>
-                          <div className="font-semibold text-white">{entry.name}</div>
-                          {entry.name === 'You' && (
-                            <div className="text-sm text-cyan-400">Your Position</div>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="font-bold text-white">{entry.points.toLocaleString()}</div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center">
-                        <Award className="w-4 h-4 text-yellow-500 mr-1" />
-                        <span className="font-semibold text-white">{entry.badges}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center">
-                        <Trophy className="w-4 h-4 text-green-500 mr-1" />
-                        <span className="font-semibold text-white">{entry.feasts}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center">
-                        <Target className="w-4 h-4 text-orange-500 mr-1" />
-                        <span className="font-semibold text-white">{entry.streak}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <div className="flex items-center justify-center">
-                        {getChangeIcon(entry.change)}
-                        <span className={`ml-1 text-sm font-medium text-white ${
-                          entry.change > 0 ? 'text-green-400' : 
-                          entry.change < 0 ? 'text-red-400' : 'text-gray-400'
-                        }`}>
-                          {entry.change > 0 ? `+${entry.change}` : entry.change || '-'}
-                        </span>
-                      </div>
-                    </td>
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="text-gray-400">Loading leaderboard...</div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-white/5 border-b border-white/10">
+                  <tr>
+                    <th className="px-6 py-4 text-left text-sm font-black text-white">Rank</th>
+                    <th className="px-6 py-4 text-left text-sm font-black text-white">User</th>
+                    <th className="px-6 py-4 text-center text-sm font-black text-white">Points</th>
+                    <th className="px-6 py-4 text-center text-sm font-black text-white">Badges</th>
+                    <th className="px-6 py-4 text-center text-sm font-black text-white">Feasts</th>
+                    <th className="px-6 py-4 text-center text-sm font-black text-white">Streak</th>
+                    <th className="px-6 py-4 text-center text-sm font-black text-white">Change</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {leaderboardData.map((entry) => (
+                    <tr 
+                      key={entry.rank}
+                      className={`${getRowStyle(entry.rank, entry.name)} hover:bg-white/10 transition-all duration-200 border-b border-white/5`}
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          {getRankIcon(entry.rank)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white mr-3 clip-path-hexagon">
+                            {entry.avatar}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-white">{entry.name}</div>
+                            {currentUser && entry._id === currentUser._id && (
+                              <div className="text-sm text-cyan-400">Your Position</div>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="font-bold text-white">{entry.points.toLocaleString()}</div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center">
+                          <Award className="w-4 h-4 text-yellow-500 mr-1" />
+                          <span className="font-semibold text-white">{entry.badges}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center">
+                          <Trophy className="w-4 h-4 text-green-500 mr-1" />
+                          <span className="font-semibold text-white">{entry.feasts}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center">
+                          <Target className="w-4 h-4 text-orange-500 mr-1" />
+                          <span className="font-semibold text-white">{entry.streak}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <div className="flex items-center justify-center">
+                          {getChangeIcon(entry.change)}
+                          <span className={`ml-1 text-sm font-medium text-white ${
+                            entry.change > 0 ? 'text-green-400' : 
+                            entry.change < 0 ? 'text-red-400' : 'text-gray-400'
+                          }`}>
+                            {entry.change > 0 ? `+${entry.change}` : entry.change || '-'}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Your Stats */}
-        <div className="relative mt-8 bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-white z-10 overflow-hidden">
-          {/* Geometric patterns */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-0 left-0 w-32 h-32 border-2 border-white transform rotate-45"></div>
-            <div className="absolute top-10 right-10 w-24 h-24 border-2 border-white transform rotate-12"></div>
-            <div className="absolute bottom-10 left-1/4 w-20 h-20 border-2 border-white transform -rotate-12"></div>
+        {currentUser && (
+          <div className="relative mt-8 bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-white z-10 overflow-hidden">
+            {/* Geometric patterns */}
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute top-0 left-0 w-32 h-32 border-2 border-white transform rotate-45"></div>
+              <div className="absolute top-10 right-10 w-24 h-24 border-2 border-white transform rotate-12"></div>
+              <div className="absolute bottom-10 left-1/4 w-20 h-20 border-2 border-white transform -rotate-12"></div>
+            </div>
+            
+            <h2 className="text-3xl font-black mb-8 relative z-10">Your Performance</h2>
+            <div className="grid md:grid-cols-4 gap-6 relative z-10">
+              <div className="text-center">
+                <div className="text-4xl font-black mb-2">{userRank ? `#${userRank}` : 'N/A'}</div>
+                <div className="opacity-90">Current Rank</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-black mb-2">--</div>
+                <div className="opacity-90">Positions Up</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-black mb-2">{currentUser.totalPoints.toLocaleString()}</div>
+                <div className="opacity-90">Total Points</div>
+              </div>
+              <div className="text-center">
+                <div className="text-4xl font-black mb-2">{currentUser.streak}</div>
+                <div className="opacity-90">Day Streak</div>
+              </div>
+            </div>
           </div>
-          
-          <h2 className="text-3xl font-black mb-8 relative z-10">Your Performance</h2>
-          <div className="grid md:grid-cols-4 gap-6 relative z-10">
-            <div className="text-center">
-              <div className="text-4xl font-black mb-2">10th</div>
-              <div className="opacity-90">Current Rank</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-black mb-2">+5</div>
-              <div className="opacity-90">Positions Up</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-black mb-2">2,450</div>
-              <div className="opacity-90">Total Points</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-black mb-2">15</div>
-              <div className="opacity-90">Day Streak</div>
-            </div>
-          </div>
-        </div>
+        )}
       </div>
     </div>
   );

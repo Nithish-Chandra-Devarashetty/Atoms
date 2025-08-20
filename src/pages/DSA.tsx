@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 import { 
   Brain, 
   Trophy, 
@@ -18,14 +20,54 @@ interface Problem extends DsaProblem {
 }
 
 export const DSA: React.FC = () => {
+  const { currentUser } = useAuth();
   const [problems, setProblems] = useState<Problem[]>([]);
   const [topics, setTopics] = useState<{[key: string]: Problem[]}>({});
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [solvedProblems, setSolvedProblems] = useState<Set<string>>(new Set());
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load solved problems from localStorage
+    if (currentUser) {
+      loadDSAProgress();
+    } else {
+      loadLocalProgress();
+    }
+  }, [currentUser]);
+
+  const loadDSAProgress = async () => {
+    try {
+      const response = await apiService.getDSAProgress();
+      const solvedSet = new Set(response.dsaProgress.solvedProblems);
+      setSolvedProblems(solvedSet);
+      
+      // Process problems data
+      const problemsData: Problem[] = dsaProblems.map(problem => ({
+        ...problem,
+        solved: solvedSet.has(problem.Name)
+      }));
+      setProblems(problemsData);
+      
+      // Group by topic
+      const topicsData: {[key: string]: Problem[]} = {};
+      problemsData.forEach(problem => {
+        if (!topicsData[problem.Topic]) {
+          topicsData[problem.Topic] = [];
+        }
+        topicsData[problem.Topic].push(problem);
+      });
+      setTopics(topicsData);
+    } catch (error) {
+      console.error('Failed to load DSA progress:', error);
+      loadLocalProgress();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadLocalProgress = () => {
+    // Fallback to localStorage for non-authenticated users
     const savedSolved = localStorage.getItem('solvedProblems');
     let solvedSet = new Set<string>();
     let savedProblems: string[] = [];
@@ -33,7 +75,6 @@ export const DSA: React.FC = () => {
     if (savedSolved) {
       try {
         const parsed = JSON.parse(savedSolved);
-        // Ensure we have an array of strings
         savedProblems = Array.isArray(parsed) 
           ? parsed.filter((item): item is string => typeof item === 'string')
           : typeof parsed === 'object' && parsed !== null
@@ -50,11 +91,10 @@ export const DSA: React.FC = () => {
     // Process problems data
     const problemsData: Problem[] = dsaProblems.map(problem => ({
       ...problem,
-      solved: savedProblems.includes(problem.Name) // Changed from problem.Link to problem.Name
+      solved: savedProblems.includes(problem.Name)
     }));
-
     setProblems(problemsData);
-
+    
     // Group by topic
     const topicsData: {[key: string]: Problem[]} = {};
     problemsData.forEach(problem => {
@@ -64,7 +104,8 @@ export const DSA: React.FC = () => {
       topicsData[problem.Topic].push(problem);
     });
     setTopics(topicsData);
-  }, []);
+    setLoading(false);
+  };
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -76,7 +117,7 @@ export const DSA: React.FC = () => {
   };
 
   const getSolvedCount = (topic: string) => {
-    return problems.filter(p => p.Topic === topic && solvedProblems.has(p.Link)).length;
+    return problems.filter(p => p.Topic === topic && solvedProblems.has(p.Name)).length;
   };
 
   const getTotalSolved = () => {
@@ -106,6 +147,14 @@ export const DSA: React.FC = () => {
       topic.toLowerCase().includes(searchQuery.toLowerCase());
     return topicProblems.length > 0 && matchesSearch;
   });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div className="text-white text-xl">Loading DSA data...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">

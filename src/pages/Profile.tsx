@@ -20,7 +20,26 @@ import {
 
 export const Profile: React.FC = () => {
   const { currentUser, logout } = useAuth();
+  const [userProgress, setUserProgress] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (currentUser) {
+      loadUserProgress();
+    }
+  }, [currentUser]);
+
+  const loadUserProgress = async () => {
+    try {
+      const response = await apiService.getProgress();
+      setUserProgress(response);
+    } catch (error) {
+      console.error('Failed to load user progress:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -34,39 +53,56 @@ export const Profile: React.FC = () => {
   const userStats = {
     name: currentUser?.displayName || 'Anonymous User',
     username: currentUser?.email || '@user',
-    rank: 42,
+    rank: userProgress?.rank || 'N/A',
     totalUsers: 1250,
     followers: 156,
     following: 89,
     joinDate: 'March 2024',
-    totalPoints: 2450,
-    streak: 15
+    totalPoints: currentUser?.totalPoints || 0,
+    streak: currentUser?.streak || 0
   };
 
-  const badges = [
-    { name: 'HTML Master', icon: '🏅', type: 'feast', earned: true },
-    { name: 'Arrays Silver', icon: '🥈', type: 'silver', earned: true },
-    { name: 'Strings Gold', icon: '🥇', type: 'gold', earned: true },
-    { name: 'CSS Expert', icon: '🏅', type: 'feast', earned: true },
-    { name: 'Trees Silver', icon: '🥈', type: 'silver', earned: true },
-    { name: 'JavaScript Pro', icon: '🏅', type: 'feast', earned: false },
-    { name: 'DP Gold', icon: '🥇', type: 'gold', earned: false },
-    { name: 'Diamond Master', icon: '💎', type: 'diamond', earned: false }
-  ];
+  const badges = currentUser?.badges.map((badge: string) => ({
+    name: badge.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+    icon: badge.includes('quiz') ? '🏅' : badge.includes('silver') ? '🥈' : badge.includes('gold') ? '🥇' : '💎',
+    type: badge.includes('quiz') ? 'feast' : badge.includes('silver') ? 'silver' : badge.includes('gold') ? 'gold' : 'diamond',
+    earned: true
+  })) || [];
 
-  const progress = {
-    webdev: { completed: 3, total: 6, percentage: 50 },
-    core: { completed: 2, total: 3, percentage: 67 },
-    dsa: { completed: 12, total: 150, percentage: 8 },
-    aptitude: { completed: 2, total: 8, percentage: 25 }
+  const progress = userProgress ? {
+    webdev: { 
+      completed: Object.values(userProgress.progress.webdev).filter((p: any) => p.quizPassed).length, 
+      total: 6, 
+      percentage: Math.round((Object.values(userProgress.progress.webdev).filter((p: any) => p.quizPassed).length / 6) * 100)
+    },
+    core: { 
+      completed: userProgress.progress.core.os.topicsCompleted.length + userProgress.progress.core.dbms.topicsCompleted.length + userProgress.progress.core.cn.topicsCompleted.length, 
+      total: 20, 
+      percentage: Math.round(((userProgress.progress.core.os.topicsCompleted.length + userProgress.progress.core.dbms.topicsCompleted.length + userProgress.progress.core.cn.topicsCompleted.length) / 20) * 100)
+    },
+    dsa: { 
+      completed: userProgress.progress.dsa.solvedProblems.length, 
+      total: 150, 
+      percentage: Math.round((userProgress.progress.dsa.solvedProblems.length / 150) * 100)
+    },
+    aptitude: { 
+      completed: userProgress.progress.aptitude.completedTopics.length, 
+      total: 8, 
+      percentage: Math.round((userProgress.progress.aptitude.completedTopics.length / 8) * 100)
+    }
+  } : {
+    webdev: { completed: 0, total: 6, percentage: 0 },
+    core: { completed: 0, total: 20, percentage: 0 },
+    dsa: { completed: 0, total: 150, percentage: 0 },
+    aptitude: { completed: 0, total: 8, percentage: 0 }
   };
 
-  const recentActivity = [
-    { type: 'quiz', subject: 'HTML', score: 95, date: '2 hours ago' },
-    { type: 'problem', subject: 'Arrays', name: 'Two Sum', date: '1 day ago' },
-    { type: 'badge', subject: 'CSS Expert', date: '2 days ago' },
-    { type: 'quiz', subject: 'Operating Systems', score: 88, date: '3 days ago' }
-  ];
+  const recentActivity = userProgress?.recentQuizzes?.slice(0, 4).map((quiz: any) => ({
+    type: 'quiz',
+    subject: quiz.subject,
+    score: Math.round((quiz.score / quiz.totalQuestions) * 100),
+    date: new Date(quiz.createdAt).toLocaleDateString()
+  })) || [];
 
   const getBadgeColor = (type: string) => {
     switch (type) {
@@ -77,6 +113,14 @@ export const Profile: React.FC = () => {
       default: return 'from-gray-300 to-gray-400';
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div className="text-white text-xl">Loading profile...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
@@ -227,31 +271,26 @@ export const Profile: React.FC = () => {
             <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 text-white z-10">
               <h2 className="text-3xl font-black text-white mb-8">Recent Activity</h2>
               
-              <div className="space-y-4">
-                {recentActivity.map((activity, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-white/5 backdrop-blur-sm border border-white/10">
-                    <div className="flex items-center">
-                      {activity.type === 'quiz' && <Target className="w-5 h-5 text-cyan-400 mr-3" />}
-                      {activity.type === 'problem' && <Brain className="w-5 h-5 text-purple-400 mr-3" />}
-                      {activity.type === 'badge' && <Award className="w-5 h-5 text-green-400 mr-3" />}
-                      
-                      <div>
-                        <div className="font-medium text-white">
-                          {activity.type === 'quiz' && `${activity.subject} Quiz`}
-                          {activity.type === 'problem' && activity.name}
-                          {activity.type === 'badge' && `Earned ${activity.subject}`}
-                        </div>
-                        <div className="text-sm text-gray-300">
-                          {activity.type === 'quiz' && `Score: ${activity.score}%`}
-                          {activity.type === 'problem' && activity.subject}
-                          {activity.type === 'badge' && 'Achievement unlocked'}
+              {recentActivity.length > 0 ? (
+                <div className="space-y-4">
+                  {recentActivity.map((activity, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 bg-white/5 backdrop-blur-sm border border-white/10">
+                      <div className="flex items-center">
+                        <Target className="w-5 h-5 text-cyan-400 mr-3" />
+                        <div>
+                          <div className="font-medium text-white">{activity.subject} Quiz</div>
+                          <div className="text-sm text-gray-300">Score: {activity.score}%</div>
                         </div>
                       </div>
+                      <span className="text-sm text-gray-400">{activity.date}</span>
                     </div>
-                    <span className="text-sm text-gray-400">{activity.date}</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-400">
+                  No recent activity
+                </div>
+              )}
             </div>
           </div>
 
@@ -261,21 +300,23 @@ export const Profile: React.FC = () => {
             <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 text-white z-10">
               <h2 className="text-3xl font-black text-white mb-8">Achievement Badges</h2>
               
-              <div className="grid grid-cols-2 gap-4">
-                {badges.map((badge, index) => (
-                  <div 
-                    key={index}
-                    className={`p-4 text-center transition-all duration-200 ${
-                      badge.earned 
-                        ? `bg-gradient-to-r ${getBadgeColor(badge.type)} text-white border border-white/20` 
-                        : 'bg-white/5 backdrop-blur-sm border border-white/10 text-gray-500'
-                    }`}
-                  >
-                    <div className="text-2xl mb-2">{badge.earned ? badge.icon : '🔒'}</div>
-                    <div className="text-sm font-medium">{badge.name}</div>
-                  </div>
-                ))}
-              </div>
+              {badges.length > 0 ? (
+                <div className="grid grid-cols-2 gap-4">
+                  {badges.map((badge, index) => (
+                    <div 
+                      key={index}
+                      className={`p-4 text-center transition-all duration-200 bg-gradient-to-r ${getBadgeColor(badge.type)} text-white border border-white/20`}
+                    >
+                      <div className="text-2xl mb-2">{badge.icon}</div>
+                      <div className="text-sm font-medium">{badge.name}</div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-400">
+                  No badges earned yet. Complete quizzes to earn your first badge!
+                </div>
+              )}
             </div>
 
             {/* Performance Stats */}
@@ -292,11 +333,11 @@ export const Profile: React.FC = () => {
               <div className="space-y-4 relative z-10">
                 <div className="flex items-center justify-between">
                   <span>Quiz Average</span>
-                  <span className="font-black">87%</span>
+                  <span className="font-black">{userProgress?.averageScore || 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Problems Solved</span>
-                  <span className="font-black">42</span>
+                  <span className="font-black">{progress.dsa.completed}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Study Streak</span>
@@ -304,22 +345,22 @@ export const Profile: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Time Spent</span>
-                  <span className="font-black">24h 30m</span>
+                  <span className="font-black">{userProgress?.totalTimeSpent || 'N/A'}</span>
                 </div>
               </div>
             </div>
           </div>
-          
-          {/* Logout Button */}
-          <div className="mt-12 text-center relative z-10">
-            <button
-              onClick={handleLogout}
-              className="flex items-center justify-center mx-auto px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-black text-lg transition-colors"
-            >
-              <LogOut size={20} className="mr-2" />
-              Logout
-            </button>
-          </div>
+        </div>
+        
+        {/* Logout Button */}
+        <div className="mt-12 text-center relative z-10">
+          <button
+            onClick={handleLogout}
+            className="flex items-center justify-center mx-auto px-8 py-3 bg-red-600 hover:bg-red-700 text-white font-black text-lg transition-colors"
+          >
+            <LogOut size={20} className="mr-2" />
+            Logout
+          </button>
         </div>
       </div>
     </div>

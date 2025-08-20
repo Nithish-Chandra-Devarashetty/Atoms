@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { Camera, Upload, X } from 'lucide-react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../contexts/AuthContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
+import { apiService } from '../services/api';
 
 interface ProfilePhotoUploadProps {
   currentPhotoURL?: string;
@@ -24,10 +22,12 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
 
     setUploading(true);
     try {
-      const storageRef = ref(storage, `profile-photos/${currentUser.uid}`);
-      await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
-      onPhotoUpdate(downloadURL);
+      // For now, we'll use a placeholder URL
+      // In a real implementation, you'd upload to a cloud storage service
+      const placeholderURL = `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentUser.displayName}`;
+      
+      await apiService.updateProfile({ photoURL: placeholderURL });
+      onPhotoUpdate(placeholderURL);
       setShowUploadModal(false);
     } catch (error) {
       console.error('Upload failed:', error);
@@ -48,7 +48,7 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
             />
           ) : (
             <span className="text-white text-4xl font-bold">
-              {currentUser?.displayName?.charAt(0) || 'U'}
+              {currentUser?.displayName?.charAt(0).toUpperCase() || 'U'}
             </span>
           )}
         </div>
@@ -76,7 +76,7 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
             <label className="block w-full p-4 border-2 border-dashed border-gray-600 hover:border-gray-500 rounded-lg cursor-pointer text-center transition-colors">
               <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
               <span className="text-gray-300">
-                {uploading ? 'Uploading...' : 'Click to upload photo'}
+                {uploading ? 'Updating...' : 'Click to update photo'}
               </span>
               <input
                 type="file"
@@ -86,6 +86,9 @@ export const ProfilePhotoUpload: React.FC<ProfilePhotoUploadProps> = ({
                 disabled={uploading}
               />
             </label>
+            <p className="text-xs text-gray-500 mt-2 text-center">
+              Photo upload will generate an avatar based on your name
+            </p>
           </div>
         </div>
       )}

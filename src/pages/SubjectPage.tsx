@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { CheckCircle, Clock, Award, Pizza as QuizIcon, ArrowRight, Lock } from 'lucide-react';
 import { PracticeProjects } from '../components/PracticeProjects';
+import { apiService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { htmlData as rawHtmlData } from '../data/webdev/htmlData';
 import { cssData as rawCssData } from '../data/webdev/cssData';
 import { javascriptData as rawJavascriptData } from '../data/webdev/javascriptData';
@@ -105,6 +107,7 @@ const mapProjectIdeasToProjects = (projectIdeas: { title: string; topics: string
 
 export const SubjectPage: React.FC = () => {
   const { subject } = useParams<{ subject: 'html' | 'css' | 'javascript' | 'react' | 'nodejs' | 'mongodb' }>();
+  const { currentUser } = useAuth();
   const [videos, setVideos] = useState<Video[]>([]);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[]>([]);
   const [currentVideo, setCurrentVideo] = useState<Video | null>(null);
@@ -114,17 +117,29 @@ export const SubjectPage: React.FC = () => {
   const [score, setScore] = useState(0);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [isQuizPassed, setIsQuizPassed] = useState(false);
+  const [submittingQuiz, setSubmittingQuiz] = useState(false);
 
   useEffect(() => {
     // Load subject data based on the subject parameter
     loadSubjectData(subject || '');
     
-    // Check if quiz was previously passed
-    const savedQuizStatus = localStorage.getItem(`quiz_${subject}_passed`);
-    if (savedQuizStatus === 'true') {
-      setIsQuizPassed(true);
+    // Load user progress from API if logged in
+    if (currentUser) {
+      loadUserProgress();
     }
-  }, [subject]);
+  }, [subject, currentUser]);
+
+  const loadUserProgress = async () => {
+    try {
+      const response = await apiService.getProgress();
+      const webdevProgress = response.progress.webdev[subject as keyof typeof response.progress.webdev];
+      if (webdevProgress?.quizPassed) {
+        setIsQuizPassed(true);
+      }
+    } catch (error) {
+      console.error('Failed to load user progress:', error);
+    }
+  };
 
   // Add a useEffect to update quizQuestions when currentVideo changes (for javascript, react, nodejs)
   useEffect(() => {
@@ -229,6 +244,13 @@ export const SubjectPage: React.FC = () => {
     if (currentVideo && currentVideo.id === videoId) {
       setCurrentVideo({ ...currentVideo, watched: true });
     }
+
+    // Send to API if user is logged in
+    if (currentUser && subject) {
+      apiService.markVideoWatched(subject, videoId).catch(error => {
+        console.error('Failed to mark video as watched:', error);
+      });
+    }
   };
 
   const startQuiz = () => {
@@ -252,15 +274,50 @@ export const SubjectPage: React.FC = () => {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       setSelectedAnswer(null);
     } else {
-      setQuizCompleted(true);
-      // Check if quiz was passed (70% or higher)
-      const finalScore = selectedAnswer === quizQuestions[currentQuestionIndex].correct ? score + 1 : score;
-      const percentage = (finalScore / quizQuestions.length) * 100;
-      if (percentage >= 70) {
-        setIsQuizPassed(true);
-        localStorage.setItem(`quiz_${subject}_passed`, 'true');
+      handleQuizComplete();
+    }
+  };
+
+  const handleQuizComplete = async () => {
+    setSubmittingQuiz(true);
+    
+    // Calculate final score
+    const finalScore = selectedAnswer === quizQuestions[currentQuestionIndex].correct ? score + 1 : score;
+    const percentage = (finalScore / quizQuestions.length) * 100;
+    const passed = percentage >= 70;
+    
+    setScore(finalScore);
+    setQuizCompleted(true);
+    
+    if (passed) {
+      setIsQuizPassed(true);
+    }
+
+    // Submit to API if user is logged in
+    if (currentUser && subject) {
+      try {
+        // Prepare answers array
+        const answers = quizQuestions.map((question, index) => ({
+          questionIndex: index,
+          selectedAnswer: index === currentQuestionIndex ? (selectedAnswer || 0) : 0,
+          isCorrect: index === currentQuestionIndex 
+            ? (selectedAnswer === question.correct)
+            : (0 === question.correct) // Default for unanswered questions
+        }));
+
+        await apiService.submitQuiz({
+          subject,
+          score: finalScore,
+          totalQuestions: quizQuestions.length,
+          timeSpent: 300, // Default 5 minutes
+          answers
+        });
+      } catch (error) {
+        console.error('Failed to submit quiz:', error);
       }
     }
+    
+    setSubmittingQuiz(false);
   };
 
   const getSubjectInfo = (subject: string) => {
@@ -369,10 +426,11 @@ export const SubjectPage: React.FC = () => {
               </button>
               <button
                 onClick={handleNextQuestion}
+                disabled={submittingQuiz}
                 disabled={selectedAnswer === null}
                 className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {currentQuestionIndex < quizQuestions.length - 1 ? 'Next Question' : 'Finish Quiz'}
+                {submittingQuiz ? 'Submitting...' : currentQuestionIndex < quizQuestions.length - 1 ? 'Next Question' : 'Finish Quiz'}
                 <ArrowRight className="w-4 h-4 ml-2" />
               </button>
             </div>
@@ -409,7 +467,7 @@ export const SubjectPage: React.FC = () => {
               <div className="text-gray-600">Accuracy</div>
               {isPassed && (
                 <div className="mt-2 text-sm text-green-600 font-medium">
-                  ✓ Quiz marked as completed
+                  ✓ Quiz completed successfully
                 </div>
               )}
             </div>

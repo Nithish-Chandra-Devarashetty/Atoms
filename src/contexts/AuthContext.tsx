@@ -1,42 +1,23 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { initializeApp } from 'firebase/app';
-import {
-  getAuth,
-  signInWithPopup,
-  GoogleAuthProvider,
-  signOut,
-  onAuthStateChanged,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  User
-} from 'firebase/auth';
-import { getStorage } from 'firebase/storage';
-import { getAnalytics } from "firebase/analytics";
+import { apiService } from '../services/api';
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyAWQ3C9jlfEwfxe8kZq-a9fa81MXu21_WI",
-  authDomain: "zuno-ceba7.firebaseapp.com",
-  projectId: "zuno-ceba7",
-  storageBucket: "zuno-ceba7.firebasestorage.app",
-  messagingSenderId: "508260542193",
-  appId: "1:508260542193:web:1737ee11ec26ad6a816b50",
-  measurementId: "G-5EBNBQ5Y4V"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const analytics = getAnalytics(app);
-export const auth = getAuth(app);
-export const storage = getStorage(app);
+interface User {
+  _id: string;
+  email: string;
+  displayName: string;
+  photoURL?: string;
+  provider: string;
+  totalPoints: number;
+  badges: string[];
+  streak: number;
+  progress: any;
+}
 
 interface AuthContextType {
   currentUser: User | null;
-  login: () => Promise<void>; // Google login
   logout: () => Promise<void>;
-  emailSignup: (email: string, password: string) => Promise<void>; // Added email signup
-  emailLogin: (email: string, password: string) => Promise<void>;   // Added email login
+  emailSignup: (email: string, password: string, displayName: string) => Promise<void>;
+  emailLogin: (email: string, password: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -54,43 +35,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Google Login
-  const login = async () => {
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+  useEffect(() => {
+    // Check for existing token on app load
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      loadUserProfile();
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  const loadUserProfile = async () => {
+    try {
+      const response = await apiService.getProfile();
+      setCurrentUser(response.user);
+    } catch (error) {
+      console.error('Failed to load user profile:', error);
+      localStorage.removeItem('authToken');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Email Signup
-  const emailSignup = async (email: string, password: string) => {
-    await createUserWithEmailAndPassword(auth, email, password);
+  const emailSignup = async (email: string, password: string, displayName: string) => {
+    const response = await apiService.register(email, password, displayName);
+    localStorage.setItem('authToken', response.token);
+    setCurrentUser(response.user);
   };
 
   // Email Login
   const emailLogin = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
+    const response = await apiService.login(email, password);
+    localStorage.setItem('authToken', response.token);
+    setCurrentUser(response.user);
   };
 
   const logout = async () => {
-    await signOut(auth);
+    localStorage.removeItem('authToken');
+    setCurrentUser(null);
   };
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setCurrentUser(user);
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, []);
-
   const value = {
-      currentUser,
-      login,
-      logout,
-      emailSignup,
-      emailLogin,
-      loading
-    };
+    currentUser,
+    logout,
+    emailSignup,
+    emailLogin,
+    loading
+  };
 
   return (
     <AuthContext.Provider value={value}>
