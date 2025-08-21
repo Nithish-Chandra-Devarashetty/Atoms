@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 interface LoginModalProps {
@@ -39,8 +40,17 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 h-screen">
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-40" style={{ top: 'var(--navbar-height, 0)' }}>
       <div className="relative p-8 bg-white/10 backdrop-blur-md border border-white/20 w-96 shadow-2xl">
         <button
           className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors duration-300"
@@ -153,7 +163,8 @@ const LoginModal: React.FC<LoginModalProps> = ({ onClose }) => {
           </p>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

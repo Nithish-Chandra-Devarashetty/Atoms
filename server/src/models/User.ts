@@ -43,6 +43,7 @@ export interface IUser extends Document {
   badges: string[];
   streak: number;
   lastActiveDate: Date;
+  lastLogin: Date;
   
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -82,6 +83,14 @@ const userSchema = new Schema<IUser>({
   isEmailVerified: {
     type: Boolean,
     default: false
+  },
+  lastActiveDate: {
+    type: Date,
+    default: Date.now
+  },
+  lastLogin: {
+    type: Date,
+    default: Date.now
   },
   progress: {
     webdev: {

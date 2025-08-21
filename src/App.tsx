@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -20,13 +20,17 @@ import { PrivacyPolicy } from './pages/PrivacyPolicy';
 import { Footer } from './components/Footer';
 
 function App() {
+  useEffect(() => {
+    document.documentElement.style.setProperty('--navbar-height', '4rem'); // 4rem = h-16
+  }, []);
+
   return (
     <ThemeProvider>
       <AuthProvider>
         <Router>
           <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
             <Navbar />
-            <main>
+            <main className="pt-16">
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/webdev" element={<WebDev />} />

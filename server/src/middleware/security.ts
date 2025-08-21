@@ -13,19 +13,25 @@ export const createRateLimit = (windowMs: number, max: number, message: string) 
   });
 };
 
-// General rate limit
-export const generalLimiter = createRateLimit(
-  15 * 60 * 1000, // 15 minutes
-  100, // limit each IP to 100 requests per windowMs
-  'Too many requests from this IP, please try again later'
-);
+// General rate limit - disabled in development
+export const generalLimiter = (req: any, res: any, next: any) => {
+  if (process.env.NODE_ENV === 'development') return next();
+  return createRateLimit(
+    15 * 60 * 1000, // 15 minutes
+    100, // limit each IP to 100 requests per windowMs
+    'Too many requests from this IP, please try again later'
+  )(req, res, next);
+};
 
-// Auth rate limit (stricter)
-export const authLimiter = createRateLimit(
-  15 * 60 * 1000, // 15 minutes
-  5, // limit each IP to 5 auth requests per windowMs
-  'Too many authentication attempts, please try again later'
-);
+// Auth rate limit - disabled in development
+export const authLimiter = (req: any, res: any, next: any) => {
+  if (process.env.NODE_ENV === 'development') return next();
+  return createRateLimit(
+    15 * 60 * 1000, // 15 minutes
+    5, // limit each IP to 5 auth requests per windowMs
+    'Too many authentication attempts, please try again later'
+  )(req, res, next);
+};
 
 // Security headers
 export const securityHeaders = helmet({
@@ -57,9 +63,14 @@ export const corsOptions = {
   origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
     const allowedOrigins = [
       process.env.FRONTEND_URL || 'http://localhost:5173',
+      'http://localhost:5174', // Added for Vite default port
       'http://localhost:3000',
       'https://atoms-learning.netlify.app' // Add your production domain
     ];
+    
+    // Log CORS origin for debugging
+    console.log('Origin:', origin);
+    console.log('Allowed origins:', allowedOrigins);
     
     // Allow requests with no origin (mobile apps, etc.)
     if (!origin) return callback(null, true);

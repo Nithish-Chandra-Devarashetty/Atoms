@@ -83,17 +83,23 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Update last active date and streak
+    // Update login and streak tracking
     const today = new Date();
-    const lastActive = new Date(user.lastActiveDate);
-    const daysDiff = Math.floor((today.getTime() - lastActive.getTime()) / (1000 * 60 * 60 * 24));
+    const lastLogin = user.lastLogin ? new Date(user.lastLogin) : today;
+    const lastActive = user.lastActiveDate ? new Date(user.lastActiveDate) : today;
     
-    if (daysDiff === 1) {
-      user.streak += 1;
-    } else if (daysDiff > 1) {
+    // Calculate days since last login
+    const daysSinceLastLogin = Math.floor((today.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Update streak logic
+    if (daysSinceLastLogin === 1) {
+      user.streak = (user.streak || 0) + 1;
+    } else if (daysSinceLastLogin > 1) {
       user.streak = 1;
     }
     
+    // Update timestamps
+    user.lastLogin = today;
     user.lastActiveDate = today;
     await user.save();
 

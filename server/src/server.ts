@@ -26,6 +26,11 @@ connectDatabase();
 
 // Security middleware
 app.use(securityHeaders);
+
+// Handle preflight requests
+app.options('*', cors(corsOptions));
+
+// Apply CORS and rate limiting
 app.use(cors(corsOptions));
 app.use(generalLimiter);
 

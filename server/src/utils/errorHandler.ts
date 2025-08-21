@@ -18,7 +18,10 @@ export const errorHandler = (
   res: Response,
   next: NextFunction
 ): void => {
+  console.error('Error:', error);
   let { statusCode = 500, message } = error;
+
+  const isDevelopment = process.env.NODE_ENV === 'development';
 
   // Mongoose validation error
   if (error.name === 'ValidationError') {
@@ -43,19 +46,23 @@ export const errorHandler = (
     message = 'Token expired';
   }
 
-  console.error('Error:', {
-    message: error.message,
-    stack: error.stack,
+  const errorResponse: any = {
+    status: 'error',
     statusCode,
-    url: req.url,
-    method: req.method,
-    ip: req.ip
-  });
+    message
+  };
 
-  res.status(statusCode).json({
-    error: message,
-    ...(process.env.NODE_ENV === 'development' && { stack: error.stack })
-  });
+  // Add more details in development mode
+  if (isDevelopment) {
+    errorResponse.error = {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      ...(error as any)._errors
+    };
+  }
+
+  res.status(statusCode).json(errorResponse);
 };
 
 export const notFoundHandler = (req: Request, res: Response): void => {
