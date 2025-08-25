@@ -10,6 +10,7 @@ import { CoreCS } from './pages/CoreCS';
 import { DSA } from './pages/DSA';
 import { Aptitude } from './pages/Aptitude';
 import { Profile } from './pages/Profile';
+import { UserProfile } from './pages/UserProfile';
 import { Discussion } from './pages/Discussion';
 import { Messages } from './pages/Messages';
 import { Leaderboard } from './pages/Leaderboard';
@@ -44,6 +45,7 @@ function App() {
                 <Route path="/dsa/:topic" element={<DSATopicPage />} />
                 <Route path="/aptitude" element={<Aptitude />} />
                 <Route path="/aptitude/:topic" element={<AptitudeTopicPage />} />
+                <Route path="/user/:userId" element={<UserProfile />} />
                 {/* Protected Routes */}
                 <Route element={<ProtectedRoute />}>
                   <Route path="/profile" element={<Profile />} />

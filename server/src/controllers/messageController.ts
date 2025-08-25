@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { Message, Conversation } from '../models/Message.js';
 import { User } from '../models/User.js';
 import { AuthRequest } from '../middleware/auth.js';
+import { createNotification } from './notificationController.js';
 
 export const getConversations = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -126,6 +127,16 @@ export const sendMessage = async (req: AuthRequest, res: Response): Promise<void
     }
 
     await conversation.save();
+
+    // Create notification for the recipient
+    await createNotification(
+      recipientId,
+      req.user._id.toString(),
+      'message',
+      'New Message',
+      `${req.user.displayName} sent you a message`,
+      { messageId: message._id.toString(), userId: req.user._id.toString() }
+    );
 
     res.status(201).json({
       message: 'Message sent successfully',

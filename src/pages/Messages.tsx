@@ -53,11 +53,14 @@ export const Messages: React.FC = () => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [selectedUserInfo, setSelectedUserInfo] = useState<any>(null); // For new conversations
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const { isDarkMode } = useTheme();
 
   useEffect(() => {
@@ -71,8 +74,7 @@ export const Messages: React.FC = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const userId = urlParams.get('user');
     if (userId && currentUser) {
-      setSelectedUserId(userId);
-      fetchMessages(userId);
+      startNewConversation(userId); // This will handle both new and existing conversations
     }
   }, [currentUser]);
 
@@ -86,10 +88,44 @@ export const Messages: React.FC = () => {
     try {
       const response = await apiService.getConversations();
       setConversations(response.conversations);
+      
+      // If no conversations, fetch suggested users
+      if (response.conversations.length === 0) {
+        fetchSuggestedUsers();
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load conversations');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSuggestedUsers = async () => {
+    if (!currentUser?._id) return;
+    
+    setLoadingSuggestions(true);
+    try {
+      const [followersRes, followingRes] = await Promise.all([
+        apiService.getFollowers(currentUser._id),
+        apiService.getFollowing(currentUser._id)
+      ]);
+      
+      // Combine and deduplicate followers and following
+      const allUsers = [
+        ...(followersRes.followers || []),
+        ...(followingRes.following || [])
+      ];
+      
+      // Remove duplicates
+      const uniqueUsers = allUsers.filter((user, index, self) => 
+        self.findIndex(u => u._id === user._id) === index
+      );
+      
+      setSuggestedUsers(uniqueUsers);
+    } catch (err) {
+      console.error('Failed to load suggested users:', err);
+    } finally {
+      setLoadingSuggestions(false);
     }
   };
 
@@ -100,7 +136,9 @@ export const Messages: React.FC = () => {
       // Mark messages as read
       await apiService.markMessagesAsRead(userId);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load messages');
+      // If no messages exist yet (new conversation), just set empty messages
+      console.log('No messages found for user, starting new conversation');
+      setMessages([]);
     }
   };
 
@@ -112,13 +150,21 @@ export const Messages: React.FC = () => {
       const response = await apiService.sendMessage(selectedUserId, newMessage);
       setMessages(prev => [...prev, response.data]);
       setNewMessage('');
-      // Refresh conversations to update last message
+      // After first message, clear selectedUserInfo and refresh conversations
+      setSelectedUserInfo(null);
       fetchConversations();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message');
     } finally {
       setSendingMessage(false);
     }
+  };
+
+  const startNewConversation = (userId: string, userInfo?: any) => {
+    setSelectedUserId(userId);
+    setSelectedUserInfo(userInfo); // Store user info for display
+    setMessages([]); // Start with empty messages for new conversation
+    // Don't call fetchMessages since there might not be any messages yet
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -164,7 +210,7 @@ export const Messages: React.FC = () => {
   const selectedConversation = conversations.find(conv => 
     getOtherParticipant(conv)?._id === selectedUserId
   );
-  const selectedContact = selectedConversation ? getOtherParticipant(selectedConversation) : null;
+  const selectedContact = selectedConversation ? getOtherParticipant(selectedConversation) : selectedUserInfo;
 
   if (!currentUser) {
     return (
@@ -226,7 +272,11 @@ export const Messages: React.FC = () => {
                 return (
                   <div
                     key={conversation._id}
-                    onClick={() => setSelectedUserId(otherParticipant._id)}
+                    onClick={() => {
+                      setSelectedUserId(otherParticipant._id);
+                      setSelectedUserInfo(null); // Clear for existing conversations
+                      fetchMessages(otherParticipant._id);
+                    }}
                     className={`p-4 border-b border-white/10 hover:bg-white/10 cursor-pointer transition-colors ${
                       selectedUserId === otherParticipant._id ? 'bg-white/20 border-cyan-500/50' : ''
                     }`}
@@ -261,10 +311,57 @@ export const Messages: React.FC = () => {
                 );
               })
             ) : (
-              <div className="p-8 text-center text-gray-400">
-                <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>No conversations found</p>
-                <p className="text-sm mt-2">Start a conversation from the discussion page!</p>
+              <div className="p-4">
+                {loadingSuggestions ? (
+                  <div className="text-center text-gray-400 p-8">
+                    <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>Loading suggested contacts...</p>
+                  </div>
+                ) : suggestedUsers.length > 0 ? (
+                  <div>
+                    <div className="text-center text-gray-400 mb-4">
+                      <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                      <p className="text-sm">No conversations yet</p>
+                      <p className="text-xs">Start chatting with your connections!</p>
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-white font-semibold text-sm mb-2">Suggested Contacts</h3>
+                      {suggestedUsers.slice(0, 10).map((user: any) => (
+                        <div
+                          key={user._id}
+                          onClick={() => startNewConversation(user._id, user)}
+                          className="flex items-center p-3 hover:bg-white/5 rounded-lg cursor-pointer transition-colors"
+                        >
+                          <div className="relative">
+                            {user.photoURL ? (
+                              <img
+                                src={user.photoURL}
+                                alt={user.displayName}
+                                className="w-10 h-10 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                                {user.displayName?.[0]?.toUpperCase() || 'U'}
+                              </div>
+                            )}
+                          </div>
+                          <div className="ml-3 flex-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-white font-medium">{user.displayName}</span>
+                            </div>
+                            <p className="text-gray-400 text-sm">{user.totalPoints || 0} points</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center text-gray-400 p-8">
+                    <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                    <p>No conversations found</p>
+                    <p className="text-sm mt-2">Follow users from the discussion page to start chatting!</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

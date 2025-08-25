@@ -2,6 +2,7 @@ import { Response } from 'express';
 import mongoose from 'mongoose';
 import { Discussion, Reply } from '../models/Discussion.js';
 import { AuthRequest } from '../middleware/auth.js';
+import { createNotification } from './notificationController.js';
 
 export const getDiscussions = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -112,6 +113,18 @@ export const likeDiscussion = async (req: AuthRequest, res: Response): Promise<v
 
     await discussion.save();
 
+    // Create notification if the discussion is liked (not unliked) and not by the author
+    if (!isLiked && discussion.author.toString() !== req.user._id.toString()) {
+      await createNotification(
+        discussion.author.toString(),
+        req.user._id.toString(),
+        'discussion_like',
+        'Discussion Liked',
+        `${req.user.displayName} liked your discussion`,
+        { discussionId: discussion._id.toString(), userId: req.user._id.toString() }
+      );
+    }
+
     res.json({
       message: isLiked ? 'Discussion unliked' : 'Discussion liked',
       liked: !isLiked,
@@ -155,6 +168,18 @@ export const createReply = async (req: AuthRequest, res: Response): Promise<void
     // Award points for replying
     req.user.totalPoints += 15;
     await req.user.save();
+
+    // Create notification for the discussion author (if not replying to own discussion)
+    if (discussion.author.toString() !== req.user._id.toString()) {
+      await createNotification(
+        discussion.author.toString(),
+        req.user._id.toString(),
+        'discussion_reply',
+        'New Reply',
+        `${req.user.displayName} replied to your discussion`,
+        { discussionId: discussion._id.toString(), userId: req.user._id.toString() }
+      );
+    }
 
     res.status(201).json({
       message: 'Reply created successfully',

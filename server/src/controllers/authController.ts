@@ -139,18 +139,30 @@ export const getProfile = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
+    // Get user with populated followers/following to get counts
+    const user = await User.findById(req.user._id)
+      .populate('followers', 'displayName photoURL')
+      .populate('following', 'displayName photoURL');
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
     const userResponse = {
-      _id: req.user._id,
-      email: req.user.email,
-      displayName: req.user.displayName,
-      photoURL: req.user.photoURL,
-      provider: req.user.provider,
-      isEmailVerified: req.user.isEmailVerified,
-      totalPoints: req.user.totalPoints,
-      badges: req.user.badges,
-      streak: req.user.streak,
-      progress: req.user.progress,
-      createdAt: req.user.createdAt
+      _id: user._id,
+      email: user.email,
+      displayName: user.displayName,
+      photoURL: user.photoURL,
+      provider: user.provider,
+      isEmailVerified: user.isEmailVerified,
+      totalPoints: user.totalPoints,
+      badges: user.badges,
+      streak: user.streak,
+      progress: user.progress,
+      createdAt: user.createdAt,
+      followersCount: user.followers.length,
+      followingCount: user.following.length
     };
 
     res.json({ user: userResponse });

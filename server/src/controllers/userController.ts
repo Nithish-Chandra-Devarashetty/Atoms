@@ -2,6 +2,7 @@ import { Response } from 'express';
 import mongoose from 'mongoose';
 import { User } from '../models/User.js';
 import { AuthRequest } from '../middleware/auth.js';
+import { createNotification } from './notificationController.js';
 
 export const getUserProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -77,6 +78,18 @@ export const followUser = async (req: AuthRequest, res: Response): Promise<void>
     }
 
     await Promise.all([currentUser.save(), userToFollow.save()]);
+
+    // Create notification when following (not unfollowing)
+    if (!isAlreadyFollowing) {
+      await createNotification(
+        userId,
+        req.user._id.toString(),
+        'follow',
+        'New Follower',
+        `${req.user.displayName} started following you`,
+        { userId: req.user._id.toString() }
+      );
+    }
 
     res.json({
       message: isAlreadyFollowing ? 'User unfollowed successfully' : 'User followed successfully',
