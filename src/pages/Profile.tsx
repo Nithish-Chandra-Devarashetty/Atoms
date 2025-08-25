@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
+import { apiService } from '../services/api';
 import { 
   User, 
   Trophy, 
@@ -21,21 +22,42 @@ import {
 export const Profile: React.FC = () => {
   const { currentUser, logout } = useAuth();
   const [userProgress, setUserProgress] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (currentUser) {
       loadUserProgress();
+    } else {
+      setLoading(false);
+      setError('Please log in to view your profile');
     }
   }, [currentUser]);
 
   const loadUserProgress = async () => {
+    if (!currentUser) {
+      setError('User not authenticated');
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+    
     try {
-      const response = await apiService.getProgress();
-      setUserProgress(response);
+      // Fetch both progress and profile data
+      const [progressResponse, profileResponse] = await Promise.all([
+        apiService.getProgress(),
+        apiService.getProfile()
+      ]);
+      
+      setUserProgress(progressResponse);
+      setUserProfile(profileResponse.user);
     } catch (error) {
-      console.error('Failed to load user progress:', error);
+      console.error('Failed to load user data:', error);
+      setError('Failed to load profile data. Please try again later.');
     } finally {
       setLoading(false);
     }
@@ -51,23 +73,23 @@ export const Profile: React.FC = () => {
   };
 
   const userStats = {
-    name: currentUser?.displayName || 'Anonymous User',
+    name: userProfile?.displayName || currentUser?.displayName || 'Anonymous User',
     username: currentUser?.email || '@user',
     rank: userProgress?.rank || 'N/A',
-    totalUsers: 1250,
-    followers: 156,
-    following: 89,
-    joinDate: 'March 2024',
-    totalPoints: currentUser?.totalPoints || 0,
-    streak: currentUser?.streak || 0
+    totalUsers: userProgress?.totalUsers || 1250, // fallback to static if not available
+    followers: userProfile?.followersCount || 0,
+    following: userProfile?.followingCount || 0,
+    joinDate: userProfile?.createdAt ? new Date(userProfile.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }) : 'March 2024',
+    totalPoints: userProfile?.totalPoints || 0,
+    streak: userProfile?.streak || 0
   };
 
-  const badges = currentUser?.badges.map((badge: string) => ({
+  const badges = (userProfile?.badges || currentUser?.badges || []).map((badge: string) => ({
     name: badge.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
     icon: badge.includes('quiz') ? '🏅' : badge.includes('silver') ? '🥈' : badge.includes('gold') ? '🥇' : '💎',
     type: badge.includes('quiz') ? 'feast' : badge.includes('silver') ? 'silver' : badge.includes('gold') ? 'gold' : 'diamond',
     earned: true
-  })) || [];
+  }));
 
   const progress = userProgress ? {
     webdev: { 
@@ -116,8 +138,27 @@ export const Profile: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-        <div className="text-white text-xl">Loading profile...</div>
+      <div className="flex justify-center items-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <strong className="font-bold">Error: </strong>
+          <span className="block sm:inline">{error}</span>
+          {!currentUser && (
+            <button
+              onClick={() => navigate('/login')}
+              className="ml-4 mt-2 sm:mt-0 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            >
+              Go to Login
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -138,7 +179,7 @@ export const Profile: React.FC = () => {
             {/* Avatar */}
             <div className="relative">
               <ProfilePhotoUpload 
-                currentPhotoURL={currentUser?.photoURL || undefined}
+                currentPhotoURL={userProfile?.photoURL || currentUser?.photoURL || undefined}
                 onPhotoUpdate={(url) => console.log('Photo updated:', url)}
               />
             </div>

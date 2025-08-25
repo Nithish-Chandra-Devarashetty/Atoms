@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { Navbar } from './components/Navbar';
@@ -17,6 +18,7 @@ import { CoreSubjectPage } from './pages/CoreSubjectPage';
 import { DSATopicPage } from './pages/DSATopicPage';
 import { AptitudeTopicPage } from './pages/AptitudeTopicPage';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { TestAuth } from './pages/TestAuth';
 import { Footer } from './components/Footer';
 
 function App() {
@@ -42,11 +44,15 @@ function App() {
                 <Route path="/dsa/:topic" element={<DSATopicPage />} />
                 <Route path="/aptitude" element={<Aptitude />} />
                 <Route path="/aptitude/:topic" element={<AptitudeTopicPage />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/discussion" element={<Discussion />} />
-                <Route path="/messages" element={<Messages />} />
-                <Route path="/leaderboard" element={<Leaderboard />} />
+                {/* Protected Routes */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/discussion" element={<Discussion />} />
+                  <Route path="/messages" element={<Messages />} />
+                  <Route path="/leaderboard" element={<Leaderboard />} />
+                </Route>
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/test-auth" element={<TestAuth />} />
               </Routes>
             </main>
             <Footer />

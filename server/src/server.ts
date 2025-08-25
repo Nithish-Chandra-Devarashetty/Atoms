@@ -14,6 +14,8 @@ import authRoutes from './routes/auth.js';
 import progressRoutes from './routes/progress.js';
 import discussionRoutes from './routes/discussion.js';
 import dsaRoutes from './routes/dsa.js';
+import userRoutes from './routes/user.js';
+import messageRoutes from './routes/messages.js';
 
 // Load environment variables
 dotenv.config();
@@ -57,6 +59,8 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/progress', progressRoutes);
 app.use('/api/discussions', discussionRoutes);
 app.use('/api/dsa', dsaRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/messages', messageRoutes);
 
 // API info endpoint
 app.get('/api', (req, res) => {
@@ -68,7 +72,9 @@ app.get('/api', (req, res) => {
       auth: '/api/auth',
       progress: '/api/progress',
       discussions: '/api/discussions',
-      dsa: '/api/dsa'
+      dsa: '/api/dsa',
+      users: '/api/users',
+      messages: '/api/messages'
     }
   });
 });

@@ -57,3 +57,7 @@ export const discussionSchema = Joi.object({
 export const replySchema = Joi.object({
   content: Joi.string().min(1).max(1000).required()
 });
+
+export const messageSchema = Joi.object({
+  content: Joi.string().min(1).max(1000).required()
+});

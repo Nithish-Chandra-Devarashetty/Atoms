@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   MessageCircle, 
   Send, 
@@ -12,117 +12,112 @@ import {
   X
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 
-interface Contact {
-  id: string;
-  name: string;
-  avatar: string;
-  lastMessage: string;
-  timestamp: string;
-  unread: number;
-  online: boolean;
+interface Conversation {
+  _id: string;
+  participants: Array<{
+    _id: string;
+    displayName: string;
+    photoURL?: string;
+  }>;
+  lastMessage?: {
+    _id: string;
+    content: string;
+    createdAt: string;
+    sender: string;
+  };
+  lastActivity: string;
 }
 
 interface Message {
-  id: string;
-  senderId: string;
+  _id: string;
+  sender: {
+    _id: string;
+    displayName: string;
+    photoURL?: string;
+  };
+  recipient: {
+    _id: string;
+    displayName: string;
+    photoURL?: string;
+  };
   content: string;
-  timestamp: string;
-  type: 'text' | 'image' | 'file';
+  isRead: boolean;
+  createdAt: string;
 }
 
 export const Messages: React.FC = () => {
-  const [selectedContact, setSelectedContact] = useState<string | null>('1');
+  const { currentUser } = useAuth();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [sendingMessage, setSendingMessage] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { isDarkMode } = useTheme();
 
-  const contacts: Contact[] = [
-    {
-      id: '1',
-      name: 'Sarah Chen',
-      avatar: '👩‍💻',
-      lastMessage: 'Thanks for helping with the React hooks!',
-      timestamp: '2m ago',
-      unread: 2,
-      online: true
-    },
-    {
-      id: '2',
-      name: 'Mike Rodriguez',
-      avatar: '👨‍🔬',
-      lastMessage: 'Did you solve the binary tree problem?',
-      timestamp: '1h ago',
-      unread: 0,
-      online: true
-    },
-    {
-      id: '3',
-      name: 'Emma Wilson',
-      avatar: '👩‍🎓',
-      lastMessage: 'The CSS Grid tutorial was amazing!',
-      timestamp: '3h ago',
-      unread: 1,
-      online: false
-    },
-    {
-      id: '4',
-      name: 'Alex Kumar',
-      avatar: '👨‍💼',
-      lastMessage: 'Let\'s study together for the aptitude test',
-      timestamp: '1d ago',
-      unread: 0,
-      online: false
+  useEffect(() => {
+    if (currentUser) {
+      fetchConversations();
     }
-  ];
+  }, [currentUser]);
 
-  const messages: Message[] = [
-    {
-      id: '1',
-      senderId: '1',
-      content: 'Hey! I saw your post about React hooks. Could you help me understand useEffect?',
-      timestamp: '10:30 AM',
-      type: 'text'
-    },
-    {
-      id: '2',
-      senderId: 'me',
-      content: 'Sure! useEffect is used for side effects in functional components. What specific part are you struggling with?',
-      timestamp: '10:32 AM',
-      type: 'text'
-    },
-    {
-      id: '3',
-      senderId: '1',
-      content: 'I don\'t understand the dependency array. When should I include variables in it?',
-      timestamp: '10:35 AM',
-      type: 'text'
-    },
-    {
-      id: '4',
-      senderId: 'me',
-      content: 'Great question! You should include any value from component scope that\'s used inside useEffect. This includes props, state, and derived values.',
-      timestamp: '10:37 AM',
-      type: 'text'
-    },
-    {
-      id: '5',
-      senderId: '1',
-      content: 'Thanks for helping with the React hooks!',
-      timestamp: '10:45 AM',
-      type: 'text'
+  useEffect(() => {
+    // Check for user parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('user');
+    if (userId && currentUser) {
+      setSelectedUserId(userId);
+      fetchMessages(userId);
     }
-  ];
+  }, [currentUser]);
 
-  const selectedContactData = contacts.find(c => c.id === selectedContact);
-  const filteredContacts = contacts.filter(contact =>
-    contact.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  useEffect(() => {
+    if (selectedUserId) {
+      fetchMessages(selectedUserId);
+    }
+  }, [selectedUserId]);
 
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      // In a real app, this would send the message to the backend
+  const fetchConversations = async () => {
+    try {
+      const response = await apiService.getConversations();
+      setConversations(response.conversations);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load conversations');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchMessages = async (userId: string) => {
+    try {
+      const response = await apiService.getMessages(userId);
+      setMessages(response.messages);
+      // Mark messages as read
+      await apiService.markMessagesAsRead(userId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load messages');
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !selectedUserId || !currentUser) return;
+
+    setSendingMessage(true);
+    try {
+      const response = await apiService.sendMessage(selectedUserId, newMessage);
+      setMessages(prev => [...prev, response.data]);
       setNewMessage('');
+      // Refresh conversations to update last message
+      fetchConversations();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send message');
+    } finally {
+      setSendingMessage(false);
     }
   };
 
@@ -132,6 +127,56 @@ export const Messages: React.FC = () => {
       handleSendMessage();
     }
   };
+
+  const getOtherParticipant = (conversation: Conversation) => {
+    return conversation.participants.find(p => p._id !== currentUser?._id);
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
+
+    if (diffInHours < 1) {
+      const diffInMinutes = Math.floor(diffInHours * 60);
+      return `${diffInMinutes}m ago`;
+    } else if (diffInHours < 24) {
+      return `${Math.floor(diffInHours)}h ago`;
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24);
+      return `${diffInDays}d ago`;
+    }
+  };
+
+  const formatMessageTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  const filteredConversations = conversations.filter(conversation => {
+    const otherParticipant = getOtherParticipant(conversation);
+    return otherParticipant?.displayName.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  const selectedConversation = conversations.find(conv => 
+    getOtherParticipant(conv)?._id === selectedUserId
+  );
+  const selectedContact = selectedConversation ? getOtherParticipant(selectedConversation) : null;
+
+  if (!currentUser) {
+    return (
+      <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+        <div className="text-center text-white">
+          <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+          <h2 className="text-xl font-semibold mb-2">Sign in to access messages</h2>
+          <p className="text-gray-400">You need to be logged in to view your conversations</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 transition-colors duration-300 relative overflow-hidden">
@@ -143,7 +188,7 @@ export const Messages: React.FC = () => {
       </div>
       
       <div className="h-full flex">
-        {/* Contacts Sidebar */}
+        {/* Conversations Sidebar */}
         <div className="w-80 bg-white/5 backdrop-blur-md border-r border-white/10 flex flex-col text-white relative z-10">
           {/* Header */}
           <div className="p-6 border-b border-white/10">
@@ -155,50 +200,71 @@ export const Messages: React.FC = () => {
                 placeholder="Search conversations..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
               />
             </div>
           </div>
 
-          {/* Contacts List */}
+          {/* Error Message */}
+          {error && (
+            <div className="mx-4 mt-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200 text-sm">
+              {error}
+            </div>
+          )}
+
+          {/* Conversations List */}
           <div className="flex-1 overflow-y-auto">
-            {filteredContacts.length > 0 ? (
-              filteredContacts.map((contact) => (
-                <div
-                  key={contact.id}
-                  onClick={() => setSelectedContact(contact.id)}
-                  className={`p-4 border-b border-white/10 hover:bg-white/10 cursor-pointer transition-colors ${
-                    selectedContact === contact.id ? 'bg-white/20 border-cyan-500/50' : ''
-                  }`}
-                >
-                  <div className="flex items-center">
-                    <div className="relative">
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-lg clip-path-hexagon">
-                        {contact.avatar}
+            {loading ? (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
+              </div>
+            ) : filteredConversations.length > 0 ? (
+              filteredConversations.map((conversation) => {
+                const otherParticipant = getOtherParticipant(conversation);
+                if (!otherParticipant) return null;
+
+                return (
+                  <div
+                    key={conversation._id}
+                    onClick={() => setSelectedUserId(otherParticipant._id)}
+                    className={`p-4 border-b border-white/10 hover:bg-white/10 cursor-pointer transition-colors ${
+                      selectedUserId === otherParticipant._id ? 'bg-white/20 border-cyan-500/50' : ''
+                    }`}
+                  >
+                    <div className="flex items-center">
+                      <div className="relative">
+                        {otherParticipant.photoURL ? (
+                          <img
+                            src={otherParticipant.photoURL}
+                            alt={otherParticipant.displayName}
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-lg font-bold">
+                            {otherParticipant.displayName.charAt(0).toUpperCase()}
+                          </div>
+                        )}
                       </div>
-                      {contact.online && (
-                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 border-2 border-slate-900"></div>
-                      )}
+                      <div className="ml-3 flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <h3 className="font-semibold text-white truncate">{otherParticipant.displayName}</h3>
+                          <span className="text-xs text-gray-400">
+                            {formatTime(conversation.lastActivity)}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-300 truncate">
+                          {conversation.lastMessage?.content || 'No messages yet'}
+                        </p>
+                      </div>
                     </div>
-                    <div className="ml-3 flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-white truncate">{contact.name}</h3>
-                        <span className="text-xs text-gray-400">{contact.timestamp}</span>
-                      </div>
-                      <p className="text-sm text-gray-300 truncate">{contact.lastMessage}</p>
-                    </div>
-                    {contact.unread > 0 && (
-                      <div className="ml-2 w-5 h-5 bg-cyan-500 text-white text-xs flex items-center justify-center">
-                        {contact.unread}
-                      </div>
-                    )}
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="p-8 text-center text-gray-400">
                 <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p>No conversations found</p>
+                <p className="text-sm mt-2">Start a conversation from the discussion page!</p>
               </div>
             )}
           </div>
@@ -206,33 +272,28 @@ export const Messages: React.FC = () => {
 
         {/* Chat Area */}
         <div className="flex-1 flex flex-col">
-          {selectedContactData ? (
+          {selectedContact ? (
             <>
               {/* Chat Header */}
               <div className="p-4 bg-white/5 backdrop-blur-md border-b border-white/10 flex items-center justify-between text-white relative z-10">
                 <div className="flex items-center">
                   <div className="relative">
-                    <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white clip-path-hexagon">
-                      {selectedContactData.avatar}
-                    </div>
-                    {selectedContactData.online && (
-                      <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 border-2 border-slate-900"></div>
+                    {selectedContact.photoURL ? (
+                      <img
+                        src={selectedContact.photoURL}
+                        alt={selectedContact.displayName}
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                        {selectedContact.displayName.charAt(0).toUpperCase()}
+                      </div>
                     )}
                   </div>
                   <div className="ml-3">
-                    <h2 className="font-semibold text-white">{selectedContactData.name}</h2>
-                    <p className="text-sm text-gray-400">
-                      {selectedContactData.online ? 'Online' : 'Last seen 2h ago'}
-                    </p>
+                    <h2 className="font-semibold text-white">{selectedContact.displayName}</h2>
+                    <p className="text-sm text-gray-400">Click to view profile</p>
                   </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button className="p-2 text-gray-400 hover:text-white hover:bg-white/10">
-                    <Phone className="w-5 h-5" />
-                  </button>
-                  <button className="p-2 text-gray-400 hover:text-white hover:bg-white/10">
-                    <Video className="w-5 h-5" />
-                  </button>
                 </div>
               </div>
 
@@ -240,22 +301,39 @@ export const Messages: React.FC = () => {
               <div className="flex-1 overflow-y-auto p-4 space-y-4 relative z-10">
                 {messages.map((message) => (
                   <div
-                    key={message.id}
-                    className={`flex ${message.senderId === 'me' ? 'justify-end' : 'justify-start'}`}
+                    key={message._id}
+                    className={`flex ${message.sender._id === currentUser._id ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div
-                      className={`max-w-xs lg:max-w-md px-4 py-2 ${
-                        message.senderId === 'me'
-                          ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
-                          : 'bg-white/10 backdrop-blur-sm border border-white/20 text-white'
-                      }`}
-                    >
-                      <p className="text-sm">{message.content}</p>
-                      <p className={`text-xs mt-1 ${
-                        message.senderId === 'me' ? 'text-cyan-100' : 'text-gray-400'
-                      }`}>
-                        {message.timestamp}
-                      </p>
+                    <div className="flex items-end space-x-2 max-w-xs lg:max-w-md">
+                      {message.sender._id !== currentUser._id && (
+                        <div className="w-8 h-8 flex-shrink-0">
+                          {message.sender.photoURL ? (
+                            <img
+                              src={message.sender.photoURL}
+                              alt={message.sender.displayName}
+                              className="w-full h-full rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full rounded-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center text-white text-sm font-bold">
+                              {message.sender.displayName.charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div
+                        className={`px-4 py-2 rounded-lg ${
+                          message.sender._id === currentUser._id
+                            ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
+                            : 'bg-white/10 backdrop-blur-sm border border-white/20 text-white'
+                        }`}
+                      >
+                        <p className="text-sm">{message.content}</p>
+                        <p className={`text-xs mt-1 ${
+                          message.sender._id === currentUser._id ? 'text-cyan-100' : 'text-gray-400'
+                        }`}>
+                          {formatMessageTime(message.createdAt)}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -264,28 +342,27 @@ export const Messages: React.FC = () => {
               {/* Message Input */}
               <div className="p-4 bg-white/5 backdrop-blur-md border-t border-white/10 relative z-10">
                 <div className="flex items-end space-x-2">
-                  <button className="p-2 text-gray-400 hover:text-white hover:bg-white/10 transition-colors">
-                    <Paperclip className="w-5 h-5" />
-                  </button>
                   <div className="flex-1 relative">
                     <textarea
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       onKeyPress={handleKeyPress}
                       placeholder="Type a message..."
-                      className="w-full p-3 pr-12 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 resize-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                      className="w-full p-3 pr-12 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-gray-400 resize-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
                       rows={1}
+                      disabled={sendingMessage}
                     />
-                    <button className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white transition-colors">
-                      <Smile className="w-5 h-5" />
-                    </button>
                   </div>
                   <button
                     onClick={handleSendMessage}
-                    disabled={!newMessage.trim()}
-                    className="p-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    disabled={!newMessage.trim() || sendingMessage}
+                    className="p-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg hover:from-cyan-400 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    <Send className="w-5 h-5" />
+                    {sendingMessage ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    ) : (
+                      <Send className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
               </div>
@@ -296,6 +373,9 @@ export const Messages: React.FC = () => {
                 <MessageCircle className="w-16 h-16 text-gray-500 mx-auto mb-4" />
                 <h2 className="text-xl font-semibold text-white mb-2">Start a Conversation</h2>
                 <p className="text-gray-400">Select a contact to begin messaging</p>
+                <p className="text-gray-500 text-sm mt-2">
+                  Visit the discussion page to connect with other users
+                </p>
               </div>
             </div>
           )}

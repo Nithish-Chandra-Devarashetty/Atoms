@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { Discussion, Reply } from '../models/Discussion.js';
 import { AuthRequest } from '../middleware/auth.js';
 
@@ -100,12 +101,13 @@ export const likeDiscussion = async (req: AuthRequest, res: Response): Promise<v
       return;
     }
 
-    const isLiked = discussion.likes.includes(userId);
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const isLiked = discussion.likes.some(id => id.equals(userObjectId));
     
     if (isLiked) {
-      discussion.likes = discussion.likes.filter(id => !id.equals(userId));
+      discussion.likes = discussion.likes.filter(id => !id.equals(userObjectId));
     } else {
-      discussion.likes.push(userId);
+      discussion.likes.push(userObjectId);
     }
 
     await discussion.save();
@@ -147,7 +149,7 @@ export const createReply = async (req: AuthRequest, res: Response): Promise<void
     await reply.populate('author', 'displayName photoURL');
 
     // Add reply to discussion
-    discussion.replies.push(reply._id);
+    discussion.replies.push(new mongoose.Types.ObjectId(reply._id));
     await discussion.save();
 
     // Award points for replying

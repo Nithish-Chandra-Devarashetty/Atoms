@@ -61,23 +61,21 @@ export const Navbar: React.FC = () => {
     return () => setMounted(false);
   }, []);
 
-  // --- Hide navbar on scroll down ---
+  // --- Only show navbar when at very top ---
   const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > lastScrollY + 10) {
-        setIsVisible(false); // hide on scroll down
-      } else if (window.scrollY < lastScrollY - 10) {
-        setIsVisible(true); // show on scroll up
+      if (window.scrollY === 0) {
+        setIsVisible(true); // show at top
+      } else {
+        setIsVisible(false); // hide when scrolling down
       }
-      setLastScrollY(window.scrollY);
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [lastScrollY]);
+  }, []);
 
   return (
     <>

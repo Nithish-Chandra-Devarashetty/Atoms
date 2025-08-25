@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 
-interface User {
+export interface User {
   _id: string;
   email: string;
   displayName: string;
@@ -11,7 +11,14 @@ interface User {
   badges: string[];
   streak: number;
   progress: any;
+  createdAt?: string;
+  updatedAt?: string;
 }
+
+type AuthError = {
+  message: string;
+  code?: string;
+};
 
 interface AuthContextType {
   currentUser: User | null;
@@ -19,6 +26,8 @@ interface AuthContextType {
   emailSignup: (email: string, password: string, displayName: string) => Promise<void>;
   emailLogin: (email: string, password: string) => Promise<void>;
   loading: boolean;
+  error: AuthError | null;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -33,7 +42,8 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<AuthError | null>(null);
 
   useEffect(() => {
     // Check for existing token on app load
@@ -46,34 +56,73 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const loadUserProfile = async () => {
+    setLoading(true);
+    clearError();
     try {
       const response = await apiService.getProfile();
       setCurrentUser(response.user);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to load user profile:', error);
+      const errorMessage = error.response?.data?.error || 'Failed to load user profile';
+      setError({ message: errorMessage });
+      // Clear invalid token if exists
       localStorage.removeItem('authToken');
+      setCurrentUser(null);
+      throw new Error(errorMessage);
     } finally {
       setLoading(false);
     }
   };
 
+  const clearError = () => setError(null);
+
   // Email Signup
   const emailSignup = async (email: string, password: string, displayName: string) => {
-    const response = await apiService.register(email, password, displayName);
-    localStorage.setItem('authToken', response.token);
-    setCurrentUser(response.user);
+    setLoading(true);
+    clearError();
+    try {
+      const response = await apiService.signup({ email, password, displayName });
+      localStorage.setItem('authToken', response.token);
+      setCurrentUser(response.user);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Signup failed. Please try again.';
+      setError({ message: errorMessage });
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Email Login
   const emailLogin = async (email: string, password: string) => {
-    const response = await apiService.login(email, password);
-    localStorage.setItem('authToken', response.token);
-    setCurrentUser(response.user);
+    setLoading(true);
+    clearError();
+    try {
+      const response = await apiService.login({ email, password });
+      localStorage.setItem('authToken', response.token);
+      setCurrentUser(response.user);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.error || 'Login failed. Please check your credentials.';
+      setError({ message: errorMessage });
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = async () => {
-    localStorage.removeItem('authToken');
-    setCurrentUser(null);
+    setLoading(true);
+    clearError();
+    try {
+      await apiService.logout();
+      localStorage.removeItem('authToken');
+      setCurrentUser(null);
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Logout failed. Please try again.';
+      setError({ message: errorMessage });
+      throw new Error(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const value = {
@@ -81,7 +130,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     emailSignup,
     emailLogin,
-    loading
+    loading,
+    error,
+    clearError
   };
 
   return (

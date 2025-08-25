@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Bot, Instagram, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
+import { Atom, Instagram, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
@@ -11,7 +11,7 @@ export const Footer: React.FC = () => {
           <div className="col-span-1">
             <div className="flex items-center mb-4">
               <div className="relative">
-                <Bot size={32} className="text-cyan-400" />
+                <Atom size={32} className="text-cyan-400" />
                 <div className="absolute -inset-1 bg-cyan-400/20 blur-sm opacity-100"></div>
               </div>
               <span className="ml-3 text-2xl font-black text-white tracking-tight">Atoms</span>

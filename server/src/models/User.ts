@@ -45,6 +45,10 @@ export interface IUser extends Document {
   lastActiveDate: Date;
   lastLogin: Date;
   
+  // Social features
+  followers: mongoose.Types.ObjectId[];
+  following: mongoose.Types.ObjectId[];
+  
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -126,10 +130,14 @@ const userSchema = new Schema<IUser>({
     type: Number,
     default: 0
   },
-  lastActiveDate: {
-    type: Date,
-    default: Date.now
-  }
+  followers: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  following: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }]
 }, {
   timestamps: true
 });
