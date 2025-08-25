@@ -11,7 +11,7 @@ export const cssData = {
       id: "1",
       title: "CSS Full Course - Styling a Website Tutorial",
       url: "https://youtu.be/ESnrn1kAD4E",
-      duration: "1:30:00",
+      duration: "7:18:24",
       watched: false
     }
   ],
@@ -215,70 +215,6 @@ export const cssData = {
         "transition: left 2s;"
       ],
       correct: 1
-    }
-  ],
-  projectIdeas: [
-    {
-      title: "Personal Portfolio Website",
-      topics: [
-        "CSS selectors",
-        "colors",
-        "typography",
-        "text alignment",
-        "margins",
-        "padding",
-        "linking external stylesheets",
-        "basic layout with the box model"
-      ]
-    },
-    {
-      title: "Product Card or Profile Card UI",
-      topics: [
-        "Box model (margin, border, padding)",
-        "border-radius",
-        "box-shadow",
-        "images",
-        "pseudo-classes (:hover, :active)",
-        "CSS variables",
-        "simple card layouts"
-      ]
-    },
-    {
-      title: "Responsive Landing Page",
-      topics: [
-        "Flexbox for layout",
-        "media queries for responsiveness",
-        "navigation menu styling",
-        "buttons",
-        "background images",
-        "gradients",
-        "positioning",
-        "custom fonts"
-      ]
-    },
-    {
-      title: "Animated Features Showcase Page",
-      topics: [
-        "CSS transitions and transforms",
-        "keyframe animations",
-        "animated buttons/images/icons",
-        "overlays",
-        "advanced pseudo-classes"
-      ]
-    },
-    {
-      title: "Dashboard or Blog Template",
-      topics: [
-        "CSS Grid for complex layouts",
-        "flexbox",
-        "sticky/fixed navigation bars",
-        "form styling",
-        "modals",
-        "z-index",
-        "responsive sidebar",
-        "themes",
-        "custom scrollbars"
-      ]
     }
   ]
 };

@@ -11,7 +11,7 @@ export const reactData = {
       id: "1",
       title: "React Core Concepts",
       url: "https://youtu.be/CgkZ7MvWUAA",
-      duration: "2:00:00",
+      duration: "4:43:02",
       watched: false
     }
   ],

@@ -20,7 +20,7 @@ export const AptitudeTopicPage: React.FC = () => {
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(300); // 5 minutes
+  const [timeLeft, setTimeLeft] = useState(900); // 15 minutes
   const [quizStarted, setQuizStarted] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
@@ -74,7 +74,7 @@ export const AptitudeTopicPage: React.FC = () => {
     setQuizStarted(true);
     setCurrentQuestionIndex(0);
     setScore(0);
-    setTimeLeft(300);
+    setTimeLeft(900); // 15 minutes
     setQuizCompleted(false);
     setAnswers(new Array(questions.length).fill(null));
     setSelectedAnswer(null);
@@ -91,7 +91,7 @@ export const AptitudeTopicPage: React.FC = () => {
   const handleNextQuestion = () => {
     if (selectedAnswer !== null) {
       if (selectedAnswer === questions[currentQuestionIndex].correct) {
-        setScore(score + 1);
+        setScore(score + 10);
       }
     }
 
@@ -116,12 +116,17 @@ export const AptitudeTopicPage: React.FC = () => {
     let finalScore = 0;
     answers.forEach((answer, index) => {
       if (answer === questions[index].correct) {
-        finalScore++;
+        finalScore += 10;
       }
     });
     setScore(finalScore);
     setQuizCompleted(true);
     setQuizStarted(false);
+    
+    // Mark topic as completed if score is good (let's say >= 70%)
+    if (finalScore >= (questions.length * 10 * 0.7)) {
+      localStorage.setItem(`aptitude_${topic}_completed`, 'true');
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -171,12 +176,12 @@ export const AptitudeTopicPage: React.FC = () => {
               </div>
               <div className="text-center p-6 bg-white/5 backdrop-blur-sm border border-white/10">
                 <Clock className="w-8 h-8 text-green-400 mx-auto mb-3" />
-                <div className="text-3xl font-black text-white">5:00</div>
+                <div className="text-3xl font-black text-white">15:00</div>
                 <div className="text-gray-300">Time Limit</div>
               </div>
               <div className="text-center p-6 bg-white/5 backdrop-blur-sm border border-white/10">
                 <Award className="w-8 h-8 text-purple-400 mx-auto mb-3" />
-                <div className="text-3xl font-black text-white">100</div>
+                <div className="text-3xl font-black text-white">150</div>
                 <div className="text-gray-300">Max Points</div>
               </div>
             </div>
@@ -184,8 +189,8 @@ export const AptitudeTopicPage: React.FC = () => {
             <div className="bg-blue-500/10 border border-blue-500/30 p-6 mb-8 backdrop-blur-sm">
               <h3 className="font-semibold text-blue-300 mb-3">Instructions:</h3>
               <ul className="space-y-2 text-blue-200 text-sm">
-                <li>• You have 5 minutes to complete all questions</li>
-                <li>• Each question carries equal marks</li>
+                <li>• You have 15 minutes to complete all questions</li>
+                <li>• Each question carries 10 points (Max 150 points)</li>
                 <li>• You can navigate between questions</li>
                 <li>• Click "Submit Quiz" when you're done</li>
                 <li>• No negative marking for wrong answers</li>
@@ -209,7 +214,8 @@ export const AptitudeTopicPage: React.FC = () => {
   }
 
   if (quizCompleted) {
-    const percentage = Math.round((score / questions.length) * 100);
+    const percentage = Math.round((score / (questions.length * 10)) * 100);
+    const correctAnswers = score / 10;
     
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-orange-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
@@ -227,7 +233,7 @@ export const AptitudeTopicPage: React.FC = () => {
                 <Award className="w-12 h-12 text-white" />
               </div>
               <h1 className="text-4xl font-black text-white mb-4">Quiz Completed!</h1>
-              <p className="text-xl text-gray-300">You scored {score} out of {questions.length} questions</p>
+              <p className="text-xl text-gray-300">You scored {score} points out of {questions.length * 10} points</p>
             </div>
 
             <div className="grid md:grid-cols-3 gap-6 mb-8">
@@ -237,10 +243,10 @@ export const AptitudeTopicPage: React.FC = () => {
               </div>
               <div className="text-center p-6 bg-white/5 backdrop-blur-sm border border-white/10">
                 <div className="text-4xl font-black text-green-400 mb-2">{score}</div>
-                <div className="text-gray-300">Correct</div>
+                <div className="text-gray-300">Points</div>
               </div>
               <div className="text-center p-6 bg-white/5 backdrop-blur-sm border border-white/10">
-                <div className="text-4xl font-black text-red-400 mb-2">{questions.length - score}</div>
+                <div className="text-4xl font-black text-red-400 mb-2">{questions.length - correctAnswers}</div>
                 <div className="text-gray-300">Incorrect</div>
               </div>
             </div>
@@ -295,7 +301,7 @@ export const AptitudeTopicPage: React.FC = () => {
           
           <div className="flex items-center justify-between text-sm text-gray-300 mb-4">
             <span>Question {currentQuestionIndex + 1} of {questions.length}</span>
-            <span>Score: {score}/{questions.length}</span>
+            <span>Points: {score}/{questions.length * 10}</span>
           </div>
           
           <div className="w-full bg-white/20 h-2">

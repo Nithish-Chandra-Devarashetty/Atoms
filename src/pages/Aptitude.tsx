@@ -12,7 +12,16 @@ import {
 import { aptitudeTopics } from '../data/aptitudeData';
 
 export const Aptitude: React.FC = () => {
-  const [completedTopics] = useState<string[]>(['mixture-and-alligation']);
+  // Get completed topics from localStorage instead of hardcoding
+  const [completedTopics] = useState<string[]>(() => {
+    const completed: string[] = [];
+    aptitudeTopics.forEach(topic => {
+      if (localStorage.getItem(`aptitude_${topic.id}_completed`) === 'true') {
+        completed.push(topic.id);
+      }
+    });
+    return completed;
+  });
 
   const topics = aptitudeTopics.map(topic => ({
     id: topic.id,
@@ -21,7 +30,7 @@ export const Aptitude: React.FC = () => {
     icon: topic.icon,
     difficulty: 'Medium',
     questionsCount: topic.questions.length,
-    avgTime: '2 min',
+    avgTime: '15 min',
     completed: completedTopics.includes(topic.id)
   }));
 

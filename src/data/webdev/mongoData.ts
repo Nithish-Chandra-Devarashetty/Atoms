@@ -11,7 +11,7 @@ export const mongoData = {
       id: "1",
       title: "MongoDB Crash Course",
       url: "https://youtu.be/c2M-rlkkT5o",
-      duration: "1:45:00",
+      duration: "1:00:00",
       watched: false
     }
   ],

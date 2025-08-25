@@ -11,7 +11,7 @@ export const nodeData = {
       id: "1",
       title: "Node.js Crash Course",
       url: "https://youtu.be/Oe421EPjeBE",
-      duration: "1:45:00",
+      duration: "8:16:48",
       watched: false
     }
   ],

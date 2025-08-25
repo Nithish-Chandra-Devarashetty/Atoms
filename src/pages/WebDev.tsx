@@ -11,6 +11,12 @@ import {
   Clock,
   Play
 } from 'lucide-react';
+import { htmlData } from '../data/webdev/htmlData';
+import { cssData } from '../data/webdev/cssData';
+import { javascriptData } from '../data/webdev/javascriptData';
+import { reactData } from '../data/webdev/reactData';
+import { nodeData } from '../data/webdev/nodeData';
+import { mongoData } from '../data/webdev/mongoData';
 
 export const WebDev: React.FC = () => {
   const [subjects, setSubjects] = useState([
@@ -20,9 +26,9 @@ export const WebDev: React.FC = () => {
       description: 'HyperText Markup Language - The foundation of web development',
       icon: FileText,
       color: 'from-orange-500 to-red-500',
-      progress: 0, // Will be updated based on quiz completion
+      progress: 0,
       videosWatched: 0,
-      totalVideos: 1,
+      totalVideos: htmlData.videos.length,
       quizzesPassed: 0,
       totalQuizzes: 1
     },
@@ -32,11 +38,11 @@ export const WebDev: React.FC = () => {
       description: 'Cascading Style Sheets - Style and layout for beautiful web pages',
       icon: Palette,
       color: 'from-blue-500 to-cyan-500',
-      progress: 60,
-      videosWatched: 8,
-      totalVideos: 12,
-      quizzesPassed: 5,
-      totalQuizzes: 8
+      progress: 0,
+      videosWatched: 0,
+      totalVideos: cssData.videos.length,
+      quizzesPassed: 0,
+      totalQuizzes: 1
     },
     {
       id: 'javascript',
@@ -44,11 +50,11 @@ export const WebDev: React.FC = () => {
       description: 'Dynamic programming language for interactive web experiences',
       icon: Code,
       color: 'from-yellow-500 to-orange-500',
-      progress: 40,
-      videosWatched: 6,
-      totalVideos: 18,
-      quizzesPassed: 3,
-      totalQuizzes: 12
+      progress: 0,
+      videosWatched: 0,
+      totalVideos: javascriptData.videos.length,
+      quizzesPassed: 0,
+      totalQuizzes: javascriptData.videos.length // 11 quizzes for 11 videos
     },
     {
       id: 'react',
@@ -56,11 +62,11 @@ export const WebDev: React.FC = () => {
       description: 'Modern JavaScript library for building user interfaces',
       icon: Layers,
       color: 'from-cyan-500 to-blue-500',
-      progress: 25,
-      videosWatched: 3,
-      totalVideos: 16,
-      quizzesPassed: 1,
-      totalQuizzes: 10
+      progress: 0,
+      videosWatched: 0,
+      totalVideos: reactData.videos.length,
+      quizzesPassed: 0,
+      totalQuizzes: 1
     },
     {
       id: 'nodejs',
@@ -68,11 +74,11 @@ export const WebDev: React.FC = () => {
       description: 'JavaScript runtime for server-side development',
       icon: Server,
       color: 'from-green-500 to-emerald-500',
-      progress: 10,
-      videosWatched: 1,
-      totalVideos: 14,
+      progress: 0,
+      videosWatched: 0,
+      totalVideos: nodeData.videos.length,
       quizzesPassed: 0,
-      totalQuizzes: 8
+      totalQuizzes: 1
     },
     {
       id: 'mongodb',
@@ -82,24 +88,134 @@ export const WebDev: React.FC = () => {
       color: 'from-green-600 to-green-500',
       progress: 0,
       videosWatched: 0,
-      totalVideos: 10,
+      totalVideos: mongoData.videos.length,
       quizzesPassed: 0,
-      totalQuizzes: 6
+      totalQuizzes: 1
     }
   ]);
 
-  useEffect(() => {
-    // Check quiz completion status for each subject
-    const updatedSubjects = subjects.map(subject => {
-      const isQuizPassed = localStorage.getItem(`quiz_${subject.id}_passed`) === 'true';
+  const calculateProgress = () => {
+    console.log('Calculating progress...');
+    
+    // Get fresh subjects data
+    const currentSubjects = [
+      {
+        id: 'html',
+        totalVideos: htmlData.videos.length,
+        totalQuizzes: 1
+      },
+      {
+        id: 'css',
+        totalVideos: cssData.videos.length,
+        totalQuizzes: 1
+      },
+      {
+        id: 'javascript',
+        totalVideos: javascriptData.videos.length,
+        totalQuizzes: javascriptData.videos.length // 11 quizzes for 11 videos
+      },
+      {
+        id: 'react',
+        totalVideos: reactData.videos.length,
+        totalQuizzes: 1
+      },
+      {
+        id: 'nodejs',
+        totalVideos: nodeData.videos.length,
+        totalQuizzes: 1
+      },
+      {
+        id: 'mongodb',
+        totalVideos: mongoData.videos.length,
+        totalQuizzes: 1
+      }
+    ];
+    
+    // Update subjects with actual progress from localStorage
+    setSubjects(prevSubjects => prevSubjects.map(subject => {
+      const currentSubject = currentSubjects.find(s => s.id === subject.id);
+      if (!currentSubject) return subject;
+      
+      let videosWatched = 0;
+      let quizzesPassed = 0;
+
+      console.log(`Checking progress for ${subject.id}:`);
+
+      if (subject.id === 'javascript') {
+        // JavaScript has 11 videos and 11 quizzes
+        for (let i = 1; i <= currentSubject.totalVideos; i++) {
+          const videoKey = `video_${subject.id}_${i}_watched`;
+          const quizKey = `quiz_${subject.id}_${i}_passed`;
+          
+          if (localStorage.getItem(videoKey) === 'true') {
+            videosWatched++;
+            console.log(`  Video ${i} watched`);
+          }
+          if (localStorage.getItem(quizKey) === 'true') {
+            quizzesPassed++;
+            console.log(`  Quiz ${i} passed`);
+          }
+        }
+      } else {
+        // Other subjects have 1 video and 1 quiz each
+        const videoKey = `video_${subject.id}_1_watched`;
+        const quizKey = `quiz_${subject.id}_passed`;
+        
+        console.log(`  Checking ${videoKey}: ${localStorage.getItem(videoKey)}`);
+        console.log(`  Checking ${quizKey}: ${localStorage.getItem(quizKey)}`);
+        
+        if (localStorage.getItem(videoKey) === 'true') {
+          videosWatched = 1;
+          console.log(`  ${subject.id} video watched`);
+        }
+        if (localStorage.getItem(quizKey) === 'true') {
+          quizzesPassed = 1;
+          console.log(`  ${subject.id} quiz passed`);
+        }
+      }
+
+      // Calculate progress based on both videos and quizzes (50% each)
+      const videoProgress = (videosWatched / currentSubject.totalVideos) * 50;
+      const quizProgress = (quizzesPassed / currentSubject.totalQuizzes) * 50;
+      const totalProgress = Math.round(videoProgress + quizProgress);
+
+      console.log(`  ${subject.id} progress: ${totalProgress}% (videos: ${videosWatched}/${currentSubject.totalVideos}, quizzes: ${quizzesPassed}/${currentSubject.totalQuizzes})`);
+
       return {
         ...subject,
-        progress: isQuizPassed ? 100 : 0,
-        quizzesPassed: isQuizPassed ? 1 : 0
+        progress: totalProgress,
+        videosWatched,
+        quizzesPassed
       };
-    });
-    setSubjects(updatedSubjects);
-  }, []);
+    }));
+  };
+
+  useEffect(() => {
+    // Calculate progress on component mount
+    calculateProgress();
+
+    // Add focus listener to recalculate when window gains focus
+    const handleFocus = () => {
+      console.log('Window gained focus, recalculating progress...');
+      calculateProgress();
+    };
+
+    // Add visibility change listener
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('Page became visible, recalculating progress...');
+        calculateProgress();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []); // Empty dependency array, but calculateProgress uses current state
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">

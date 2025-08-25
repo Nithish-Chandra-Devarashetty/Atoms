@@ -173,9 +173,13 @@ export const Profile: React.FC = () => {
       percentage: Math.round((Object.values(userProgress.progress.webdev).filter((p: any) => p.quizPassed).length / 6) * 100)
     },
     core: { 
-      completed: userProgress.progress.core.os.topicsCompleted.length + userProgress.progress.core.dbms.topicsCompleted.length + userProgress.progress.core.cn.topicsCompleted.length, 
-      total: 20, 
-      percentage: Math.round(((userProgress.progress.core.os.topicsCompleted.length + userProgress.progress.core.dbms.topicsCompleted.length + userProgress.progress.core.cn.topicsCompleted.length) / 20) * 100)
+      completed: userProgress.progress.core.os.topicsCompleted.length + 
+                 userProgress.progress.core.dbms.topicsCompleted.length + 
+                 userProgress.progress.core.cn.topicsCompleted.length, 
+      total: 29, 
+      percentage: Math.round(((userProgress.progress.core.os.topicsCompleted.length + 
+                              userProgress.progress.core.dbms.topicsCompleted.length + 
+                              userProgress.progress.core.cn.topicsCompleted.length) / 29) * 100)
     },
     dsa: { 
       completed: userProgress.progress.dsa.solvedProblems.length, 
@@ -189,7 +193,7 @@ export const Profile: React.FC = () => {
     }
   } : {
     webdev: { completed: 0, total: 6, percentage: 0 },
-    core: { completed: 0, total: 20, percentage: 0 },
+    core: { completed: 0, total: 29, percentage: 0 },
     dsa: { completed: 0, total: 150, percentage: 0 },
     aptitude: { completed: 0, total: 8, percentage: 0 }
   };
@@ -339,7 +343,7 @@ export const Profile: React.FC = () => {
                     <BookOpen className="w-6 h-6 text-green-400 mr-3" />
                     <div>
                       <div className="font-semibold text-white">Core CS</div>
-                      <div className="text-sm text-gray-300">{progress.core.completed}/{progress.core.total} subjects</div>
+                      <div className="text-sm text-gray-300">{progress.core.completed}/{progress.core.total} topics</div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">

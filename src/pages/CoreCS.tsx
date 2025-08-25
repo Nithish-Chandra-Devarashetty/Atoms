@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Monitor, 
@@ -6,12 +6,61 @@ import {
   Network,
   CheckCircle,
   Clock,
-  Play,
   BookOpen,
   ArrowRight
 } from 'lucide-react';
+import { osTopics } from '../data/osTopics';
+import { dbmsTopics } from '../data/dbmsTopics';
+import { cnTopics } from '../data/cnTopics';
 
 export const CoreCS: React.FC = () => {
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // Add listeners for automatic refresh when returning to this page
+  useEffect(() => {
+    const handleFocus = () => setRefreshTrigger(prev => prev + 1);
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        setRefreshTrigger(prev => prev + 1);
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  // Calculate progress based on completed topics from localStorage
+  const calculateTopicProgress = (subjectId: string, totalTopics: number) => {
+    let completedCount = 0;
+    
+    // Check localStorage for completed topics
+    for (let i = 0; i < totalTopics; i++) {
+      const topicData = subjectId === 'os' ? osTopics[i] : 
+                       subjectId === 'dbms' ? dbmsTopics[i] : cnTopics[i];
+      if (topicData) {
+        const isCompleted = localStorage.getItem(`topic_${subjectId}_${topicData.id}_completed`) === 'true';
+        if (isCompleted) completedCount++;
+      }
+    }
+    
+    console.log(`${subjectId} progress: ${completedCount}/${totalTopics}`);
+    
+    return {
+      completed: completedCount,
+      total: totalTopics,
+      percentage: Math.round((completedCount / totalTopics) * 100)
+    };
+  };
+
+  const osProgress = useMemo(() => calculateTopicProgress('os', osTopics.length), [refreshTrigger]);
+  const dbmsProgress = useMemo(() => calculateTopicProgress('dbms', dbmsTopics.length), [refreshTrigger]);
+  const cnProgress = useMemo(() => calculateTopicProgress('cn', cnTopics.length), [refreshTrigger]);
+
   const subjects = [
     {
       id: 'os',
@@ -19,12 +68,10 @@ export const CoreCS: React.FC = () => {
       description: 'Process management, memory management, file systems, and system calls',
       icon: Monitor,
       color: 'from-cyan-400 to-blue-500',
-      progress: 70,
-      videosWatched: 8,
-      totalVideos: 12,
-      quizzesPassed: 6,
-      totalQuizzes: 8,
-      topics: ['Process Management', 'Memory Management', 'File Systems', 'Deadlocks']
+      progress: osProgress.percentage,
+      topicsCompleted: osProgress.completed,
+      totalTopics: osProgress.total,
+      topics: ['Process Management', 'Memory Management', 'File Systems', 'Deadlocks', 'Scheduling', 'Synchronization', 'Virtual Memory', 'I/O Systems', 'Security', 'Distributed Systems']
     },
     {
       id: 'dbms',
@@ -32,12 +79,10 @@ export const CoreCS: React.FC = () => {
       description: 'Relational databases, SQL, normalization, transactions, and indexing',
       icon: Database,
       color: 'from-emerald-400 to-green-500',
-      progress: 45,
-      videosWatched: 5,
-      totalVideos: 10,
-      quizzesPassed: 3,
-      totalQuizzes: 7,
-      topics: ['SQL Queries', 'Normalization', 'Transactions', 'Indexing']
+      progress: dbmsProgress.percentage,
+      topicsCompleted: dbmsProgress.completed,
+      totalTopics: dbmsProgress.total,
+      topics: ['SQL Queries', 'Normalization', 'Transactions', 'Indexing', 'ER Diagrams', 'Relational Algebra', 'Concurrency Control', 'Recovery', 'Distributed Databases']
     },
     {
       id: 'cn',
@@ -45,12 +90,10 @@ export const CoreCS: React.FC = () => {
       description: 'Network protocols, OSI model, TCP/IP, routing, and network security',
       icon: Network,
       color: 'from-purple-400 to-pink-500',
-      progress: 30,
-      videosWatched: 3,
-      totalVideos: 11,
-      quizzesPassed: 2,
-      totalQuizzes: 6,
-      topics: ['OSI Model', 'TCP/IP', 'Routing', 'Network Security']
+      progress: cnProgress.percentage,
+      topicsCompleted: cnProgress.completed,
+      totalTopics: cnProgress.total,
+      topics: ['OSI Model', 'TCP/IP', 'Routing', 'Network Security', 'HTTP/HTTPS', 'DNS', 'DHCP', 'Switching', 'Error Control', 'Flow Control']
     }
   ];
 
@@ -80,15 +123,15 @@ export const CoreCS: React.FC = () => {
           <div className="grid md:grid-cols-3 gap-6">
             <div className="text-center">
               <div className="text-4xl font-black text-cyan-400 mb-2">
-                {subjects.reduce((acc, s) => acc + s.videosWatched, 0)}
+                {subjects.reduce((acc, s) => acc + s.topicsCompleted, 0)}
               </div>
-              <div className="text-gray-300">Videos Watched</div>
+              <div className="text-gray-300">Topics Completed</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-black text-green-400 mb-2">
-                {subjects.reduce((acc, s) => acc + s.quizzesPassed, 0)}
+                {subjects.reduce((acc, s) => acc + s.totalTopics, 0)}
               </div>
-              <div className="text-gray-300">Quizzes Passed</div>
+              <div className="text-gray-300">Total Topics</div>
             </div>
             <div className="text-center">
               <div className="text-4xl font-black text-purple-400 mb-2">
@@ -108,10 +151,8 @@ export const CoreCS: React.FC = () => {
             icon: Icon, 
             color, 
             progress, 
-            videosWatched, 
-            totalVideos, 
-            quizzesPassed, 
-            totalQuizzes,
+            topicsCompleted, 
+            totalTopics,
             topics 
           }) => (
             <Link
@@ -135,7 +176,7 @@ export const CoreCS: React.FC = () => {
                     ) : progress > 0 ? (
                       <Clock className="w-4 h-4 text-yellow-500 mr-1" />
                     ) : (
-                      <Play className="w-4 h-4 text-gray-400 mr-1" />
+                      <BookOpen className="w-4 h-4 text-gray-400 mr-1" />
                     )}
                     <span className="text-sm text-gray-400">
                       {progress === 100 ? 'Completed' : progress > 0 ? 'In Progress' : 'Not Started'}
@@ -182,12 +223,12 @@ export const CoreCS: React.FC = () => {
               {/* Stats */}
               <div className="grid grid-cols-2 gap-4 text-sm relative z-10">
                 <div className="text-center p-3 bg-white/5 backdrop-blur-sm border border-white/10">
-                  <div className="font-semibold text-white">{videosWatched}/{totalVideos}</div>
-                  <div className="text-gray-400">Videos</div>
+                  <div className="font-semibold text-white">{topicsCompleted}/{totalTopics}</div>
+                  <div className="text-gray-400">Topics</div>
                 </div>
                 <div className="text-center p-3 bg-white/5 backdrop-blur-sm border border-white/10">
-                  <div className="font-semibold text-white">{quizzesPassed}/{totalQuizzes}</div>
-                  <div className="text-gray-400">Quizzes</div>
+                  <div className="font-semibold text-white">{topicsCompleted}</div>
+                  <div className="text-gray-400">Completed</div>
                 </div>
               </div>
               

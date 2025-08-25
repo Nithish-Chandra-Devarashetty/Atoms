@@ -11,77 +11,77 @@ export const javascriptData = {
       id: "1",
       title: "1. Variables and Datatypes",
       url: "https://youtu.be/ajdRvxDWH4w",
-      duration: "15:30",
+      duration: "1:21:11",
       watched: false
     },
     {
       id: "2",
       title: "2. Operators and Conditional Statements",
       url: "https://youtu.be/Zg4-uSjxosE",
-      duration: "18:00",
+      duration: "1:16:47",
       watched: false
     },
     {
       id: "3",
       title: "3. Loops and Strings",
       url: "https://youtu.be/UmRtFFSDSFo",
-      duration: "20:00",
+      duration: "1:21:09",
       watched: false
     },
     {
       id: "4",
       title: "4. Arrays",
       url: "https://youtu.be/gFWhbjzowrM",
-      duration: "18:00",
+      duration: "1:00:26",
       watched: false
     },
     {
       id: "5",
       title: "5. Functions and Methods",
       url: "https://youtu.be/P0XMXqDGttU",
-      duration: "20:00",
+      duration: "1:09:10",
       watched: false
     },
     {
       id: "6",
       title: "6. DOM Document Object Model",
       url: "https://youtu.be/7zcXPCt8Ck0",
-      duration: "20:00",
+      duration: "1:22:31",
       watched: false
     },
     {
       id: "7",
       title: "7. DOM(Part 2)",
       url: "https://youtu.be/fXAGTOZ25H8",
-      duration: "20:00",
+      duration: "27:56",
       watched: false
     },
     {
       id: "8",
       title: "8. Events",
       url: "https://youtu.be/_i-uLJAh79U",
-      duration: "20:00",
+      duration: "33:12",
       watched: false
     },
     {
       id: "9",
       title: "9. Classes and Objects",
       url: "https://youtu.be/N-O4w6PynGY",
-      duration: "20:00",
+      duration: "1:00:43",
       watched: false
     },
     {
       id: "10",
       title: "10. Callbacks Promises and Async Await",
       url: "https://youtu.be/d3jXofmQm44",
-      duration: "20:00",
+      duration: "1:23:55",
       watched: false
     },
     {
       id: "11",
       title: "11. Fetch API",
       url: "https://youtu.be/CyGodpqcid4",
-      duration: "20:00",
+      duration: "1:17:15",
       watched: false
     }
   ],

@@ -46,10 +46,17 @@ export const CoreSubjectPage: React.FC = () => {
       if (coreProgress) {
         // Mark topics as completed based on API data
         setTopics(prevTopics => 
-          prevTopics.map(topic => ({
-            ...topic,
-            completed: coreProgress.topicsCompleted.includes(topic.id)
-          }))
+          prevTopics.map(topic => {
+            const isCompleted = coreProgress.topicsCompleted.includes(topic.id);
+            // Sync to localStorage so Core CS page can read it
+            if (isCompleted && subject) {
+              localStorage.setItem(`topic_${subject}_${topic.id}_completed`, 'true');
+            }
+            return {
+              ...topic,
+              completed: isCompleted
+            };
+          })
         );
       }
     } catch (error) {
@@ -103,6 +110,11 @@ export const CoreSubjectPage: React.FC = () => {
     setTopics(topics.map(topic => 
       topic.id === topicId ? { ...topic, completed: true } : topic
     ));
+    
+    // Save to localStorage so the Core CS page can read the progress
+    if (subject) {
+      localStorage.setItem(`topic_${subject}_${topicId}_completed`, 'true');
+    }
   };
 
   const startQuiz = (topic: Topic) => {

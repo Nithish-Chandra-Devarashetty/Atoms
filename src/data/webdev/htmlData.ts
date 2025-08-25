@@ -11,7 +11,7 @@ export const htmlData = {
       id: "1",
       title: "HTML Full Course - Build a Website Tutorial",
       url: "https://youtu.be/HcOc7P5BMi4",
-      duration: "2:02:00",
+      duration: "2:06:00",
       watched: false
     }
   ],
@@ -165,69 +165,6 @@ export const htmlData = {
         "Inline styles"
       ],
       correct: 1
-    }
-  ],
-  projectIdeas: [
-    {
-      title: "Personal Portfolio Page",
-      topics: [
-        "Elements",
-        "headings",
-        "paragraphs",
-        "images",
-        "hyperlinks",
-        "lists",
-        "semantic tags"
-      ]
-    },
-    {
-      title: "Restaurant Menu",
-      topics: [
-        "Tables",
-        "images",
-        "lists",
-        "special characters",
-        "styling with basic inline styles"
-      ]
-    },
-    {
-      title: "Survey Form",
-      topics: [
-        "Form tags",
-        "input types (text, email, radio, checkbox, date, etc.)",
-        "labels",
-        "fieldset",
-        "legend",
-        "textarea",
-        "select options"
-      ]
-    },
-    {
-      title: "Product Landing Page",
-      topics: [
-        "Multimedia (images, audio, video)",
-        "embedding videos",
-        "semantic structure",
-        "navigation links",
-        "sections",
-        "footer",
-        "forms"
-      ]
-    },
-    {
-      title: "Technical Documentation Page",
-      topics: [
-        "Nested navigation (unordered/ordered lists)",
-        "multiple sections",
-        "aside",
-        "article",
-        "code snippets (<code>, <pre>)",
-        "hyperlinks",
-        "IDs",
-        "anchor links",
-        "semantic HTML5 tags",
-        "tables"
-      ]
     }
   ]
 };

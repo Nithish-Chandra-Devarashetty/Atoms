@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { CheckCircle, Clock, Award, Pizza as QuizIcon, ArrowRight, Lock } from 'lucide-react';
-import { PracticeProjects } from '../components/PracticeProjects';
 import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { htmlData as rawHtmlData } from '../data/webdev/htmlData';
@@ -10,9 +9,7 @@ import { javascriptData as rawJavascriptData } from '../data/webdev/javascriptDa
 import { reactData as rawReactData } from '../data/webdev/reactData';
 import { nodeData as rawNodeData } from '../data/webdev/nodeData';
 import { mongoData as rawMongoData } from '../data/webdev/mongoData';
-import { Project as ReactProject, reactProjects } from '../data/reactProjects';
-import { Project as NodeProject, nodeProjects } from '../data/nodeProjects';
-import { Project as MongoProject, mongoProjects } from '../data/mongoProjects';
+
 
 const htmlData: {
   url: string;
@@ -20,7 +17,6 @@ const htmlData: {
   subjectInfo: { title: string; description: string; color: string };
   videos: Video[];
   quiz: QuizQuestion[];
-  projectIdeas: { title: string; topics: string[] }[];
 } = rawHtmlData;
 
 const cssData: {
@@ -29,7 +25,6 @@ const cssData: {
   subjectInfo: { title: string; description: string; color: string };
   videos: Video[];
   quiz: QuizQuestion[];
-  projectIdeas: { title: string; topics: string[] }[];
 } = rawCssData;
 
 const javascriptData: {
@@ -82,28 +77,6 @@ interface QuizQuestion {
   correct: number;
 }
 
-// Helper to map projectIdeas to Project[]
-const mapProjectIdeasToProjects = (projectIdeas: { title: string; topics: string[] }[], subject: string): ReactProject[] | NodeProject[] | MongoProject[] => {
-  if (subject === 'react') {
-    return reactProjects;
-  }
-  
-  if (subject === 'nodejs') {
-    return nodeProjects;
-  }
-
-  if (subject === 'mongodb') {
-    return mongoProjects;
-  }
-  
-  return projectIdeas.map((idea, idx) => ({
-    id: `${subject}-${idx}`,
-    title: idea.title,
-    description: `Build a project: ${idea.title}`,
-    concepts: idea.topics,
-    features: [],
-  }));
-};
 
 export const SubjectPage: React.FC = () => {
   const { subject } = useParams<{ subject: 'html' | 'css' | 'javascript' | 'react' | 'nodejs' | 'mongodb' }>();
@@ -245,6 +218,12 @@ export const SubjectPage: React.FC = () => {
       setCurrentVideo({ ...currentVideo, watched: true });
     }
 
+    // Set localStorage for progress tracking
+    if (subject) {
+      localStorage.setItem(`video_${subject}_${videoId}_watched`, 'true');
+      console.log(`Set localStorage: video_${subject}_${videoId}_watched = true`);
+    }
+
     // Send to API if user is logged in
     if (currentUser && subject) {
       apiService.markVideoWatched(subject, videoId).catch(error => {
@@ -291,6 +270,12 @@ export const SubjectPage: React.FC = () => {
     
     if (passed) {
       setIsQuizPassed(true);
+      
+      // Set localStorage for progress tracking
+      if (subject) {
+        localStorage.setItem(`quiz_${subject}_passed`, 'true');
+        console.log(`Set localStorage: quiz_${subject}_passed = true`);
+      }
     }
 
     // Submit to API if user is logged in
@@ -426,8 +411,7 @@ export const SubjectPage: React.FC = () => {
               </button>
               <button
                 onClick={handleNextQuestion}
-                disabled={submittingQuiz}
-                disabled={selectedAnswer === null}
+                disabled={submittingQuiz || selectedAnswer === null}
                 className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {submittingQuiz ? 'Submitting...' : currentQuestionIndex < quizQuestions.length - 1 ? 'Next Question' : 'Finish Quiz'}
@@ -563,10 +547,24 @@ export const SubjectPage: React.FC = () => {
                     const selected = videos.find(v => v.id === e.target.value);
                     if (selected) setCurrentVideo(selected);
                   }}
-                  className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                  className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent appearance-none"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e")`,
+                    backgroundPosition: 'right 0.5rem center',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundSize: '1.5em 1.5em',
+                    WebkitAppearance: 'none',
+                    MozAppearance: 'none',
+                    appearance: 'none'
+                  }}
                 >
                   {videos.map(video => (
-                    <option key={video.id} value={video.id}>
+                    <option 
+                      key={video.id} 
+                      value={video.id}
+                      className="bg-gray-800 text-white py-2"
+                      style={{ backgroundColor: '#1f2937', color: '#ffffff' }}
+                    >
                       {video.title}
                     </option>
                   ))}
@@ -619,10 +617,10 @@ export const SubjectPage: React.FC = () => {
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-4">
                   <div className="text-2xl font-black text-white">
-                    {isQuizPassed ? 'Completed' : '15 Questions'}
+                    {isQuizPassed ? 'Completed' : `${quizQuestions.length} Questions`}
                   </div>
                   <div className="text-sm text-gray-300">
-                    {isQuizPassed ? '100%' : 'HTML Fundamentals'}
+                    {isQuizPassed ? '100%' : `${subjectInfo.title} Fundamentals`}
                   </div>
                 </div>
                 
@@ -635,8 +633,8 @@ export const SubjectPage: React.FC = () => {
                 
                 <p className="text-gray-300 text-sm">
                   {isQuizPassed 
-                    ? 'You have successfully completed the HTML quiz!'
-                    : 'Test your knowledge with 15 comprehensive HTML questions.'
+                    ? `You have successfully completed the ${subjectInfo.title} quiz!`
+                    : `Test your knowledge with ${quizQuestions.length} comprehensive ${subjectInfo.title} questions.`
                   }
                 </p>
               </div>
@@ -682,54 +680,13 @@ export const SubjectPage: React.FC = () => {
                              {/* Quiz Stats */}
                <div className="mt-6 pt-6 border-t border-white/20">
                  <div className="text-center">
-                   <div className="font-black text-white">15</div>
+                   <div className="font-black text-white">{quizQuestions.length}</div>
                    <div className="text-gray-300">Questions</div>
                  </div>
                </div>
             </div>
           </div>
           
-                     {/* Practice Projects Section */}
-           {(subject === 'html' || subject === 'css' || subject === 'javascript' || subject === 'react' || subject === 'nodejs' || subject === 'mongodb') && (
-             <div className="mt-12 relative z-10">
-               {subject === 'html' && (
-                 <PracticeProjects
-                   projects={mapProjectIdeasToProjects(htmlData.projectIdeas, 'html')}
-                   subject="HTML"
-                 />
-               )}
-               {subject === 'css' && (
-                 <PracticeProjects
-                   projects={mapProjectIdeasToProjects(cssData.projectIdeas, 'css')}
-                   subject="CSS"
-                 />
-               )}
-               {subject === 'javascript' && (
-                 <PracticeProjects
-                   projects={mapProjectIdeasToProjects(javascriptData.projectIdeas, 'javascript')}
-                   subject="JavaScript"
-                 />
-               )}
-               {subject === 'react' && (
-                 <PracticeProjects
-                   projects={mapProjectIdeasToProjects(reactData.projectIdeas, 'react')}
-                   subject="React"
-                 />
-               )}
-               {subject === 'nodejs' && (
-                 <PracticeProjects
-                   projects={nodeProjects}
-                   subject="Node.js"
-                 />
-               )}
-               {subject === 'mongodb' && (
-                 <PracticeProjects
-                   projects={mongoProjects}
-                   subject="MongoDB"
-                 />
-               )}
-             </div>
-           )}
         </div>
       </div>
     </div>
