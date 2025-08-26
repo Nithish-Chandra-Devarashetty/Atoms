@@ -62,18 +62,24 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction): 
 export const corsOptions = {
   origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
     // In development, allow all local network origins
-    if (process.env.NODE_ENV === 'development') {
-      // Allow requests with no origin (mobile apps, etc.)
+    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV !== 'production') {
+      // Allow requests with no origin (mobile apps, Postman, etc.)
       if (!origin) return callback(null, true);
       
       // Allow localhost and local network IPs
       const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
       const isLocalNetwork = /^https?:\/\/(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.)/.test(origin);
-      const isViteHMR = origin.includes('5173') || origin.includes('5174');
+      const isViteHMR = origin.includes('5173') || origin.includes('5174') || origin.includes('4173');
       
-      if (isLocalhost || isLocalNetwork || isViteHMR) {
+      // More permissive check for local development - allow any local IP with Vite ports
+      const isLocalDev = /^https?:\/\/\d+\.\d+\.\d+\.\d+:(5173|5174|4173)$/.test(origin);
+      
+      if (isLocalhost || isLocalNetwork || isViteHMR || isLocalDev) {
+        console.log('✅ CORS: Allowing local development origin:', origin);
         return callback(null, true);
       }
+      
+      console.log('❌ CORS: Rejecting origin:', origin);
     }
     
     // Production allowed origins
@@ -95,5 +101,5 @@ export const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
 };

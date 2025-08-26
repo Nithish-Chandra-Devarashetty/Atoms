@@ -3,16 +3,23 @@ import Joi from 'joi';
 
 export const validateRequest = (schema: Joi.ObjectSchema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
+    console.log('🔍 Validating request body:', req.body);
     const { error } = schema.validate(req.body);
     
     if (error) {
+      console.error('❌ Validation failed:', error.details);
       res.status(400).json({
         error: 'Validation failed',
-        details: error.details.map(detail => detail.message)
+        details: error.details.map(detail => ({
+          message: detail.message,
+          path: detail.path,
+          value: detail.context?.value
+        }))
       });
       return;
     }
     
+    console.log('✅ Validation passed');
     next();
   };
 };

@@ -3,16 +3,34 @@ const getApiBaseUrl = () => {
   // If we're in development and the current host is not localhost, use the current host
   if (import.meta.env.DEV && typeof window !== 'undefined') {
     const currentHost = window.location.hostname;
+    
+    // If accessing via IP address (not localhost), use the same IP for API
     if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
+      console.log('🌐 Using network API URL for host:', currentHost);
       return `http://${currentHost}:5000/api`;
     }
   }
   
-  // Default to localhost for development
-  return import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  // Default to localhost for development or use environment variable
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+  console.log('🔗 API Base URL:', baseUrl);
+  return baseUrl;
 };
 
 const API_BASE_URL = getApiBaseUrl();
+
+// Test API connectivity
+export const testApiConnection = async () => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/test`);
+    const data = await response.json();
+    console.log('✅ API Connection Test Success:', data);
+    return { success: true, data };
+  } catch (error) {
+    console.error('❌ API Connection Test Failed:', error);
+    return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+  }
+};
 
 type AuthResponse = {
   message: string;
@@ -30,22 +48,54 @@ class ApiService {
   }
 
   private async handleResponse<T = any>(response: Response): Promise<T> {
-    const data = await response.json().catch(() => ({}));
+    let data: any = {};
+    
+    try {
+      data = await response.json();
+    } catch (jsonError) {
+      console.warn('Failed to parse JSON response:', jsonError);
+      data = { error: 'Invalid response format' };
+    }
     
     if (!response.ok) {
-      const error = new Error(data.error || 'Request failed');
-      (error as any).response = { data };
+      console.error('API Error:', {
+        status: response.status,
+        statusText: response.statusText,
+        url: response.url,
+        data
+      });
+      
+      const error = new Error(data.error || data.message || `HTTP ${response.status}: ${response.statusText}`);
+      (error as any).response = { data, status: response.status };
       throw error;
     }
     
     return data as T;
   }
 
+  private async fetchWithErrorHandling(url: string, options: RequestInit = {}): Promise<Response> {
+    try {
+      console.log('🔄 Making API request to:', url);
+      const response = await fetch(url, {
+        ...options,
+        headers: {
+          ...this.getAuthHeaders(),
+          ...options.headers
+        }
+      });
+      console.log('✅ API response:', response.status, response.statusText);
+      return response;
+    } catch (networkError) {
+      console.error('❌ Network error:', networkError);
+      console.error('Failed to connect to API server. Make sure the server is running on the correct port.');
+      throw new Error('Network error: Unable to connect to server');
+    }
+  }
+
   // Auth endpoints
   async signup(data: { email: string; password: string; displayName: string }): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    const response = await this.fetchWithErrorHandling(`${API_BASE_URL}/auth/register`, {
       method: 'POST',
-      headers: this.getAuthHeaders(),
       body: JSON.stringify(data)
     });
     return this.handleResponse(response);
@@ -57,9 +107,8 @@ class ApiService {
   }
 
   async login(credentials: { email: string; password: string }): Promise<AuthResponse> {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    const response = await this.fetchWithErrorHandling(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
-      headers: this.getAuthHeaders(),
       body: JSON.stringify(credentials)
     });
     return this.handleResponse(response);
@@ -145,16 +194,13 @@ class ApiService {
     if (search) params.append('search', search);
     if (tags?.length) tags.forEach(tag => params.append('tags', tag));
 
-    const response = await fetch(`${API_BASE_URL}/discussions?${params}`, {
-      headers: this.getAuthHeaders()
-    });
+    const response = await this.fetchWithErrorHandling(`${API_BASE_URL}/discussions?${params}`);
     return this.handleResponse(response);
   }
 
   async createDiscussion(content: string, tags: string[] = []) {
-    const response = await fetch(`${API_BASE_URL}/discussions`, {
+    const response = await this.fetchWithErrorHandling(`${API_BASE_URL}/discussions`, {
       method: 'POST',
-      headers: this.getAuthHeaders(),
       body: JSON.stringify({ content, tags })
     });
     return this.handleResponse(response);

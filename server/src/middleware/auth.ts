@@ -15,13 +15,21 @@ export const authenticateToken = async (
     const authHeader = req.headers.authorization;
     const token = authHeader && authHeader.split(' ')[1];
 
+    console.log('🔐 Auth check:', {
+      hasAuthHeader: !!authHeader,
+      hasToken: !!token,
+      path: req.path
+    });
+
     if (!token) {
+      console.error('❌ No access token provided');
       res.status(401).json({ error: 'Access token required' });
       return;
     }
 
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
+      console.error('❌ JWT secret not configured');
       res.status(500).json({ error: 'JWT secret not configured' });
       return;
     }
@@ -30,14 +38,16 @@ export const authenticateToken = async (
     const user = await User.findById(decoded.userId).select('-password');
 
     if (!user) {
+      console.error('❌ Invalid token - user not found');
       res.status(401).json({ error: 'Invalid token' });
       return;
     }
 
+    console.log('✅ User authenticated:', user.displayName);
     req.user = user;
     next();
   } catch (error) {
-    console.error('Auth middleware error:', error);
+    console.error('❌ Auth middleware error:', error);
     res.status(401).json({ error: 'Invalid token' });
   }
 };

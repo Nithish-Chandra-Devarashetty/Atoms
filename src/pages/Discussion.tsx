@@ -53,10 +53,14 @@ export const Discussion: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
+      console.log('🔄 Fetching discussions...');
       const response = await apiService.getDiscussions(1, searchQuery, selectedTags);
+      console.log('✅ Discussions fetched successfully:', response);
       setDiscussions(response.discussions);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load discussions');
+      console.error('❌ Error fetching discussions:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load discussions';
+      setError(`Network Error: ${errorMessage}. Please check your connection to the server.`);
     } finally {
       setLoading(false);
     }
@@ -66,14 +70,43 @@ export const Discussion: React.FC = () => {
     e.preventDefault();
     if (!currentUser || !newDiscussion.trim()) return;
 
+    // Client-side validation
+    if (newDiscussion.trim().length < 10) {
+      setError('Discussion content must be at least 10 characters long');
+      return;
+    }
+
+    if (newDiscussion.trim().length > 2000) {
+      setError('Discussion content must be less than 2000 characters');
+      return;
+    }
+
     setSubmitting(true);
+    setError(null);
     try {
       const tags = newTags.split(',').map(tag => tag.trim()).filter(tag => tag);
-      const response = await apiService.createDiscussion(newDiscussion, tags);
+      
+      // Validate tags
+      if (tags.length > 5) {
+        setError('Maximum 5 tags are allowed');
+        return;
+      }
+      
+      for (const tag of tags) {
+        if (tag.length > 20) {
+          setError(`Tag "${tag}" is too long. Maximum 20 characters per tag.`);
+          return;
+        }
+      }
+
+      console.log('🔄 Creating discussion:', { content: newDiscussion.trim(), tags });
+      const response = await apiService.createDiscussion(newDiscussion.trim(), tags);
+      console.log('✅ Discussion created successfully:', response);
       setDiscussions(prev => [response.discussion, ...prev]);
       setNewDiscussion('');
       setNewTags('');
     } catch (err) {
+      console.error('❌ Error creating discussion:', err);
       setError(err instanceof Error ? err.message : 'Failed to create discussion');
     } finally {
       setSubmitting(false);
@@ -217,24 +250,53 @@ export const Discussion: React.FC = () => {
           <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 mb-8 z-10">
             <h2 className="text-3xl font-black text-white mb-6">Start a Discussion</h2>
             <form onSubmit={handleCreateDiscussion} className="space-y-6">
-              <textarea
-                value={newDiscussion}
-                onChange={(e) => setNewDiscussion(e.target.value)}
-                placeholder="What would you like to discuss?"
-                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent resize-none transition-all"
-                rows={4}
-                required
-              />
-              <input
-                type="text"
-                value={newTags}
-                onChange={(e) => setNewTags(e.target.value)}
-                placeholder="Tags (comma-separated, e.g., javascript, react, help)"
-                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
-              />
+              <div>
+                <textarea
+                  value={newDiscussion}
+                  onChange={(e) => setNewDiscussion(e.target.value)}
+                  placeholder="What would you like to discuss? (minimum 10 characters)"
+                  className={`w-full px-4 py-3 bg-white/10 backdrop-blur-sm border transition-all resize-none ${
+                    newDiscussion.trim().length > 0 && newDiscussion.trim().length < 10
+                      ? 'border-red-500 focus:ring-red-500' 
+                      : 'border-white/20 focus:ring-cyan-500'
+                  } text-white placeholder-gray-400 focus:ring-2 focus:border-transparent`}
+                  rows={4}
+                  required
+                />
+                <div className="flex justify-between items-center mt-2">
+                  <div className="text-sm">
+                    {newDiscussion.trim().length < 10 ? (
+                      <span className="text-red-400">
+                        {10 - newDiscussion.trim().length} more characters needed
+                      </span>
+                    ) : (
+                      <span className="text-green-400">✓ Minimum length met</span>
+                    )}
+                  </div>
+                  <div className="text-sm text-gray-400">
+                    {newDiscussion.length}/2000 characters
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <input
+                  type="text"
+                  value={newTags}
+                  onChange={(e) => setNewTags(e.target.value)}
+                  placeholder="Tags (comma-separated, e.g., javascript, react, help) - max 5 tags, 20 chars each"
+                  className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                />
+                {newTags && (
+                  <div className="mt-2 text-sm text-gray-400">
+                    Tags: {newTags.split(',').map(tag => tag.trim()).filter(tag => tag).length}/5
+                  </div>
+                )}
+              </div>
+              
               <button
                 type="submit"
-                disabled={submitting || !newDiscussion.trim()}
+                disabled={submitting || !newDiscussion.trim() || newDiscussion.trim().length < 10}
                 className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-6 py-3 font-semibold hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transition-all duration-200"
               >
                 {submitting ? 'Posting...' : 'Post Discussion'}

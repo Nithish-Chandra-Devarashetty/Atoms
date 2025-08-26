@@ -55,7 +55,14 @@ export const getDiscussions = async (req: AuthRequest, res: Response): Promise<v
 
 export const createDiscussion = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    console.log('📝 Create discussion request:', {
+      user: req.user ? { id: req.user._id, name: req.user.displayName } : null,
+      body: req.body,
+      headers: req.headers.authorization ? 'Present' : 'Missing'
+    });
+
     if (!req.user) {
+      console.error('❌ User not authenticated');
       res.status(401).json({ error: 'User not authenticated' });
       return;
     }
@@ -75,13 +82,15 @@ export const createDiscussion = async (req: AuthRequest, res: Response): Promise
     req.user.totalPoints += 25;
     await req.user.save();
 
+    console.log('✅ Discussion created successfully:', discussion._id);
+
     res.status(201).json({
       message: 'Discussion created successfully',
       discussion,
       pointsEarned: 25
     });
   } catch (error) {
-    console.error('Create discussion error:', error);
+    console.error('❌ Create discussion error:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

@@ -1,0 +1,22 @@
+{
+  "timestamp": "2025-08-26T08:56:20.816Z",
+  "primaryIP": "172.168.14.8",
+  "allInterfaces": [
+    {
+      "interface": "Wi-Fi",
+      "address": "172.168.14.8",
+      "netmask": "255.255.248.0",
+      "mac": "c8:5e:a9:f1:ae:19"
+    },
+    {
+      "interface": "vEthernet (WSL (Hyper-V firewall))",
+      "address": "172.21.208.1",
+      "netmask": "255.255.240.0",
+      "mac": "00:15:5d:13:19:20"
+    }
+  ],
+  "urls": {
+    "frontend": "http://172.168.14.8:5173",
+    "backend": "http://172.168.14.8:5000"
+  }
+}

@@ -30,6 +30,12 @@ connectDatabase();
 // Security middleware
 app.use(securityHeaders);
 
+// Request logging middleware
+app.use((req, res, next) => {
+  console.log(`📡 ${new Date().toISOString()} - ${req.method} ${req.path} from ${req.ip} (Origin: ${req.get('Origin') || 'none'})`);
+  next();
+});
+
 // Handle preflight requests
 app.options('*', cors(corsOptions));
 
@@ -47,11 +53,26 @@ app.use(morgan('combined'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
+  console.log('🏥 Health check requested from:', req.ip, req.get('Origin'));
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
     uptime: process.uptime(),
-    environment: process.env.NODE_ENV || 'development'
+    environment: process.env.NODE_ENV || 'development',
+    server: 'Atoms Learning Platform',
+    requestOrigin: req.get('Origin'),
+    requestIP: req.ip
+  });
+});
+
+// CORS test endpoint
+app.get('/api/test', (req, res) => {
+  console.log('🧪 API test requested from:', req.ip, req.get('Origin'));
+  res.json({ 
+    message: 'CORS and API connection working!',
+    origin: req.get('Origin'),
+    ip: req.ip,
+    timestamp: new Date().toISOString()
   });
 });
 
