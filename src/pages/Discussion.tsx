@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { UserProfileModal } from '../components/UserProfileModal';
+import { RealTimeIndicator } from '../components/RealTimeIndicator';
+import { useRealTimeUpdates } from '../hooks/useRealTimeUpdates';
 
 interface Discussion {
   _id: string;
@@ -44,6 +46,51 @@ export const Discussion: React.FC = () => {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+  // Real-time updates for discussions
+  const handleDiscussionsUpdate = (newDiscussions: Discussion[]) => {
+    console.log('🔄 Handling discussions update:', newDiscussions.length, 'discussions received');
+    console.log('Current discussions count:', discussions.length);
+    
+    // Always update if we receive new data - let React handle the re-rendering optimization
+    if (newDiscussions && newDiscussions.length >= 0) {
+      // Check for actual differences by comparing IDs or timestamps
+      const currentIds = discussions.map(d => d._id).sort().join(',');
+      const newIds = newDiscussions.map(d => d._id).sort().join(',');
+      
+      if (currentIds !== newIds || newDiscussions.length !== discussions.length) {
+        console.log('✅ Discussions have changed, updating...');
+        setDiscussions(newDiscussions);
+      } else {
+        // Check if any discussion content has been updated
+        const hasContentChanges = newDiscussions.some((newDisc) => {
+          const currentDisc = discussions.find(d => d._id === newDisc._id);
+          if (!currentDisc) return true;
+          
+          return (
+            newDisc.content !== currentDisc.content ||
+            newDisc.likes.length !== currentDisc.likes.length ||
+            newDisc.replies.length !== currentDisc.replies.length ||
+            newDisc.updatedAt !== currentDisc.updatedAt
+          );
+        });
+        
+        if (hasContentChanges) {
+          console.log('✅ Discussion content has changed, updating...');
+          setDiscussions(newDiscussions);
+        }
+      }
+    }
+  };
+
+  const { lastFetchTimes, isEnabled } = useRealTimeUpdates({
+    onDiscussionsUpdate: handleDiscussionsUpdate,
+    shouldFetchDiscussions: true,
+    discussionsSearchQuery: searchQuery,
+    discussionsSelectedTags: selectedTags,
+    interval: 3000, // Poll every 3 seconds for very responsive updates
+    enabled: !loading && !submitting // Don't poll while loading or submitting
+  });
 
   useEffect(() => {
     fetchDiscussions();
@@ -105,6 +152,11 @@ export const Discussion: React.FC = () => {
       setDiscussions(prev => [response.discussion, ...prev]);
       setNewDiscussion('');
       setNewTags('');
+      
+      // Immediately fetch latest discussions to ensure real-time sync
+      setTimeout(() => {
+        fetchDiscussions();
+      }, 500);
     } catch (err) {
       console.error('❌ Error creating discussion:', err);
       setError(err instanceof Error ? err.message : 'Failed to create discussion');
@@ -204,6 +256,15 @@ export const Discussion: React.FC = () => {
           <p className="text-xl text-gray-300 max-w-3xl mx-auto font-light">
             Connect with fellow learners, share knowledge, and get help from the community
           </p>
+          
+          {/* Real-time indicator */}
+          <div className="mt-4 flex justify-center">
+            <RealTimeIndicator 
+              isConnected={isEnabled}
+              lastUpdate={lastFetchTimes.discussions}
+              className="text-sm"
+            />
+          </div>
         </div>
 
         {/* Main Content Container */}

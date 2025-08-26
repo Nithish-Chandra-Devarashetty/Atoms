@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
+import { useRealTimeUpdates } from '../hooks/useRealTimeUpdates';
 import LoginModal from './LoginModal';
 import { 
   Home, 
@@ -30,15 +31,25 @@ const Navbar: React.FC = () => {
   const toggleMenu = () => setIsOpen(!isOpen);
   const closeMenu = () => setIsOpen(false);
 
-  // Fetch notifications when user is logged in
+  // Fetch initial notifications and set up real-time updates
   useEffect(() => {
     if (currentUser) {
       fetchNotifications();
-      // Poll for new notifications every 30 seconds
-      const interval = setInterval(fetchNotifications, 30000);
-      return () => clearInterval(interval);
     }
   }, [currentUser]);
+
+  // Real-time updates for notification count
+  const handleNotificationsUpdate = (newNotifications: any[]) => {
+    const unreadCount = newNotifications.filter(n => !n.isRead).length;
+    setUnreadCount(unreadCount);
+  };
+
+  useRealTimeUpdates({
+    onNotificationsUpdate: handleNotificationsUpdate,
+    shouldFetchNotifications: !!currentUser,
+    interval: 20000, // Poll every 20 seconds
+    enabled: !!currentUser
+  });
 
   const fetchNotifications = async () => {
     if (!currentUser) return;

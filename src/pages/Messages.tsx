@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
+import { RealTimeIndicator } from '../components/RealTimeIndicator';
+import { useRealTimeUpdates } from '../hooks/useRealTimeUpdates';
 
 interface Conversation {
   _id: string;
@@ -90,6 +92,67 @@ export const Messages: React.FC = () => {
     }
   }, [selectedUserId]);
 
+  // Real-time updates for messages and conversations
+  const handleMessagesUpdate = (newMessages: Message[]) => {
+    console.log('🔄 Handling messages update:', newMessages.length, 'messages received');
+    console.log('Current messages count:', messages.length);
+    
+    if (newMessages && newMessages.length >= 0) {
+      // Check for differences
+      const currentIds = messages.map(m => m._id).sort().join(',');
+      const newIds = newMessages.map(m => m._id).sort().join(',');
+      
+      if (currentIds !== newIds || newMessages.length !== messages.length) {
+        console.log('✅ Messages have changed, updating...');
+        setMessages(newMessages);
+      }
+    }
+  };
+
+  const handleConversationsUpdate = (newConversations: Conversation[]) => {
+    console.log('🔄 Handling conversations update:', newConversations.length, 'conversations received');
+    console.log('Current conversations count:', conversations.length);
+    
+    if (newConversations && newConversations.length >= 0) {
+      // Check for differences
+      const currentIds = conversations.map(c => c._id).sort().join(',');
+      const newIds = newConversations.map(c => c._id).sort().join(',');
+      
+      if (currentIds !== newIds || newConversations.length !== conversations.length) {
+        console.log('✅ Conversations have changed, updating...');
+        setConversations(newConversations);
+      } else {
+        // Check for lastMessage changes
+        const hasChanges = newConversations.some(newConv => {
+          const currentConv = conversations.find(c => c._id === newConv._id);
+          if (!currentConv) return true;
+          
+          return (
+            newConv.lastMessage?._id !== currentConv.lastMessage?._id ||
+            newConv.lastActivity !== currentConv.lastActivity
+          );
+        });
+        
+        if (hasChanges) {
+          console.log('✅ Conversation content has changed, updating...');
+          setConversations(newConversations);
+        }
+      }
+    }
+  };
+
+  const { lastFetchTimes, isEnabled } = useRealTimeUpdates({
+    onMessagesUpdate: handleMessagesUpdate,
+    shouldFetchMessages: !!selectedUserId,
+    selectedUserId: selectedUserId || undefined,
+    
+    onConversationsUpdate: handleConversationsUpdate,
+    shouldFetchConversations: true,
+    
+    interval: 2000, // Poll every 2 seconds for messages
+    enabled: !loading && !sendingMessage // Don't poll while loading or sending
+  });
+
   const fetchConversations = async () => {
     try {
       const response = await apiService.getConversations();
@@ -159,6 +222,13 @@ export const Messages: React.FC = () => {
       // After first message, clear selectedUserInfo and refresh conversations
       setSelectedUserInfo(null);
       fetchConversations();
+      
+      // Immediately fetch latest messages to ensure real-time sync
+      setTimeout(() => {
+        if (selectedUserId) {
+          fetchMessages(selectedUserId);
+        }
+      }, 500);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message');
     } finally {
@@ -248,6 +318,15 @@ export const Messages: React.FC = () => {
           <p className="text-xl text-gray-300 max-w-3xl mx-auto font-light">
             Connect with fellow learners and stay in touch with your network
           </p>
+          
+          {/* Real-time indicator */}
+          <div className="mt-4 flex justify-center">
+            <RealTimeIndicator 
+              isConnected={isEnabled}
+              lastUpdate={lastFetchTimes.conversations || lastFetchTimes.messages}
+              className="text-sm"
+            />
+          </div>
         </div>
 
         {/* Main Content - Mobile First Design */}

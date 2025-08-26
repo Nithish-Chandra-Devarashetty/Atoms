@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, CheckCheck, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
+import { useRealTimeUpdates } from '../hooks/useRealTimeUpdates';
 
 interface Notification {
   _id: string;
@@ -33,6 +34,22 @@ export const Notifications: React.FC = () => {
       fetchNotifications(1);
     }
   }, [currentUser]);
+
+  // Real-time updates for notifications
+  const handleNotificationsUpdate = (newNotifications: Notification[]) => {
+    const hasChanges = JSON.stringify(newNotifications) !== JSON.stringify(notifications.slice(0, 20)); // Compare with first 20
+    if (hasChanges && newNotifications.length > 0) {
+      console.log('🔄 Real-time update: New notifications received');
+      setNotifications(newNotifications);
+    }
+  };
+
+  useRealTimeUpdates({
+    onNotificationsUpdate: handleNotificationsUpdate,
+    shouldFetchNotifications: true,
+    interval: 20000, // Poll every 20 seconds for notifications
+    enabled: !loading // Don't poll while loading
+  });
 
   const fetchNotifications = async (pageNum = 1) => {
     if (!currentUser) return;
