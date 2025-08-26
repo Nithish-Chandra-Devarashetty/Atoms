@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   MessageCircle, 
   Send, 
   Search, 
-  X
+  X,
+  ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
@@ -49,6 +50,7 @@ export const Messages: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [selectedUserInfo, setSelectedUserInfo] = useState<any>(null); // For new conversations
+  const [showMobileConversations, setShowMobileConversations] = useState(true);
   const [newMessage, setNewMessage] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -57,6 +59,15 @@ export const Messages: React.FC = () => {
   const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [showNewMessageModal, setShowNewMessageModal] = useState(false);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages]);
 
   useEffect(() => {
     if (currentUser) {
@@ -220,170 +231,193 @@ export const Messages: React.FC = () => {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 transition-colors duration-300 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-cyan-500/10 blur-3xl animate-pulse delay-1000"></div>
-        <div className="absolute top-1/2 left-1/3 w-80 h-80 bg-purple-500/10 blur-3xl animate-pulse delay-2000"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500/10 blur-3xl animate-pulse delay-1000"></div>
+        <div className="absolute top-1/2 left-1/3 w-80 h-80 bg-pink-500/10 blur-3xl animate-pulse delay-2000"></div>
       </div>
-      
-      <div className="h-full flex">
-        {/* Conversations Sidebar */}
-        <div className="w-80 bg-white/5 backdrop-blur-md border-r border-white/10 flex flex-col text-white relative z-10">
-          {/* Header */}
-          <div className="p-6 border-b border-white/10">
-            <div className="flex items-center justify-between mb-4">
-              <h1 className="text-3xl font-black text-white">Messages</h1>
-              <button
-                onClick={() => {
-                  setShowNewMessageModal(true);
-                  if (suggestedUsers.length === 0) {
-                    fetchSuggestedUsers();
-                  }
-                }}
-                className="p-2 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-lg hover:from-cyan-400 hover:to-purple-500 transition-all duration-300"
-                title="New Message"
-              >
-                <MessageCircle className="w-5 h-5 text-white" />
-              </button>
-            </div>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
-              <input
-                type="text"
-                placeholder="Search conversations..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-              />
-            </div>
-          </div>
 
-          {/* Error Message */}
-          {error && (
-            <div className="mx-4 mt-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-red-200 text-sm">
-              {error}
-            </div>
-          )}
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-16 relative z-10">
+          <h1 className="text-5xl md:text-7xl font-black bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-6 tracking-tight">
+            Messages
+          </h1>
+          <p className="text-xl text-gray-300 max-w-3xl mx-auto font-light">
+            Connect with fellow learners and stay in touch with your network
+          </p>
+        </div>
 
-          {/* Conversations List */}
-          <div className="flex-1 overflow-y-auto">
-            {loading ? (
-              <div className="flex justify-center items-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
-              </div>
-            ) : filteredConversations.length > 0 ? (
-              filteredConversations.map((conversation) => {
-                const otherParticipant = getOtherParticipant(conversation);
-                if (!otherParticipant) return null;
-
-                return (
-                  <div
-                    key={conversation._id}
+        {/* Main Content - Mobile First Design */}
+        <div className="max-w-6xl mx-auto h-[calc(100vh-300px)] lg:h-[calc(100vh-200px)]">
+          <div className="lg:flex lg:space-x-6 space-y-6 lg:space-y-0 relative z-10 h-full">
+            
+            {/* Conversations Sidebar - Mobile responsive */}
+            <div className={`lg:w-1/3 ${selectedContact ? 'hidden lg:block' : 'block'} bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden h-full flex flex-col`}>
+              {/* Search and New Message */}
+              <div className="flex-shrink-0 p-6 border-b border-white/10">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-2xl font-black text-white">Conversations</h2>
+                  <button
                     onClick={() => {
-                      setSelectedUserId(otherParticipant._id);
-                      setSelectedUserInfo(null); // Clear for existing conversations
-                      fetchMessages(otherParticipant._id);
+                      setShowNewMessageModal(true);
+                      if (suggestedUsers.length === 0) {
+                        fetchSuggestedUsers();
+                      }
                     }}
-                    className={`p-4 border-b border-white/10 hover:bg-white/10 cursor-pointer transition-colors ${
-                      selectedUserId === otherParticipant._id ? 'bg-white/20 border-cyan-500/50' : ''
-                    }`}
+                    className="p-3 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 transition-all duration-300 shadow-lg"
+                    title="New Message"
                   >
-                    <div className="flex items-center">
-                      <div className="relative">
-                        {otherParticipant.photoURL ? (
-                          <img
-                            src={otherParticipant.photoURL}
-                            alt={otherParticipant.displayName}
-                            className="w-12 h-12 rounded-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-lg font-bold">
-                            {otherParticipant.displayName.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                      </div>
-                      <div className="ml-3 flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-semibold text-white truncate">{otherParticipant.displayName}</h3>
-                          <span className="text-xs text-gray-400">
-                            {formatTime(conversation.lastActivity)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-300 truncate">
-                          {conversation.lastMessage?.content || 'No messages yet'}
-                        </p>
-                      </div>
-                    </div>
+                    <MessageCircle className="w-5 h-5 text-white" />
+                  </button>
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <input
+                    type="text"
+                    placeholder="Search conversations..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="flex-shrink-0 mx-6 mt-4 p-4 bg-red-500/20 border border-red-500/50 text-red-200 text-sm">
+                  {error}
+                </div>
+              )}
+
+              {/* Conversations List */}
+              <div className="flex-1 overflow-y-auto min-h-0">
+                {loading ? (
+                  <div className="flex justify-center items-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
                   </div>
-                );
-              })
-            ) : (
-              <div className="p-4">
-                {loadingSuggestions ? (
-                  <div className="text-center text-gray-400 p-8">
-                    <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>Loading suggested contacts...</p>
-                  </div>
-                ) : suggestedUsers.length > 0 ? (
-                  <div>
-                    <div className="text-center text-gray-400 mb-4">
-                      <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                      <p className="text-sm">No conversations yet</p>
-                      <p className="text-xs">Start chatting with your connections!</p>
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="text-white font-semibold text-sm mb-2">Suggested Contacts</h3>
-                      {suggestedUsers.slice(0, 10).map((user: any) => (
-                        <div
-                          key={user._id}
-                          onClick={() => startNewConversation(user._id, user)}
-                          className="flex items-center p-3 hover:bg-white/5 rounded-lg cursor-pointer transition-colors"
-                        >
+                ) : filteredConversations.length > 0 ? (
+                  filteredConversations.map((conversation) => {
+                    const otherParticipant = getOtherParticipant(conversation);
+                    if (!otherParticipant) return null;
+
+                    return (
+                      <div
+                        key={conversation._id}
+                        onClick={() => {
+                          setSelectedUserId(otherParticipant._id);
+                          setSelectedUserInfo(null);
+                          fetchMessages(otherParticipant._id);
+                        }}
+                        className={`p-6 border-b border-white/10 hover:bg-white/10 cursor-pointer transition-all duration-300 ${
+                          selectedUserId === otherParticipant._id ? 'bg-white/20 border-cyan-500/50' : ''
+                        }`}
+                      >
+                        <div className="flex items-center space-x-4">
                           <div className="relative">
-                            {user.photoURL ? (
+                            {otherParticipant.photoURL ? (
                               <img
-                                src={user.photoURL}
-                                alt={user.displayName}
-                                className="w-10 h-10 rounded-full object-cover"
+                                src={otherParticipant.photoURL}
+                                alt={otherParticipant.displayName}
+                                className="w-12 h-12 rounded-full object-cover shadow-lg"
                               />
                             ) : (
-                              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
-                                {user.displayName?.[0]?.toUpperCase() || 'U'}
+                              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-lg">
+                                {otherParticipant.displayName.charAt(0).toUpperCase()}
                               </div>
                             )}
                           </div>
-                          <div className="ml-3 flex-1">
-                            <div className="flex items-center justify-between">
-                              <span className="text-white font-medium">{user.displayName}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <h3 className="font-bold text-white truncate text-lg">{otherParticipant.displayName}</h3>
+                              <span className="text-xs text-gray-400 font-medium">
+                                {formatTime(conversation.lastActivity)}
+                              </span>
                             </div>
-                            <p className="text-gray-400 text-sm">{user.totalPoints || 0} points</p>
+                            <p className="text-sm text-gray-300 truncate">
+                              {conversation.lastMessage?.content || 'No messages yet'}
+                            </p>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
+                      </div>
+                    );
+                  })
                 ) : (
-                  <div className="text-center text-gray-400 p-8">
-                    <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                    <p>No conversations found</p>
-                    <p className="text-sm mt-2">Follow users from the discussion page to start chatting!</p>
+                  <div className="p-8">
+                    {loadingSuggestions ? (
+                      <div className="text-center text-gray-400 p-8">
+                        <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                        <p>Loading suggested contacts...</p>
+                      </div>
+                    ) : suggestedUsers.length > 0 ? (
+                      <div>
+                        <div className="text-center text-gray-400 mb-6">
+                          <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                          <p className="text-lg font-semibold">No conversations yet</p>
+                          <p className="text-sm">Start chatting with your connections!</p>
+                        </div>
+                        <div className="space-y-3">
+                          <h3 className="text-white font-bold text-lg mb-4">Suggested Contacts</h3>
+                          {suggestedUsers.slice(0, 5).map((user: any) => (
+                            <div
+                              key={user._id}
+                              onClick={() => startNewConversation(user._id, user)}
+                              className="flex items-center p-4 hover:bg-white/5 cursor-pointer transition-all duration-300 border border-white/10"
+                            >
+                              <div className="relative">
+                                {user.photoURL ? (
+                                  <img
+                                    src={user.photoURL}
+                                    alt={user.displayName}
+                                    className="w-10 h-10 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                                    {user.displayName?.[0]?.toUpperCase() || 'U'}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="ml-3 flex-1">
+                                <span className="text-white font-semibold">{user.displayName}</span>
+                                <p className="text-gray-400 text-sm">{user.totalPoints || 0} points</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="text-center text-gray-400 p-8">
+                        <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                        <p className="text-lg font-semibold mb-2">No conversations found</p>
+                        <p className="text-sm">Follow users from the discussion page to start chatting!</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-            )}
-          </div>
-        </div>
+            </div>
 
         {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
+        <div className={`flex-1 flex flex-col ${!selectedContact && showMobileConversations ? 'hidden' : 'flex'} lg:flex h-full max-h-[calc(100vh-200px)] lg:max-h-[calc(100vh-150px)] bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden`}>
           {selectedContact ? (
-            <>
+            <div className="flex flex-col h-full">
               {/* Chat Header */}
-              <div className="p-4 bg-white/5 backdrop-blur-md border-b border-white/10 flex items-center justify-between text-white relative z-10">
+              <div className="flex-shrink-0 p-4 bg-white/5 backdrop-blur-md border-b border-white/10 flex items-center justify-between text-white relative z-10">
+                {/* Back button for mobile */}
+                <button
+                  onClick={() => {
+                    setShowMobileConversations(true);
+                    setSelectedUserId(null);
+                  }}
+                  className="lg:hidden mr-3 p-2 hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <ArrowLeft className="w-5 h-5 text-white" />
+                </button>
+                
                 <div 
-                  className="flex items-center cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors"
+                  className="flex items-center cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors flex-1"
                   onClick={() => {
                     // Get the user ID to navigate to - use selectedUserId first, then fallback to selectedContact._id
                     const targetUserId = selectedUserId || selectedContact._id;
@@ -408,19 +442,19 @@ export const Messages: React.FC = () => {
                   </div>
                   <div className="ml-3">
                     <h2 className="font-semibold text-white hover:text-cyan-400 transition-colors">{selectedContact.displayName}</h2>
-                    <p className="text-sm text-gray-400">Click to view profile</p>
+                    <p className="text-sm text-gray-400 hidden sm:block">Click to view profile</p>
                   </div>
                 </div>
               </div>
 
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 relative z-10">
+              {/* Messages - Scrollable Container */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 relative z-10 bg-gradient-to-b from-transparent to-black/20 min-h-0">
                 {messages.map((message) => (
                   <div
                     key={message._id}
                     className={`flex ${message.sender._id === currentUser._id ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className="flex items-end space-x-2 max-w-xs lg:max-w-md">
+                    <div className="flex items-end space-x-2 max-w-[80%] sm:max-w-xs lg:max-w-md">
                       {message.sender._id !== currentUser._id && (
                         <div className="w-8 h-8 flex-shrink-0">
                           {message.sender.photoURL ? (
@@ -437,15 +471,15 @@ export const Messages: React.FC = () => {
                         </div>
                       )}
                       <div
-                        className={`px-4 py-2 rounded-lg ${
+                        className={`px-4 py-3 rounded-xl shadow-lg ${
                           message.sender._id === currentUser._id
                             ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
-                            : 'bg-white/10 backdrop-blur-sm border border-white/20 text-white'
+                            : 'bg-white/10 backdrop-blur-md border border-white/20 text-white'
                         }`}
                       >
-                        <p className="text-sm">{message.content}</p>
-                        <p className={`text-xs mt-1 ${
-                          message.sender._id === currentUser._id ? 'text-cyan-100' : 'text-gray-400'
+                        <p className="text-sm leading-relaxed">{message.content}</p>
+                        <p className={`text-xs mt-2 ${
+                          message.sender._id === currentUser._id ? 'text-cyan-100' : 'text-gray-300'
                         }`}>
                           {formatMessageTime(message.createdAt)}
                         </p>
@@ -453,26 +487,31 @@ export const Messages: React.FC = () => {
                     </div>
                   </div>
                 ))}
+                <div ref={messagesEndRef} />
               </div>
 
-              {/* Message Input */}
-              <div className="p-4 bg-white/5 backdrop-blur-md border-t border-white/10 relative z-10">
-                <div className="flex items-end space-x-2">
+              {/* Message Input - Fixed at Bottom */}
+              <div className="flex-shrink-0 p-4 bg-white/5 backdrop-blur-md border-t border-white/10 relative z-10">
+                <div className="flex items-end space-x-3">
                   <div className="flex-1 relative">
                     <textarea
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       onKeyPress={handleKeyPress}
                       placeholder="Type a message..."
-                      className="w-full p-3 pr-12 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-gray-400 resize-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
+                      className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-gray-300 resize-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent focus:bg-white/15 transition-all duration-300"
                       rows={1}
                       disabled={sendingMessage}
+                      style={{
+                        minHeight: '44px',
+                        maxHeight: '120px'
+                      }}
                     />
                   </div>
                   <button
                     onClick={handleSendMessage}
                     disabled={!newMessage.trim() || sendingMessage}
-                    className="p-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-lg hover:from-cyan-400 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="p-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl hover:from-cyan-400 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg flex-shrink-0"
                   >
                     {sendingMessage ? (
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -482,15 +521,15 @@ export const Messages: React.FC = () => {
                   </button>
                 </div>
               </div>
-            </>
+            </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center relative z-10">
-              <div className="text-center">
-                <MessageCircle className="w-16 h-16 text-gray-500 mx-auto mb-4" />
-                <h2 className="text-xl font-semibold text-white mb-2">Start a Conversation</h2>
-                <p className="text-gray-400">Select a contact to begin messaging</p>
-                <p className="text-gray-500 text-sm mt-2">
-                  Visit the discussion page to connect with other users
+            <div className="flex-1 flex items-center justify-center relative z-10 p-8">
+              <div className="text-center bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-12 max-w-md">
+                <MessageCircle className="w-20 h-20 text-cyan-400 mx-auto mb-6" />
+                <h2 className="text-2xl font-bold text-white mb-3">Start a Conversation</h2>
+                <p className="text-gray-300 mb-4 leading-relaxed">Select a contact from the sidebar to begin messaging</p>
+                <p className="text-gray-400 text-sm">
+                  Visit the discussion page to connect with other users and start new conversations
                 </p>
               </div>
             </div>
@@ -565,6 +604,10 @@ export const Messages: React.FC = () => {
           </div>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 };
+
+export default Messages;

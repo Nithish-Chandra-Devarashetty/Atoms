@@ -13,6 +13,7 @@ import { Profile } from './pages/Profile';
 import { UserProfile } from './pages/UserProfile';
 import { Discussion } from './pages/Discussion';
 import { Messages } from './pages/Messages';
+import { Notifications } from './pages/Notifications';
 import { Leaderboard } from './pages/Leaderboard';
 import { SubjectPage } from './pages/SubjectPage';
 import { CoreSubjectPage } from './pages/CoreSubjectPage';
@@ -51,6 +52,7 @@ function App() {
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/discussion" element={<Discussion />} />
                   <Route path="/messages" element={<Messages />} />
+                  <Route path="/notifications" element={<Notifications />} />
                   <Route path="/leaderboard" element={<Leaderboard />} />
                 </Route>
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
