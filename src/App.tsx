@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import  Navbar  from './components/Navbar';
 import { Home } from './pages/Home';
+import Auth from './pages/Auth';
 import { WebDev } from './pages/WebDev';
 import { CoreCS } from './pages/CoreCS';
 import { DSA } from './pages/DSA';
@@ -37,6 +38,7 @@ function App() {
             <main className="pt-16">
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/auth" element={<Auth />} />
                 <Route path="/webdev" element={<WebDev />} />
                 <Route path="/webdev/:subject" element={<SubjectPage />} />
                 <Route path="/core" element={<CoreCS />} />

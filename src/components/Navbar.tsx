@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import { useWebSocket } from '../hooks/useWebSocket';
-import LoginModal from './LoginModal';
 import { 
   Home, 
   Code, 
@@ -23,9 +22,7 @@ import {
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const location = useLocation();
   const { currentUser, logout } = useAuth();
-  const [showLoginModal, setShowLoginModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
   const toggleMenu = () => setIsOpen(!isOpen);
@@ -69,15 +66,10 @@ const Navbar: React.FC = () => {
   };
 
   const NavLink: React.FC<{ to: string; icon: React.ReactNode; label: string }> = ({ to, icon, label }) => {
-    const isActive = location.pathname === to;
     return (
       <Link
         to={to}
-        className={`flex items-center px-4 py-3 transition-all duration-300 ${
-          isActive 
-            ? 'bg-gradient-to-r from-cyan-500 to-purple-600 text-white' 
-            : 'text-gray-300 hover:bg-white/10 hover:text-white'
-        }`}
+        className="flex items-center px-4 py-3 transition-all duration-300 text-gray-300 hover:bg-white/10 hover:text-white"
         onClick={closeMenu}
       >
         {icon}
@@ -85,13 +77,6 @@ const Navbar: React.FC = () => {
       </Link>
     );
   };
-
-  // Create portal target element
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
 
   // --- Only show navbar when at very top ---
   const [isVisible, setIsVisible] = useState(true);
@@ -162,13 +147,13 @@ const Navbar: React.FC = () => {
               {currentUser && <NavLink to="/profile" icon={<User size={20} />} label="Profile" />}
 
               {!currentUser && (
-                <button
-                  onClick={() => setShowLoginModal(true)}
+                <Link
+                  to="/auth"
                   className="flex items-center px-6 py-2 bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-semibold hover:from-cyan-400 hover:to-purple-500 transition-all duration-300 transform hover:scale-105"
                 >
                   <User size={20} className="mr-2" />
                   Sign In
-                </button>
+                </Link>
               )}
             </div>
 
@@ -219,24 +204,18 @@ const Navbar: React.FC = () => {
                   Logout
                 </button>
               ) : (
-                <button
-                  onClick={() => setShowLoginModal(true)}
+                <Link
+                  to="/auth"
                   className="flex items-center px-4 py-2 bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-semibold hover:from-cyan-400 hover:to-purple-500 transition-all duration-300"
                 >
                   <User size={20} className="mr-2" />
                   Sign In
-                </button>
+                </Link>
               )}
             </div>
           )}
         </div>
       </nav>
-
-      {mounted && showLoginModal && (
-        <div id="modal-root">
-          <LoginModal onClose={() => setShowLoginModal(false)} />
-        </div>
-      )}
     </>
   );
 };

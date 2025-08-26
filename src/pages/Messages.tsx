@@ -380,7 +380,7 @@ export const Messages: React.FC = () => {
           <div className="lg:flex lg:space-x-6 space-y-6 lg:space-y-0 relative z-10 h-full">
             
             {/* Conversations Sidebar - Mobile responsive */}
-            <div className={`lg:w-1/3 ${selectedContact ? 'hidden lg:block' : 'block'} bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden h-full flex flex-col`}>
+            <div className={`lg:w-1/3 ${selectedContact ? 'hidden lg:block' : 'block'} bg-white/5 backdrop-blur-md border border-white/10 overflow-hidden h-full flex flex-col`}>
               {/* Search and New Message */}
               <div className="flex-shrink-0 p-6 border-b border-white/10">
                 <div className="flex items-center justify-between mb-4">
@@ -525,7 +525,7 @@ export const Messages: React.FC = () => {
             </div>
 
         {/* Chat Area */}
-        <div className={`flex-1 flex flex-col ${!selectedContact && showMobileConversations ? 'hidden' : 'flex'} lg:flex h-full max-h-[calc(100vh-200px)] lg:max-h-[calc(100vh-150px)] bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl overflow-hidden`}>
+        <div className={`flex-1 flex flex-col ${!selectedContact && showMobileConversations ? 'hidden' : 'flex'} lg:flex h-full max-h-[calc(100vh-200px)] lg:max-h-[calc(100vh-150px)] bg-white/5 backdrop-blur-md border border-white/10 overflow-hidden`}>
           {selectedContact ? (
             <div className="flex flex-col h-full">
               {/* Chat Header */}
@@ -536,13 +536,13 @@ export const Messages: React.FC = () => {
                     setShowMobileConversations(true);
                     setSelectedUserId(null);
                   }}
-                  className="lg:hidden mr-3 p-2 hover:bg-white/10 rounded-lg transition-colors"
+                  className="lg:hidden mr-3 p-2 hover:bg-white/10 transition-colors"
                 >
                   <ArrowLeft className="w-5 h-5 text-white" />
                 </button>
                 
                 <div 
-                  className="flex items-center cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors flex-1"
+                  className="flex items-center cursor-pointer hover:bg-white/5 p-2 transition-colors flex-1"
                   onClick={() => {
                     // Get the user ID to navigate to - use selectedUserId first, then fallback to selectedContact._id
                     const targetUserId = selectedUserId || selectedContact._id;
@@ -655,7 +655,7 @@ export const Messages: React.FC = () => {
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center relative z-10 p-8">
-              <div className="text-center bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-12 max-w-md">
+              <div className="text-center bg-white/5 backdrop-blur-md border border-white/10 p-12 max-w-md">
                 <MessageCircle className="w-20 h-20 text-cyan-400 mx-auto mb-6" />
                 <h2 className="text-2xl font-bold text-white mb-3">Start a Conversation</h2>
                 <p className="text-gray-300 mb-4 leading-relaxed">Select a contact from the sidebar to begin messaging</p>
@@ -671,7 +671,7 @@ export const Messages: React.FC = () => {
       {/* New Message Modal */}
       {showNewMessageModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-gray-900/95 backdrop-blur-md border border-white/20 rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden">
+          <div className="bg-gray-900/95 backdrop-blur-md border border-white/20 max-w-md w-full max-h-[80vh] overflow-hidden">
             {/* Modal Header */}
             <div className="p-4 border-b border-white/10 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-white">New Message</h2>
@@ -700,7 +700,7 @@ export const Messages: React.FC = () => {
                         startNewConversation(user._id, user);
                         setShowNewMessageModal(false);
                       }}
-                      className="flex items-center p-3 hover:bg-white/5 rounded-lg cursor-pointer transition-colors"
+                      className="flex items-center p-3 hover:bg-white/5 cursor-pointer transition-colors"
                     >
                       <div className="relative">
                         {user.photoURL ? (

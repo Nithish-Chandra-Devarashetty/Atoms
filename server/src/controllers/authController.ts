@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 import { User } from '../models/User.js';
 import { AuthRequest } from '../middleware/auth.js';
 
@@ -12,7 +13,7 @@ const generateToken = (userId: string): string => {
   return jwt.sign(
     { userId },
     jwtSecret,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' } as jwt.SignOptions
   );
 };
 
@@ -203,5 +204,113 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
   } catch (error) {
     console.error('Update profile error:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const googleAuth = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      res.status(400).json({ error: 'ID token is required' });
+      return;
+    }
+
+    // Initialize Google OAuth client
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+    // Verify the ID token
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email) {
+      res.status(400).json({ error: 'Invalid Google token' });
+      return;
+    }
+
+    // Extract user information from Google
+    const { email, name, picture, sub: googleId } = payload;
+
+    // Check if user already exists
+    let user = await User.findOne({ 
+      $or: [
+        { email },
+        { googleId }
+      ]
+    });
+
+    if (user) {
+      // Update existing user with Google info if needed
+      if (!user.googleId) {
+        user.googleId = googleId;
+      }
+      if (!user.photoURL && picture) {
+        user.photoURL = picture;
+      }
+      if (user.provider === 'email' && !user.isEmailVerified) {
+        user.isEmailVerified = true; // Google accounts are verified
+      }
+      
+      // Update login tracking
+      const today = new Date();
+      const lastLogin = user.lastLogin ? new Date(user.lastLogin) : today;
+      
+      const daysSinceLastLogin = Math.floor((today.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysSinceLastLogin === 1) {
+        user.streak = (user.streak || 0) + 1;
+      } else if (daysSinceLastLogin > 1) {
+        user.streak = 1;
+      }
+      
+      user.lastLogin = today;
+      user.lastActiveDate = today;
+      
+      await user.save();
+    } else {
+      // Create new user with Google account
+      user = new User({
+        email,
+        displayName: name || email.split('@')[0],
+        photoURL: picture || '',
+        provider: 'google',
+        googleId,
+        isEmailVerified: true,
+        lastLogin: new Date(),
+        lastActiveDate: new Date(),
+        streak: 1
+      });
+
+      await user.save();
+    }
+
+    // Generate JWT token
+    const token = generateToken(user._id);
+
+    // Return user data
+    const userResponse = {
+      _id: user._id,
+      email: user.email,
+      displayName: user.displayName,
+      photoURL: user.photoURL,
+      provider: user.provider,
+      isEmailVerified: user.isEmailVerified,
+      totalPoints: user.totalPoints,
+      badges: user.badges,
+      streak: user.streak,
+      createdAt: user.createdAt
+    };
+
+    res.json({
+      message: 'Google authentication successful',
+      token,
+      user: userResponse
+    });
+  } catch (error) {
+    console.error('Google auth error:', error);
+    res.status(500).json({ error: 'Google authentication failed' });
   }
 };

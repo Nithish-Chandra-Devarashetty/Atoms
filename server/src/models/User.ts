@@ -9,6 +9,7 @@ export interface IUser extends Document {
   photoURL?: string;
   provider: 'email' | 'google';
   providerId?: string;
+  googleId?: string;
   isEmailVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -81,6 +82,10 @@ const userSchema = new Schema<IUser>({
     default: 'email'
   },
   providerId: {
+    type: String,
+    default: null
+  },
+  googleId: {
     type: String,
     default: null
   },
