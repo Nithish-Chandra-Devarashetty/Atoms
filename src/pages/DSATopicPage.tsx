@@ -227,7 +227,6 @@ export const DSATopicPage: React.FC = () => {
                     </div>
                   </div>
                   <button
-                    onClick={() => toggleSolved(problem.Name)}
                     onClick={() => toggleSolved(problem.Name, problem.Topic, problem.Difficulty)}
                     className={`p-2 transition-colors ${
                       solvedProblems[problem.Name] 

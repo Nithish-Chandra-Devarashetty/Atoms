@@ -61,21 +61,33 @@ export const requestLogger = (req: Request, res: Response, next: NextFunction): 
 // CORS configuration
 export const corsOptions = {
   origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+    // In development, allow all local network origins
+    if (process.env.NODE_ENV === 'development') {
+      // Allow requests with no origin (mobile apps, etc.)
+      if (!origin) return callback(null, true);
+      
+      // Allow localhost and local network IPs
+      const isLocalhost = origin.includes('localhost') || origin.includes('127.0.0.1');
+      const isLocalNetwork = /^https?:\/\/(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.)/.test(origin);
+      const isViteHMR = origin.includes('5173') || origin.includes('5174');
+      
+      if (isLocalhost || isLocalNetwork || isViteHMR) {
+        return callback(null, true);
+      }
+    }
+    
+    // Production allowed origins
     const allowedOrigins = [
       process.env.FRONTEND_URL || 'http://localhost:5173',
-      'http://localhost:5174', // Added for Vite default port
+      'http://localhost:5174',
       'http://localhost:3000',
-      'https://atoms-learning.netlify.app' // Add your production domain
+      'https://atoms-learning.netlify.app'
     ];
     
-    // Log CORS origin for debugging
     console.log('Origin:', origin);
     console.log('Allowed origins:', allowedOrigins);
     
-    // Allow requests with no origin (mobile apps, etc.)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));

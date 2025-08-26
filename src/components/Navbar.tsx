@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
 import { apiService } from '../services/api';
 import LoginModal from './LoginModal';
 import { 
@@ -17,19 +16,19 @@ import {
   X,
   Bot,
   LogOut,
-  Bell
+  Bell,
+  Mail
 } from 'lucide-react';
 
-export const Navbar: React.FC = () => {
+const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const { currentUser, logout } = useAuth();
-  const { isDarkMode } = useTheme();
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [loadingNotifications] = useState(false);
 
   const toggleMenu = () => setIsOpen(!isOpen);
   const closeMenu = () => setIsOpen(false);
@@ -282,6 +281,16 @@ export const Navbar: React.FC = () => {
                 </div>
               )}
               
+              {/* Messages Icon */}
+              {currentUser && (
+                <Link 
+                  to="/messages"
+                  className="flex items-center px-4 py-3 text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300"
+                >
+                  <Mail size={20} />
+                </Link>
+              )}
+              
               {currentUser && <NavLink to="/profile" icon={<User size={20} />} label="Profile" />}
 
               {!currentUser && (
@@ -328,6 +337,8 @@ export const Navbar: React.FC = () => {
                 </button>
               )}
               
+              {currentUser && <NavLink to="/messages" icon={<Mail size={20} />} label="Messages" />}
+              
               {currentUser && <NavLink to="/profile" icon={<User size={20} />} label="Profile" />}
 
               {currentUser ? (
@@ -360,3 +371,4 @@ export const Navbar: React.FC = () => {
     </>
   );
 };
+export default Navbar;

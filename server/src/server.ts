@@ -22,7 +22,7 @@ import notificationRoutes from './routes/notifications.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = parseInt(process.env.PORT || '5000', 10);
 
 // Connect to database
 connectDatabase();
@@ -87,10 +87,13 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
+  console.log(`📡 Server accessible on all network interfaces`);
+  console.log(`🔗 Local: http://localhost:${PORT}`);
+  console.log(`🔗 Network: http://[YOUR_IP]:${PORT}`);
 });
 
 export default app;

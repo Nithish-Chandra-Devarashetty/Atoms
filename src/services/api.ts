@@ -1,4 +1,18 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+// Automatically determine the API base URL
+const getApiBaseUrl = () => {
+  // If we're in development and the current host is not localhost, use the current host
+  if (import.meta.env.DEV && typeof window !== 'undefined') {
+    const currentHost = window.location.hostname;
+    if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
+      return `http://${currentHost}:5000/api`;
+    }
+  }
+  
+  // Default to localhost for development
+  return import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 type AuthResponse = {
   message: string;

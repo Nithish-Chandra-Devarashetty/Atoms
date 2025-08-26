@@ -29,6 +29,22 @@ export const AptitudeTopicPage: React.FC = () => {
     loadTopicQuestions(topic || '');
   }, [topic]);
 
+  // Generate random questions from different topics
+  const generateRandomQuestions = (count: number): Question[] => {
+    const allQuestions: Question[] = [];
+    
+    // Collect all questions from all topics
+    aptitudeTopics.forEach(topic => {
+      allQuestions.push(...topic.questions);
+    });
+    
+    // Shuffle the array to ensure different questions each time
+    const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
+    
+    // Return the first 'count' questions
+    return shuffled.slice(0, count);
+  };
+
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (quizStarted && !quizCompleted && timeLeft > 0) {
@@ -41,16 +57,32 @@ export const AptitudeTopicPage: React.FC = () => {
 
   const loadTopicQuestions = async (topicName: string) => {
     const loadQuestions = () => {
-      const topic = aptitudeTopics.find(t => t.id === topicName);
-      if (topic) {
-        setQuestions(topic.questions);
-        setAnswers(new Array(topic.questions.length).fill(null));
+      if (topicName === 'random') {
+        // Generate 15 random questions from different topics
+        const randomQuestions = generateRandomQuestions(15);
+        setQuestions(randomQuestions);
+        setAnswers(new Array(randomQuestions.length).fill(null));
+      } else {
+        const topic = aptitudeTopics.find(t => t.id === topicName);
+        if (topic) {
+          setQuestions(topic.questions);
+          setAnswers(new Array(topic.questions.length).fill(null));
+        }
       }
     };
     loadQuestions();
   };
 
   const getTopicInfo = (topicId: string) => {
+    if (topicId === 'random') {
+      return {
+        title: 'Random Quiz',
+        description: 'Mixed questions from all aptitude topics',
+        color: 'from-orange-500 to-red-500',
+        icon: '🎲'
+      };
+    }
+    
     const topic = aptitudeTopics.find(t => t.id === topicId);
     if (topic) {
       return {
@@ -76,7 +108,16 @@ export const AptitudeTopicPage: React.FC = () => {
     setScore(0);
     setTimeLeft(900); // 15 minutes
     setQuizCompleted(false);
-    setAnswers(new Array(questions.length).fill(null));
+    
+    // For random quiz, generate new questions each time
+    if (topic === 'random') {
+      const newQuestions = generateRandomQuestions(15);
+      setQuestions(newQuestions);
+      setAnswers(new Array(newQuestions.length).fill(null));
+    } else {
+      setAnswers(new Array(questions.length).fill(null));
+    }
+    
     setSelectedAnswer(null);
     setShowResult(false);
   };
@@ -123,8 +164,8 @@ export const AptitudeTopicPage: React.FC = () => {
     setQuizCompleted(true);
     setQuizStarted(false);
     
-    // Mark topic as completed if score is good (let's say >= 70%)
-    if (finalScore >= (questions.length * 10 * 0.7)) {
+    // Mark topic as completed if score is good (let's say >= 70%) and it's not a random quiz
+    if (topic !== 'random' && finalScore >= (questions.length * 10 * 0.7)) {
       localStorage.setItem(`aptitude_${topic}_completed`, 'true');
     }
   };
@@ -181,7 +222,7 @@ export const AptitudeTopicPage: React.FC = () => {
               </div>
               <div className="text-center p-6 bg-white/5 backdrop-blur-sm border border-white/10">
                 <Award className="w-8 h-8 text-purple-400 mx-auto mb-3" />
-                <div className="text-3xl font-black text-white">150</div>
+                <div className="text-3xl font-black text-white">{questions.length * 10}</div>
                 <div className="text-gray-300">Max Points</div>
               </div>
             </div>
@@ -190,10 +231,11 @@ export const AptitudeTopicPage: React.FC = () => {
               <h3 className="font-semibold text-blue-300 mb-3">Instructions:</h3>
               <ul className="space-y-2 text-blue-200 text-sm">
                 <li>• You have 15 minutes to complete all questions</li>
-                <li>• Each question carries 10 points (Max 150 points)</li>
+                <li>• Each question carries 10 points (Max {questions.length * 10} points)</li>
                 <li>• You can navigate between questions</li>
                 <li>• Click "Submit Quiz" when you're done</li>
                 <li>• No negative marking for wrong answers</li>
+                {topic === 'random' && <li>• Questions are randomly selected from different topics</li>}
               </ul>
             </div>
 

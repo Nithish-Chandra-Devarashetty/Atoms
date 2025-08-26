@@ -1,17 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   MessageCircle, 
   Send, 
   Search, 
-  User, 
-  Phone, 
-  Video, 
-  MoreVertical,
-  Smile,
-  Paperclip,
   X
 } from 'lucide-react';
-import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 
@@ -50,6 +44,7 @@ interface Message {
 
 export const Messages: React.FC = () => {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
@@ -61,7 +56,7 @@ export const Messages: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
-  const { isDarkMode } = useTheme();
+  const [showNewMessageModal, setShowNewMessageModal] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -238,7 +233,21 @@ export const Messages: React.FC = () => {
         <div className="w-80 bg-white/5 backdrop-blur-md border-r border-white/10 flex flex-col text-white relative z-10">
           {/* Header */}
           <div className="p-6 border-b border-white/10">
-            <h1 className="text-3xl font-black text-white mb-4">Messages</h1>
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-3xl font-black text-white">Messages</h1>
+              <button
+                onClick={() => {
+                  setShowNewMessageModal(true);
+                  if (suggestedUsers.length === 0) {
+                    fetchSuggestedUsers();
+                  }
+                }}
+                className="p-2 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-lg hover:from-cyan-400 hover:to-purple-500 transition-all duration-300"
+                title="New Message"
+              >
+                <MessageCircle className="w-5 h-5 text-white" />
+              </button>
+            </div>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
               <input
@@ -373,7 +382,17 @@ export const Messages: React.FC = () => {
             <>
               {/* Chat Header */}
               <div className="p-4 bg-white/5 backdrop-blur-md border-b border-white/10 flex items-center justify-between text-white relative z-10">
-                <div className="flex items-center">
+                <div 
+                  className="flex items-center cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors"
+                  onClick={() => {
+                    // Get the user ID to navigate to - use selectedUserId first, then fallback to selectedContact._id
+                    const targetUserId = selectedUserId || selectedContact._id;
+                    // Make sure we're not navigating to our own profile
+                    if (targetUserId && targetUserId !== currentUser._id) {
+                      navigate(`/profile?user=${targetUserId}`);
+                    }
+                  }}
+                >
                   <div className="relative">
                     {selectedContact.photoURL ? (
                       <img
@@ -388,7 +407,7 @@ export const Messages: React.FC = () => {
                     )}
                   </div>
                   <div className="ml-3">
-                    <h2 className="font-semibold text-white">{selectedContact.displayName}</h2>
+                    <h2 className="font-semibold text-white hover:text-cyan-400 transition-colors">{selectedContact.displayName}</h2>
                     <p className="text-sm text-gray-400">Click to view profile</p>
                   </div>
                 </div>
@@ -478,6 +497,74 @@ export const Messages: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* New Message Modal */}
+      {showNewMessageModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900/95 backdrop-blur-md border border-white/20 rounded-lg max-w-md w-full max-h-[80vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-white/10 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">New Message</h2>
+              <button
+                onClick={() => setShowNewMessageModal(false)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4 overflow-y-auto max-h-96">
+              {loadingSuggestions ? (
+                <div className="text-center text-gray-400 p-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500 mx-auto mb-4"></div>
+                  <p>Loading contacts...</p>
+                </div>
+              ) : suggestedUsers.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-gray-400 text-sm mb-4">Choose someone to start a conversation with:</p>
+                  {suggestedUsers.map((user: any) => (
+                    <div
+                      key={user._id}
+                      onClick={() => {
+                        startNewConversation(user._id, user);
+                        setShowNewMessageModal(false);
+                      }}
+                      className="flex items-center p-3 hover:bg-white/5 rounded-lg cursor-pointer transition-colors"
+                    >
+                      <div className="relative">
+                        {user.photoURL ? (
+                          <img
+                            src={user.photoURL}
+                            alt={user.displayName}
+                            className="w-10 h-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                            {user.displayName?.[0]?.toUpperCase() || 'U'}
+                          </div>
+                        )}
+                      </div>
+                      <div className="ml-3 flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-white font-medium">{user.displayName}</span>
+                        </div>
+                        <p className="text-gray-400 text-sm">{user.totalPoints || 0} points</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-400 p-8">
+                  <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="mb-2">No contacts found</p>
+                  <p className="text-sm">Follow users from the discussion page to start chatting!</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
