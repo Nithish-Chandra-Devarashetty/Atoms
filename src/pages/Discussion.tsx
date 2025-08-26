@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { UserProfileModal } from '../components/UserProfileModal';
-import { RealTimeIndicator } from '../components/RealTimeIndicator';
-import { useRealTimeUpdates } from '../hooks/useRealTimeUpdates';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 interface Discussion {
   _id: string;
@@ -47,50 +46,73 @@ export const Discussion: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
 
-  // Real-time updates for discussions
-  const handleDiscussionsUpdate = (newDiscussions: Discussion[]) => {
-    console.log('🔄 Handling discussions update:', newDiscussions.length, 'discussions received');
-    console.log('Current discussions count:', discussions.length);
+  // Real-time updates with WebSocket
+  const handleDiscussionReplyReceived = (data: { discussionId: string; reply: Reply }) => {
+    console.log('💬 Received new discussion reply:', data);
     
-    // Always update if we receive new data - let React handle the re-rendering optimization
-    if (newDiscussions && newDiscussions.length >= 0) {
-      // Check for actual differences by comparing IDs or timestamps
-      const currentIds = discussions.map(d => d._id).sort().join(',');
-      const newIds = newDiscussions.map(d => d._id).sort().join(',');
-      
-      if (currentIds !== newIds || newDiscussions.length !== discussions.length) {
-        console.log('✅ Discussions have changed, updating...');
-        setDiscussions(newDiscussions);
-      } else {
-        // Check if any discussion content has been updated
-        const hasContentChanges = newDiscussions.some((newDisc) => {
-          const currentDisc = discussions.find(d => d._id === newDisc._id);
-          if (!currentDisc) return true;
-          
-          return (
-            newDisc.content !== currentDisc.content ||
-            newDisc.likes.length !== currentDisc.likes.length ||
-            newDisc.replies.length !== currentDisc.replies.length ||
-            newDisc.updatedAt !== currentDisc.updatedAt
-          );
-        });
-        
-        if (hasContentChanges) {
-          console.log('✅ Discussion content has changed, updating...');
-          setDiscussions(newDiscussions);
+    // Update the specific discussion with the new reply
+    setDiscussions(prev => 
+      prev.map(discussion => {
+        if (discussion._id === data.discussionId) {
+          // Check if reply already exists to prevent duplicates
+          const replyExists = discussion.replies.some(reply => reply._id === data.reply._id);
+          if (!replyExists) {
+            return {
+              ...discussion,
+              replies: [...discussion.replies, data.reply]
+            };
+          }
         }
-      }
-    }
+        return discussion;
+      })
+    );
   };
 
-  const { lastFetchTimes, isEnabled } = useRealTimeUpdates({
-    onDiscussionsUpdate: handleDiscussionsUpdate,
-    shouldFetchDiscussions: true,
-    discussionsSearchQuery: searchQuery,
-    discussionsSelectedTags: selectedTags,
-    interval: 3000, // Poll every 3 seconds for very responsive updates
-    enabled: !loading && !submitting // Don't poll while loading or submitting
+  const { isConnected, joinDiscussion, leaveDiscussion } = useWebSocket({
+    onDiscussionReplyReceived: handleDiscussionReplyReceived,
+    onDiscussionCreated: (data: { discussion: Discussion }) => {
+      setDiscussions(prev => {
+        // Avoid duplicates if this client just created it
+        if (prev.some(d => d._id === data.discussion._id)) return prev;
+        return [data.discussion, ...prev];
+      });
+    },
+    onDiscussionLikeUpdated: (data: { discussionId: string; likes: string[]; likesCount: number; actorId: string; liked: boolean }) => {
+      setDiscussions(prev => prev.map(d => {
+        if (d._id !== data.discussionId) return d;
+        return {
+          ...d,
+          likes: data.likes
+        } as Discussion;
+      }));
+    },
+    enabled: !!currentUser
   });
+
+  // Log WebSocket connection status for debugging
+  useEffect(() => {
+    console.log('🔗 Discussion WebSocket connection status:', isConnected ? 'Connected' : 'Disconnected');
+  }, [isConnected]);
+
+  // Join all visible discussions for real-time updates
+  useEffect(() => {
+    if (discussions.length > 0 && isConnected) {
+      console.log(`🔗 Joining ${discussions.length} discussions for real-time updates`);
+      discussions.forEach(discussion => {
+        joinDiscussion(discussion._id);
+        console.log(`📝 Joined discussion: ${discussion._id}`);
+      });
+    }
+    
+    // Cleanup: leave discussions when component unmounts or discussions change
+    return () => {
+      if (discussions.length > 0 && isConnected) {
+        discussions.forEach(discussion => {
+          leaveDiscussion(discussion._id);
+        });
+      }
+    };
+  }, [discussions, isConnected, joinDiscussion, leaveDiscussion]);
 
   useEffect(() => {
     fetchDiscussions();
@@ -147,16 +169,13 @@ export const Discussion: React.FC = () => {
       }
 
       console.log('🔄 Creating discussion:', { content: newDiscussion.trim(), tags });
-      const response = await apiService.createDiscussion(newDiscussion.trim(), tags);
-      console.log('✅ Discussion created successfully:', response);
-      setDiscussions(prev => [response.discussion, ...prev]);
+  const response = await apiService.createDiscussion(newDiscussion.trim(), tags);
+  console.log('✅ Discussion created successfully:', response);
+  // No local prepend; rely on WS 'discussion-created' to add globally (with duplicate guard already in place)
       setNewDiscussion('');
       setNewTags('');
       
-      // Immediately fetch latest discussions to ensure real-time sync
-      setTimeout(() => {
-        fetchDiscussions();
-      }, 500);
+  // No immediate fetch; WS will deliver the created discussion
     } catch (err) {
       console.error('❌ Error creating discussion:', err);
       setError(err instanceof Error ? err.message : 'Failed to create discussion');
@@ -169,17 +188,8 @@ export const Discussion: React.FC = () => {
     if (!currentUser) return;
 
     try {
-      const response = await apiService.likeDiscussion(discussionId);
-      setDiscussions(prev => prev.map(discussion => 
-        discussion._id === discussionId 
-          ? {
-              ...discussion,
-              likes: response.liked 
-                ? [...discussion.likes, currentUser._id]
-                : discussion.likes.filter(id => id !== currentUser._id)
-            }
-          : discussion
-      ));
+  await apiService.likeDiscussion(discussionId);
+  // Rely on WebSocket 'discussion-like-updated' to sync likes
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to like discussion');
     }
@@ -189,12 +199,8 @@ export const Discussion: React.FC = () => {
     if (!currentUser || !replyContent[discussionId]?.trim()) return;
 
     try {
-      const response = await apiService.replyToDiscussion(discussionId, replyContent[discussionId]);
-      setDiscussions(prev => prev.map(discussion => 
-        discussion._id === discussionId 
-          ? { ...discussion, replies: [...discussion.replies, response.reply] }
-          : discussion
-      ));
+  await apiService.replyToDiscussion(discussionId, replyContent[discussionId]);
+  // Rely on WebSocket 'discussion-reply-received' to append reply
       setReplyContent(prev => ({ ...prev, [discussionId]: '' }));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to reply');
@@ -256,15 +262,6 @@ export const Discussion: React.FC = () => {
           <p className="text-xl text-gray-300 max-w-3xl mx-auto font-light">
             Connect with fellow learners, share knowledge, and get help from the community
           </p>
-          
-          {/* Real-time indicator */}
-          <div className="mt-4 flex justify-center">
-            <RealTimeIndicator 
-              isConnected={isEnabled}
-              lastUpdate={lastFetchTimes.discussions}
-              className="text-sm"
-            />
-          </div>
         </div>
 
         {/* Main Content Container */}
@@ -559,7 +556,7 @@ export const Discussion: React.FC = () => {
             }
           </p>
         </div>
-        )}
+      )}
 
         {/* User Profile Modal */}
         {selectedUserId && (

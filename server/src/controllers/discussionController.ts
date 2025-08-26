@@ -4,6 +4,12 @@ import { Discussion, Reply } from '../models/Discussion.js';
 import { AuthRequest } from '../middleware/auth.js';
 import { createNotification } from './notificationController.js';
 
+// We'll import io dynamically to avoid circular imports
+let io: any = null;
+export const setSocketIO = (socketInstance: any) => {
+  io = socketInstance;
+};
+
 export const getDiscussions = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { page = 1, limit = 20, search, tags } = req.query;
@@ -84,6 +90,12 @@ export const createDiscussion = async (req: AuthRequest, res: Response): Promise
 
     console.log('✅ Discussion created successfully:', discussion._id);
 
+    // Emit WebSocket event for newly created discussion
+    if (io) {
+      io.emit('discussion-created', { discussion });
+      console.log('📣 Emitted discussion-created event');
+    }
+
     res.status(201).json({
       message: 'Discussion created successfully',
       discussion,
@@ -132,6 +144,19 @@ export const likeDiscussion = async (req: AuthRequest, res: Response): Promise<v
         `${req.user.displayName} liked your discussion`,
         { discussionId: discussion._id.toString(), userId: req.user._id.toString() }
       );
+    }
+
+    // Emit WebSocket event to update likes in real time
+    if (io) {
+      io.to(`discussion-${discussionId}`).emit('discussion-like-updated', {
+        discussionId: discussion._id.toString(),
+        likes: discussion.likes.map((id) => id.toString()),
+        likesCount: discussion.likes.length,
+        // who performed the action and whether it's now liked (for optional client UX)
+        actorId: req.user._id.toString(),
+        liked: !isLiked
+      });
+      console.log(`📣 Emitted discussion-like-updated for discussion-${discussionId}`);
     }
 
     res.json({
@@ -188,6 +213,15 @@ export const createReply = async (req: AuthRequest, res: Response): Promise<void
         `${req.user.displayName} replied to your discussion`,
         { discussionId: discussion._id.toString(), userId: req.user._id.toString() }
       );
+    }
+
+    // Emit WebSocket event for real-time discussion updates
+    if (io) {
+      io.to(`discussion-${discussionId}`).emit('discussion-reply-received', {
+        discussionId,
+        reply
+      });
+      console.log(`📨 Real-time reply sent to discussion-${discussionId}`);
     }
 
     res.status(201).json({

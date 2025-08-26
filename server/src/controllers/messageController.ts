@@ -5,6 +5,12 @@ import { User } from '../models/User.js';
 import { AuthRequest } from '../middleware/auth.js';
 import { createNotification } from './notificationController.js';
 
+// We'll import io dynamically to avoid circular imports
+let io: any = null;
+export const setSocketIO = (socketInstance: any) => {
+  io = socketInstance;
+};
+
 export const getConversations = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     if (!req.user) {
@@ -137,6 +143,34 @@ export const sendMessage = async (req: AuthRequest, res: Response): Promise<void
       `${req.user.displayName} sent you a message`,
       { messageId: message._id.toString(), userId: req.user._id.toString() }
     );
+
+    // Emit WebSocket event for real-time messaging
+    if (io) {
+      const emittedAt = new Date().toISOString();
+      io.to(`user-${recipientId}`).emit('private-message-received', { ...message.toObject?.() ?? message, _emittedAt: emittedAt });
+      io.to(`user-${req.user._id}`).emit('private-message-received', { ...message.toObject?.() ?? message, _emittedAt: emittedAt }); // echo to sender
+      console.log(`📨 Real-time message emitted at ${emittedAt} to user-${recipientId} and user-${req.user._id}`);
+
+      // Emit conversation-updated to both sender and recipient for live sidebar updates
+      const conversationSummary = {
+        _id: conversation._id.toString(),
+        participants: [
+          { _id: req.user._id.toString(), displayName: req.user.displayName, photoURL: req.user.photoURL },
+          { _id: recipient._id.toString(), displayName: recipient.displayName, photoURL: recipient.photoURL }
+        ],
+        lastMessage: {
+          _id: message._id.toString(),
+          content: message.content,
+          createdAt: message.createdAt,
+          sender: message.sender._id.toString()
+        },
+        lastActivity: conversation.lastActivity
+      };
+
+      io.to(`user-${recipientId}`).emit('conversation-updated', { conversation: conversationSummary });
+      io.to(`user-${req.user._id}`).emit('conversation-updated', { conversation: conversationSummary });
+      console.log(`📣 Emitted conversation-updated to sender and recipient rooms`);
+    }
 
     res.status(201).json({
       message: 'Message sent successfully',

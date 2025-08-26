@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
-import { useRealTimeUpdates } from '../hooks/useRealTimeUpdates';
+import { useWebSocket } from '../hooks/useWebSocket';
 import LoginModal from './LoginModal';
 import { 
   Home, 
@@ -38,17 +38,15 @@ const Navbar: React.FC = () => {
     }
   }, [currentUser]);
 
-  // Real-time updates for notification count
-  const handleNotificationsUpdate = (newNotifications: any[]) => {
-    const unreadCount = newNotifications.filter(n => !n.isRead).length;
-    setUnreadCount(unreadCount);
-  };
-
-  useRealTimeUpdates({
-    onNotificationsUpdate: handleNotificationsUpdate,
-    shouldFetchNotifications: !!currentUser,
-    interval: 20000, // Poll every 20 seconds
-    enabled: !!currentUser
+  // WebSocket-driven notifications (instant)
+  useWebSocket({
+    enabled: !!currentUser,
+    onNotificationCreated: (notif) => {
+      // Simple increment unless it's read or malformed
+      if (notif && !notif.isRead) {
+        setUnreadCount((c) => c + 1);
+      }
+    }
   });
 
   const fetchNotifications = async () => {

@@ -9,8 +9,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
-import { RealTimeIndicator } from '../components/RealTimeIndicator';
-import { useRealTimeUpdates } from '../hooks/useRealTimeUpdates';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 interface Conversation {
   _id: string;
@@ -43,6 +42,8 @@ interface Message {
   content: string;
   isRead: boolean;
   createdAt: string;
+  // client-side only flag for optimistic UI
+  pending?: boolean;
 }
 
 export const Messages: React.FC = () => {
@@ -63,12 +64,27 @@ export const Messages: React.FC = () => {
   const [showNewMessageModal, setShowNewMessageModal] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const prevMessagesLengthRef = useRef(0);
+  const [inputFocused, setInputFocused] = useState(false);
 
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+  // Helper: scroll chat to the bottom
+  const scrollToBottom = (smooth: boolean = true) => {
+    const container = messagesContainerRef.current;
+    if (container) {
+      container.scrollTo({ top: container.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
+    } else if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: smooth ? 'smooth' : 'auto' });
     }
+  };
+
+  // Always jump to bottom when a new message arrives (PC or mobile)
+  useEffect(() => {
+    const isNewMessage = messages.length > prevMessagesLengthRef.current;
+    if (isNewMessage) {
+      scrollToBottom(true);
+    }
+    prevMessagesLengthRef.current = messages.length;
   }, [messages]);
 
   useEffect(() => {
@@ -92,66 +108,53 @@ export const Messages: React.FC = () => {
     }
   }, [selectedUserId]);
 
-  // Real-time updates for messages and conversations
-  const handleMessagesUpdate = (newMessages: Message[]) => {
-    console.log('🔄 Handling messages update:', newMessages.length, 'messages received');
-    console.log('Current messages count:', messages.length);
+  // Real-time updates with WebSocket
+  const handlePrivateMessageReceived = (newMessage: Message) => {
+    console.log('� Received new private message:', newMessage);
     
-    if (newMessages && newMessages.length >= 0) {
-      // Check for differences
-      const currentIds = messages.map(m => m._id).sort().join(',');
-      const newIds = newMessages.map(m => m._id).sort().join(',');
-      
-      if (currentIds !== newIds || newMessages.length !== messages.length) {
-        console.log('✅ Messages have changed, updating...');
-        setMessages(newMessages);
-      }
-    }
-  };
-
-  const handleConversationsUpdate = (newConversations: Conversation[]) => {
-    console.log('🔄 Handling conversations update:', newConversations.length, 'conversations received');
-    console.log('Current conversations count:', conversations.length);
-    
-    if (newConversations && newConversations.length >= 0) {
-      // Check for differences
-      const currentIds = conversations.map(c => c._id).sort().join(',');
-      const newIds = newConversations.map(c => c._id).sort().join(',');
-      
-      if (currentIds !== newIds || newConversations.length !== conversations.length) {
-        console.log('✅ Conversations have changed, updating...');
-        setConversations(newConversations);
-      } else {
-        // Check for lastMessage changes
-        const hasChanges = newConversations.some(newConv => {
-          const currentConv = conversations.find(c => c._id === newConv._id);
-          if (!currentConv) return true;
-          
-          return (
-            newConv.lastMessage?._id !== currentConv.lastMessage?._id ||
-            newConv.lastActivity !== currentConv.lastActivity
-          );
-        });
-        
-        if (hasChanges) {
-          console.log('✅ Conversation content has changed, updating...');
-          setConversations(newConversations);
+    // Only add message if it's for the current conversation
+    if (selectedUserId && 
+        ((newMessage.sender._id === selectedUserId && newMessage.recipient._id === currentUser?._id) ||
+         (newMessage.sender._id === currentUser?._id && newMessage.recipient._id === selectedUserId))) {
+      setMessages(prev => {
+        // If there is a pending optimistic message from self with same content, replace it
+        const pendingIdx = prev.findIndex(m => m.pending && m.sender._id === currentUser?._id && m.content === newMessage.content);
+        if (pendingIdx !== -1) {
+          const updated = [...prev];
+          updated[pendingIdx] = { ...newMessage, pending: false };
+          return updated;
         }
-      }
+        // Otherwise, add if not present
+        const exists = prev.some(msg => msg._id === newMessage._id);
+        if (!exists) return [...prev, newMessage];
+        return prev;
+      });
     }
   };
 
-  const { lastFetchTimes, isEnabled } = useRealTimeUpdates({
-    onMessagesUpdate: handleMessagesUpdate,
-    shouldFetchMessages: !!selectedUserId,
-    selectedUserId: selectedUserId || undefined,
-    
-    onConversationsUpdate: handleConversationsUpdate,
-    shouldFetchConversations: true,
-    
-    interval: 2000, // Poll every 2 seconds for messages
-    enabled: !loading && !sendingMessage // Don't poll while loading or sending
+  const handleConversationUpdated = (data: { conversation: Conversation }) => {
+    setConversations(prev => {
+      const idx = prev.findIndex(c => c._id === data.conversation._id);
+      if (idx === -1) {
+        return [data.conversation, ...prev];
+      }
+      // Move updated conversation to top
+      const updated = [...prev];
+      updated.splice(idx, 1);
+      return [data.conversation, ...updated];
+    });
+  };
+
+  const { isConnected } = useWebSocket({
+    onPrivateMessageReceived: handlePrivateMessageReceived,
+    onConversationUpdated: handleConversationUpdated,
+    enabled: !!currentUser
   });
+
+  // Log WebSocket connection status for debugging
+  useEffect(() => {
+    console.log('🔗 WebSocket connection status:', isConnected ? 'Connected' : 'Disconnected');
+  }, [isConnected]);
 
   const fetchConversations = async () => {
     try {
@@ -208,6 +211,7 @@ export const Messages: React.FC = () => {
       // If no messages exist yet (new conversation), just set empty messages
       console.log('No messages found for user, starting new conversation');
       setMessages([]);
+      prevMessagesLengthRef.current = 0;
     }
   };
 
@@ -216,19 +220,69 @@ export const Messages: React.FC = () => {
 
     setSendingMessage(true);
     try {
+      // Optimistic message
+      const tempId = `temp-${Date.now()}`;
+      const optimistic: Message = {
+        _id: tempId,
+        sender: {
+          _id: currentUser._id,
+          displayName: currentUser.displayName,
+          photoURL: currentUser.photoURL
+        },
+        recipient: {
+          _id: selectedUserId,
+          displayName: selectedUserInfo?.displayName || '',
+          photoURL: selectedUserInfo?.photoURL
+        },
+        content: newMessage,
+        isRead: false,
+        createdAt: new Date().toISOString(),
+        pending: true
+      };
+      setMessages(prev => [...prev, optimistic]);
+
+      // Optimistically bump conversation list
+      setConversations(prev => {
+        const idx = prev.findIndex(c => (c.participants.find(p => p._id === selectedUserId)));
+        const lastMessage = { _id: tempId, content: optimistic.content, createdAt: optimistic.createdAt, sender: currentUser._id } as any;
+        const updatedConv: Conversation = idx !== -1
+          ? { ...prev[idx], lastMessage, lastActivity: optimistic.createdAt }
+          : {
+              _id: `temp-conv-${selectedUserId}`,
+              participants: [
+                { _id: currentUser._id, displayName: currentUser.displayName, photoURL: currentUser.photoURL },
+                { _id: selectedUserId, displayName: selectedUserInfo?.displayName || '', photoURL: selectedUserInfo?.photoURL }
+              ],
+              lastMessage,
+              lastActivity: optimistic.createdAt
+            } as Conversation;
+        if (idx === -1) return [updatedConv, ...prev];
+        const copy = [...prev];
+        copy.splice(idx, 1);
+        return [updatedConv, ...copy];
+      });
+
+      // Persist via API; WS echo will reconcile the optimistic message
       const response = await apiService.sendMessage(selectedUserId, newMessage);
-      setMessages(prev => [...prev, response.data]);
+      // As a safety, replace pending temp by the real one if still present
+      setMessages(prev => {
+        const idx = prev.findIndex(m => m._id === tempId);
+        if (idx !== -1) {
+          const updated = [...prev];
+          updated[idx] = response.data;
+          return updated;
+        }
+        // If WS already replaced it, ensure no duplicate
+        const exists = prev.some(m => m._id === response.data._id);
+        if (!exists) return [...prev, response.data];
+        return prev;
+      });
       setNewMessage('');
       // After first message, clear selectedUserInfo and refresh conversations
       setSelectedUserInfo(null);
-      fetchConversations();
-      
-      // Immediately fetch latest messages to ensure real-time sync
-      setTimeout(() => {
-        if (selectedUserId) {
-          fetchMessages(selectedUserId);
-        }
-      }, 500);
+      // No REST refresh; conversation list will update via WS
+  // Ensure view snaps to bottom after send
+  setTimeout(() => scrollToBottom(true), 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send message');
     } finally {
@@ -240,6 +294,7 @@ export const Messages: React.FC = () => {
     setSelectedUserId(userId);
     setSelectedUserInfo(userInfo); // Store user info for display
     setMessages([]); // Start with empty messages for new conversation
+    prevMessagesLengthRef.current = 0; // Reset message count for new conversation
     // Don't call fetchMessages since there might not be any messages yet
   };
 
@@ -318,15 +373,6 @@ export const Messages: React.FC = () => {
           <p className="text-xl text-gray-300 max-w-3xl mx-auto font-light">
             Connect with fellow learners and stay in touch with your network
           </p>
-          
-          {/* Real-time indicator */}
-          <div className="mt-4 flex justify-center">
-            <RealTimeIndicator 
-              isConnected={isEnabled}
-              lastUpdate={lastFetchTimes.conversations || lastFetchTimes.messages}
-              className="text-sm"
-            />
-          </div>
         </div>
 
         {/* Main Content - Mobile First Design */}
@@ -527,7 +573,7 @@ export const Messages: React.FC = () => {
               </div>
 
               {/* Messages - Scrollable Container */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 relative z-10 bg-gradient-to-b from-transparent to-black/20 min-h-0">
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 relative z-10 bg-gradient-to-b from-transparent to-black/20 min-h-0">
                 {messages.map((message) => (
                   <div
                     key={message._id}
@@ -576,6 +622,12 @@ export const Messages: React.FC = () => {
                     <textarea
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
+                      onFocus={() => {
+                        setInputFocused(true);
+                        // Small delay to allow keyboard to animate, then scroll bottom
+                        setTimeout(() => scrollToBottom(true), 150);
+                      }}
+                      onBlur={() => setInputFocused(false)}
                       onKeyPress={handleKeyPress}
                       placeholder="Type a message..."
                       className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-gray-300 resize-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent focus:bg-white/15 transition-all duration-300"

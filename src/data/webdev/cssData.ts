@@ -24,7 +24,8 @@ export const cssData = {
         "Creative Style Syntax",
         "Colorful Style Sheets"
       ],
-      correct: 1
+      correct: 1,
+      explanation: "CSS stands for Cascading Style Sheets. It describes how HTML elements should be displayed on screen, paper, or in other media."
     },
     {
       question: "Which HTML tag is used to embed CSS directly into an HTML document?",
@@ -34,7 +35,8 @@ export const cssData = {
         "<script>",
         "<link>"
       ],
-      correct: 0
+      correct: 0,
+      explanation: "The <style> tag is used to include CSS directly within an HTML document, typically placed in the <head> section."
     },
     {
       question: "What property changes the background color of an element?",
@@ -44,7 +46,8 @@ export const cssData = {
         "bg color",
         "background-color"
       ],
-      correct: 3
+      correct: 3,
+      explanation: "The 'background-color' property sets the background color of an element. 'color' is for text color, not background."
     },
     {
       question: "Which CSS property is used to change the text color of an element?",
@@ -54,7 +57,8 @@ export const cssData = {
         "background-color",
         "font-color"
       ],
-      correct: 1
+      correct: 1,
+      explanation: "The 'color' property sets the color of text content. 'background-color' sets the background, and 'font-color' doesn't exist in CSS."
     },
     {
       question: "How do you add an external CSS file to your HTML?",
@@ -64,7 +68,8 @@ export const cssData = {
         '<style src="style.css">',
         '<stylesheet href="style.css">'
       ],
-      correct: 0
+      correct: 0,
+      explanation: "The <link> tag with rel='stylesheet' and href attributes is the correct way to link external CSS files to HTML documents."
     },
     {
       question: "Which property is used to control the space between the content of an element and its border?",
@@ -74,7 +79,8 @@ export const cssData = {
         "border-spacing",
         "spacing"
       ],
-      correct: 1
+      correct: 1,
+      explanation: "Padding controls the space between an element's content and its border. Margin controls space outside the border."
     },
     {
       question: 'Which selector is used to select all elements with class="main"?',
@@ -84,7 +90,8 @@ export const cssData = {
         "main",
         "*main"
       ],
-      correct: 0
+      correct: 0,
+      explanation: "The dot (.) prefix is used for class selectors. #main selects by ID, 'main' selects by element type."
     },
     {
       question: "What is the correct value for making a font italic in CSS?",
@@ -94,7 +101,8 @@ export const cssData = {
         "font-style: italic;",
         "font-variant: italic;"
       ],
-      correct: 2
+      correct: 2,
+      explanation: "The 'font-style: italic;' property makes text italic. 'font-weight' controls boldness, not style."
     },
     {
       question: "How do you create a hover effect in CSS?",

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { CheckCircle, Clock, Award, Pizza as QuizIcon, ArrowRight, Lock } from 'lucide-react';
+import { CheckCircle, Clock, Award, Pizza as QuizIcon, ArrowRight, ArrowLeft, Lock, X } from 'lucide-react';
 import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { htmlData as rawHtmlData } from '../data/webdev/htmlData';
@@ -75,6 +75,7 @@ interface QuizQuestion {
   question: string;
   options: string[];
   correct: number;
+  explanation?: string;
 }
 
 
@@ -91,6 +92,7 @@ export const SubjectPage: React.FC = () => {
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [isQuizPassed, setIsQuizPassed] = useState(false);
   const [submittingQuiz, setSubmittingQuiz] = useState(false);
+  const [showExplanation, setShowExplanation] = useState(false);
 
   useEffect(() => {
     // Load subject data based on the subject parameter
@@ -238,10 +240,19 @@ export const SubjectPage: React.FC = () => {
     setScore(0);
     setQuizCompleted(false);
     setSelectedAnswer(null);
+    setShowExplanation(false);
   };
 
   const handleAnswerSelect = (answerIndex: number) => {
     setSelectedAnswer(answerIndex);
+  };
+
+  const handlePreviousQuestion = () => {
+    if (currentQuestionIndex > 0) {
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      setSelectedAnswer(null);
+      setShowExplanation(false);
+    }
   };
 
   const handleNextQuestion = () => {
@@ -252,6 +263,7 @@ export const SubjectPage: React.FC = () => {
     if (currentQuestionIndex < quizQuestions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       setSelectedAnswer(null);
+      setShowExplanation(false);
     } else {
       handleQuizComplete();
     }
@@ -365,17 +377,34 @@ export const SubjectPage: React.FC = () => {
     const currentQuestion = quizQuestions[currentQuestionIndex];
     
     return (
-      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/10 blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500/10 blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/3 w-80 h-80 bg-cyan-500/10 blur-3xl animate-pulse delay-2000"></div>
+        </div>
+        
+        <div className="max-w-4xl mx-auto relative z-10">
+          <div className="relative bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8">
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-bold text-gray-900">Quiz: {subjectInfo.title}</h1>
-                <span className="text-sm text-gray-600">
-                  Question {currentQuestionIndex + 1} of {quizQuestions.length}
-                </span>
+                <div>
+                  <h1 className="text-3xl font-black text-white">Quiz: {subjectInfo.title}</h1>
+                  <p className="text-gray-300">WebDev Subject</p>
+                </div>
+                <button
+                  onClick={() => setShowQuiz(false)}
+                  className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="flex items-center justify-between text-sm text-gray-300 mb-4">
+                <span>Question {currentQuestionIndex + 1} of {quizQuestions.length}</span>
+                <span>Score: {score}/{quizQuestions.length}</span>
+              </div>
+              <div className="w-full bg-white/20 rounded-full h-2">
                 <div 
                   className={`h-2 bg-gradient-to-r ${subjectInfo.color} rounded-full transition-all duration-500`}
                   style={{ width: `${((currentQuestionIndex + 1) / quizQuestions.length) * 100}%` }}
@@ -384,17 +413,24 @@ export const SubjectPage: React.FC = () => {
             </div>
 
             <div className="mb-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">{currentQuestion.question}</h2>
+              <h2 className="text-xl font-semibold text-white mb-6">{currentQuestion.question}</h2>
               <div className="space-y-3">
                 {currentQuestion.options.map((option, index) => (
                   <button
                     key={index}
                     onClick={() => handleAnswerSelect(index)}
-                    className={`w-full p-4 text-left rounded-lg border-2 transition-all duration-200 ${
+                    disabled={showExplanation}
+                    className={`w-full p-4 text-left rounded-xl transition-all duration-200 ${
                       selectedAnswer === index
-                        ? `border-blue-500 bg-blue-50`
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                    }`}
+                        ? showExplanation
+                          ? index === currentQuestion.correct
+                            ? 'bg-green-500/20 border border-green-500/50 text-white'
+                            : 'bg-red-500/20 border border-red-500/50 text-white'
+                          : 'bg-cyan-500/20 border border-cyan-500/50 text-white'
+                        : showExplanation && index === currentQuestion.correct
+                          ? 'bg-green-500/20 border border-green-500/50 text-white'
+                          : 'bg-white/5 backdrop-blur-sm border border-white/20 text-gray-300 hover:bg-white/10 hover:border-white/30'
+                    } ${showExplanation ? 'cursor-default' : 'cursor-pointer'}`}
                   >
                     <span className="font-medium">{String.fromCharCode(65 + index)}.</span> {option}
                   </button>
@@ -402,21 +438,51 @@ export const SubjectPage: React.FC = () => {
               </div>
             </div>
 
+            {showExplanation && currentQuestion.explanation && (
+              <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/30 backdrop-blur-sm rounded-xl">
+                <h3 className="font-semibold text-blue-300 mb-2">Explanation:</h3>
+                <p className="text-blue-200">{currentQuestion.explanation}</p>
+              </div>
+            )}
+
             <div className="flex justify-between">
-              <button
-                onClick={() => setShowQuiz(false)}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Exit Quiz
-              </button>
-              <button
-                onClick={handleNextQuestion}
-                disabled={submittingQuiz || selectedAnswer === null}
-                className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {submittingQuiz ? 'Submitting...' : currentQuestionIndex < quizQuestions.length - 1 ? 'Next Question' : 'Finish Quiz'}
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </button>
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowQuiz(false)}
+                  className="px-6 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-gray-300 hover:bg-white/20 rounded-xl transition-colors"
+                >
+                  Exit Quiz
+                </button>
+                {currentQuestionIndex > 0 && (
+                  <button
+                    onClick={handlePreviousQuestion}
+                    className="flex items-center px-6 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-gray-300 hover:bg-white/20 rounded-xl transition-colors"
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Previous
+                  </button>
+                )}
+              </div>
+              <div className="flex space-x-3">
+                {!showExplanation && selectedAnswer !== null && (
+                  <button
+                    onClick={() => setShowExplanation(true)}
+                    className="px-6 py-3 bg-gradient-to-r from-yellow-600 to-orange-600 text-white hover:shadow-lg transform hover:scale-105 transition-all duration-200 rounded-xl"
+                  >
+                    Check Answer
+                  </button>
+                )}
+                {showExplanation && (
+                  <button
+                    onClick={handleNextQuestion}
+                    disabled={submittingQuiz}
+                    className="flex items-center px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:shadow-lg transform hover:scale-105 transition-all duration-200 rounded-xl"
+                  >
+                    {submittingQuiz ? 'Submitting...' : currentQuestionIndex < quizQuestions.length - 1 ? 'Next Question' : 'Finish Quiz'}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -429,29 +495,36 @@ export const SubjectPage: React.FC = () => {
     const isPassed = percentage >= 70;
     
     return (
-      <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 text-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/10 blur-3xl animate-pulse"></div>
+          <div className="absolute bottom-20 right-20 w-96 h-96 bg-blue-500/10 blur-3xl animate-pulse delay-1000"></div>
+          <div className="absolute top-1/2 left-1/3 w-80 h-80 bg-cyan-500/10 blur-3xl animate-pulse delay-2000"></div>
+        </div>
+        
+        <div className="max-w-4xl mx-auto relative z-10">
+          <div className="relative bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8 text-center">
             <div className="mb-8">
               <div className={`w-24 h-24 bg-gradient-to-r ${isPassed ? 'from-green-500 to-emerald-500' : 'from-red-500 to-pink-500'} rounded-full flex items-center justify-center mx-auto mb-6`}>
-                {isPassed ? (
-                  <CheckCircle className="w-12 h-12 text-white" />
-                ) : (
-                  <Award className="w-12 h-12 text-white" />
-                )}
+                {isPassed ? <Award className="w-12 h-12 text-white" /> : <Clock className="w-12 h-12 text-white" />}
               </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              <h1 className="text-4xl font-black text-white mb-4">
                 {isPassed ? 'Quiz Passed!' : 'Quiz Completed!'}
               </h1>
-              <p className="text-xl text-gray-600">You scored {score} out of {quizQuestions.length} questions</p>
+              <p className="text-xl text-gray-300">
+                You scored {score} out of {quizQuestions.length} questions
+              </p>
             </div>
 
             <div className="mb-8">
-              <div className={`text-4xl font-bold mb-2 ${isPassed ? 'text-green-600' : 'text-red-600'}`}>{percentage}%</div>
-              <div className="text-gray-600">Accuracy</div>
+              <div className={`text-5xl font-black mb-2 ${isPassed ? 'text-green-400' : 'text-red-400'}`}>
+                {percentage}%
+              </div>
+              <div className="text-gray-300">Accuracy</div>
               {isPassed && (
-                <div className="mt-2 text-sm text-green-600 font-medium">
-                  ✓ Quiz completed successfully
+                <div className="mt-4 text-green-400 font-semibold">
+                  ✓ Quiz completed successfully!
                 </div>
               )}
             </div>
@@ -462,13 +535,13 @@ export const SubjectPage: React.FC = () => {
                   setShowQuiz(false);
                   setQuizCompleted(false);
                 }}
-                className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                className="px-6 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-gray-300 hover:bg-white/20 rounded-xl transition-colors"
               >
                 Back to Videos
               </button>
               <button
                 onClick={startQuiz}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="px-6 py-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:shadow-lg transform hover:scale-105 transition-all duration-200 rounded-xl"
               >
                 Retake Quiz
               </button>

@@ -2,6 +2,12 @@ import { Response } from 'express';
 import { Notification } from '../models/Notification.js';
 import { AuthRequest } from '../middleware/auth.js';
 
+// Socket.IO instance for real-time notifications
+let io: any = null;
+export const setSocketIO = (socketInstance: any) => {
+  io = socketInstance;
+};
+
 // Get all notifications for the current user
 export const getNotifications = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -160,7 +166,7 @@ export const createNotification = async (
       return;
     }
 
-    await Notification.create({
+    const created = await Notification.create({
       recipient: recipientId,
       sender: senderId,
       type,
@@ -168,6 +174,22 @@ export const createNotification = async (
       message,
       data
     });
+
+    // Emit real-time notification to the recipient
+    if (io) {
+      // Build a minimal payload; clients can refetch if needed
+      const payload = {
+        _id: created._id.toString(),
+        type,
+        title,
+        message,
+        data: created.data,
+        isRead: created.isRead,
+        createdAt: created.createdAt,
+        sender: { _id: senderId }
+      };
+      io.to(`user-${recipientId}`).emit('notification-created', payload);
+    }
   } catch (error) {
     console.error('Create notification error:', error);
   }

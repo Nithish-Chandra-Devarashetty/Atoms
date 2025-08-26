@@ -90,32 +90,38 @@ export const javascriptData = {
       {
         question: "Which keyword is used to declare a variable that cannot be reassigned?",
         options: ["var", "let", "const", "static"],
-        correct: 2
+        correct: 2,
+        explanation: "The 'const' keyword creates a constant variable that cannot be reassigned after declaration. 'let' and 'var' allow reassignment."
       },
       {
         question: "Which of the following is a primitive data type in JavaScript?",
         options: ["Array", "Object", "Symbol", "Function"],
-        correct: 2
+        correct: 2,
+        explanation: "Symbol is a primitive data type in JavaScript. Arrays, Objects, and Functions are non-primitive (reference) types."
       },
       {
         question: "What will be the value of a variable that is declared but not initialized?",
         options: ["0", "null", "undefined", "false"],
-        correct: 2
+        correct: 2,
+        explanation: "Variables that are declared but not initialized have the value 'undefined' in JavaScript. This is the default value for uninitialized variables."
       },
       {
         question: "Which operator is used to determine the data type of a variable in JavaScript?",
         options: ["typeof", "typeOf()", "dataType()", "isType"],
-        correct: 0
+        correct: 0,
+        explanation: "The 'typeof' operator returns a string indicating the type of a variable or expression. It's used to check data types at runtime."
       },
       {
         question: "Which of the following is the correct way to declare a variable in JavaScript?",
         options: ["var name", "var = name", "let name", "variable name"],
-        correct: 2
+        correct: 2,
+        explanation: "Both 'var name' and 'let name' are correct ways to declare variables. 'let' is the modern ES6 way, while 'var' is the traditional method."
       },
       {
         question: "What is the output of the following code?\n\nlet x = \"Hello\";\nlet y = 5;\nconsole.log(x + y);",
         options: ["Hello5", "5Hello", "NaN", "Hello"],
-        correct: 0
+        correct: 0,
+        explanation: "When concatenating a string with a number using +, JavaScript converts the number to a string and concatenates them, resulting in 'Hello5'."
       },
       {
         question: "Which variable names are correct according to JavaScript?",
