@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { apiService } from '../services/api';
 import { 
-  Brain, 
-  Trophy, 
-  Target, 
   CheckCircle, 
   Clock,
   Award,
@@ -25,82 +21,27 @@ export const DSA: React.FC = () => {
   const [topics, setTopics] = useState<{[key: string]: Problem[]}>({});
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [solvedProblems, setSolvedProblems] = useState<Set<string>>(new Set());
+  // solved state derived from problems.solved per item
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (currentUser) {
-      loadDSAProgress();
-    } else {
-      loadLocalProgress();
-    }
+    loadDSAProgress();
   }, [currentUser]);
 
-  const loadDSAProgress = async () => {
-    try {
-      const response = await apiService.getDSAProgress();
-      const solvedSet = new Set(response.dsaProgress.solvedProblems);
-      setSolvedProblems(solvedSet);
-      
-      // Process problems data
-      const problemsData: Problem[] = dsaProblems.map(problem => ({
-        ...problem,
-        solved: solvedSet.has(problem.Name)
-      }));
-      setProblems(problemsData);
-      
-      // Group by topic
-      const topicsData: {[key: string]: Problem[]} = {};
-      problemsData.forEach(problem => {
-        if (!topicsData[problem.Topic]) {
-          topicsData[problem.Topic] = [];
-        }
-        topicsData[problem.Topic].push(problem);
-      });
-      setTopics(topicsData);
-    } catch (error) {
-      console.error('Failed to load DSA progress:', error);
-      loadLocalProgress();
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loadDSAProgress = () => {
+    // Use currentUser progress directly; no shared localStorage
+  const solvedArray = currentUser?.progress?.dsa?.solvedProblems || [];
+  const solvedSet = new Set<string>(solvedArray);
 
-  const loadLocalProgress = () => {
-    // Fallback to localStorage for non-authenticated users
-    const savedSolved = localStorage.getItem('solvedProblems');
-    let solvedSet = new Set<string>();
-    let savedProblems: string[] = [];
-    
-    if (savedSolved) {
-      try {
-        const parsed = JSON.parse(savedSolved);
-        savedProblems = Array.isArray(parsed) 
-          ? parsed.filter((item): item is string => typeof item === 'string')
-          : typeof parsed === 'object' && parsed !== null
-            ? Object.keys(parsed).filter(key => parsed[key] === true)
-            : [];
-        savedProblems.forEach(problem => solvedSet.add(problem));
-      } catch (e) {
-        console.error('Error parsing solved problems:', e);
-      }
-    }
-    
-    setSolvedProblems(solvedSet);
-
-    // Process problems data
     const problemsData: Problem[] = dsaProblems.map(problem => ({
       ...problem,
-      solved: savedProblems.includes(problem.Name)
+      solved: solvedSet.has(problem.Name)
     }));
     setProblems(problemsData);
-    
-    // Group by topic
+
     const topicsData: {[key: string]: Problem[]} = {};
     problemsData.forEach(problem => {
-      if (!topicsData[problem.Topic]) {
-        topicsData[problem.Topic] = [];
-      }
+      if (!topicsData[problem.Topic]) topicsData[problem.Topic] = [];
       topicsData[problem.Topic].push(problem);
     });
     setTopics(topicsData);
@@ -116,13 +57,8 @@ export const DSA: React.FC = () => {
     }
   };
 
-  const getSolvedCount = (topic: string) => {
-    return problems.filter(p => p.Topic === topic && solvedProblems.has(p.Name)).length;
-  };
-
-  const getTotalSolved = () => {
-    return solvedProblems.size;
-  };
+  const getSolvedCount = (topic: string) => problems.filter(p => p.Topic === topic && p.solved).length;
+  const getTotalSolved = () => problems.filter(p => p.solved).length;
 
   const getTopicIcon = (topic: string) => {
     const iconMap: {[key: string]: string} = {

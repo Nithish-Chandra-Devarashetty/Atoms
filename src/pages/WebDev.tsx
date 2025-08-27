@@ -17,8 +17,11 @@ import { javascriptData } from '../data/webdev/javascriptData';
 import { reactData } from '../data/webdev/reactData';
 import { nodeData } from '../data/webdev/nodeData';
 import { mongoData } from '../data/webdev/mongoData';
+import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 
 export const WebDev: React.FC = () => {
+  const { currentUser } = useAuth();
   const [subjects, setSubjects] = useState([
     {
       id: 'html',
@@ -54,7 +57,7 @@ export const WebDev: React.FC = () => {
       videosWatched: 0,
       totalVideos: javascriptData.videos.length,
       quizzesPassed: 0,
-      totalQuizzes: javascriptData.videos.length // 11 quizzes for 11 videos
+  totalQuizzes: 1
     },
     {
       id: 'react',
@@ -93,129 +96,51 @@ export const WebDev: React.FC = () => {
       totalQuizzes: 1
     }
   ]);
-
-  const calculateProgress = () => {
-    console.log('Calculating progress...');
-    
-    // Get fresh subjects data
-    const currentSubjects = [
-      {
-        id: 'html',
-        totalVideos: htmlData.videos.length,
-        totalQuizzes: 1
-      },
-      {
-        id: 'css',
-        totalVideos: cssData.videos.length,
-        totalQuizzes: 1
-      },
-      {
-        id: 'javascript',
-        totalVideos: javascriptData.videos.length,
-        totalQuizzes: javascriptData.videos.length // 11 quizzes for 11 videos
-      },
-      {
-        id: 'react',
-        totalVideos: reactData.videos.length,
-        totalQuizzes: 1
-      },
-      {
-        id: 'nodejs',
-        totalVideos: nodeData.videos.length,
-        totalQuizzes: 1
-      },
-      {
-        id: 'mongodb',
-        totalVideos: mongoData.videos.length,
-        totalQuizzes: 1
-      }
-    ];
-    
-    // Update subjects with actual progress from localStorage
-    setSubjects(prevSubjects => prevSubjects.map(subject => {
-      const currentSubject = currentSubjects.find(s => s.id === subject.id);
-      if (!currentSubject) return subject;
-      
-      let videosWatched = 0;
-      let quizzesPassed = 0;
-
-      console.log(`Checking progress for ${subject.id}:`);
-
-      if (subject.id === 'javascript') {
-        // JavaScript has 11 videos and 11 quizzes
-        for (let i = 1; i <= currentSubject.totalVideos; i++) {
-          const videoKey = `video_${subject.id}_${i}_watched`;
-          const quizKey = `quiz_${subject.id}_${i}_passed`;
-          
-          if (localStorage.getItem(videoKey) === 'true') {
-            videosWatched++;
-            console.log(`  Video ${i} watched`);
-          }
-          if (localStorage.getItem(quizKey) === 'true') {
-            quizzesPassed++;
-            console.log(`  Quiz ${i} passed`);
-          }
-        }
-      } else {
-        // Other subjects have 1 video and 1 quiz each
-        const videoKey = `video_${subject.id}_1_watched`;
-        const quizKey = `quiz_${subject.id}_passed`;
-        
-        console.log(`  Checking ${videoKey}: ${localStorage.getItem(videoKey)}`);
-        console.log(`  Checking ${quizKey}: ${localStorage.getItem(quizKey)}`);
-        
-        if (localStorage.getItem(videoKey) === 'true') {
-          videosWatched = 1;
-          console.log(`  ${subject.id} video watched`);
-        }
-        if (localStorage.getItem(quizKey) === 'true') {
-          quizzesPassed = 1;
-          console.log(`  ${subject.id} quiz passed`);
-        }
-      }
-
-      // Calculate progress based on both videos and quizzes (50% each)
-      const videoProgress = (videosWatched / currentSubject.totalVideos) * 50;
-      const quizProgress = (quizzesPassed / currentSubject.totalQuizzes) * 50;
-      const totalProgress = Math.round(videoProgress + quizProgress);
-
-      console.log(`  ${subject.id} progress: ${totalProgress}% (videos: ${videosWatched}/${currentSubject.totalVideos}, quizzes: ${quizzesPassed}/${currentSubject.totalQuizzes})`);
-
-      return {
-        ...subject,
-        progress: totalProgress,
-        videosWatched,
-        quizzesPassed
-      };
-    }));
-  };
-
   useEffect(() => {
-    // Calculate progress on component mount
-    calculateProgress();
+    const loadProgress = async () => {
+      try {
+        if (!currentUser) return;
+        const res = await apiService.getProgress();
+        const webdev = res.progress?.webdev || {};
+        const vids = res.videoProgress || [];
+        const passedBy = res.passedQuizzesBySubject || {};
 
-    // Add focus listener to recalculate when window gains focus
-    const handleFocus = () => {
-      console.log('Window gained focus, recalculating progress...');
-      calculateProgress();
-    };
+        const currentSubjects = [
+          { id: 'html', totalVideos: htmlData.videos.length, totalQuizzes: 1 },
+          { id: 'css', totalVideos: cssData.videos.length, totalQuizzes: 1 },
+          { id: 'javascript', totalVideos: javascriptData.videos.length, totalQuizzes: javascriptData.videos.length },
+          { id: 'react', totalVideos: reactData.videos.length, totalQuizzes: 1 },
+          { id: 'nodejs', totalVideos: nodeData.videos.length, totalQuizzes: 1 },
+          { id: 'mongodb', totalVideos: mongoData.videos.length, totalQuizzes: 1 }
+        ];
 
-    // Add visibility change listener
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        console.log('Page became visible, recalculating progress...');
-        calculateProgress();
+        setSubjects(prev => prev.map(s => {
+          const meta = currentSubjects.find(cs => cs.id === s.id)!;
+          const watched = vids.filter((v: any) => v.subject === s.id).length;
+          // For single-quiz subjects use flag; for JS use per-video passed topics
+          const isMultiQuiz = s.id === 'javascript';
+          const passed = isMultiQuiz
+            ? (Array.isArray(passedBy[s.id]) ? passedBy[s.id].length : 0)
+            : (webdev[s.id]?.quizPassed ? 1 : 0);
+          const videoProgress = (watched / meta.totalVideos) * 50;
+          const quizProgress = (passed / meta.totalQuizzes) * 50;
+          const total = Math.round(videoProgress + quizProgress);
+          return {
+            ...s,
+            totalVideos: meta.totalVideos,
+            totalQuizzes: meta.totalQuizzes,
+            videosWatched: watched,
+            quizzesPassed: passed,
+            progress: total
+          };
+        }));
+      } catch (e) {
+        console.error('Failed to load progress', e);
       }
     };
 
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []); // Empty dependency array, but calculateProgress uses current state
+    loadProgress();
+  }, [currentUser]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">

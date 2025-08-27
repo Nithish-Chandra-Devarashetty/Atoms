@@ -231,7 +231,7 @@ export const Profile: React.FC = () => {
           <span className="block sm:inline">{error}</span>
           {!currentUser && (
             <button
-              onClick={() => navigate('/login')}
+              onClick={() => navigate('/auth')}
               className="ml-4 mt-2 sm:mt-0 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Go to Login
@@ -403,7 +403,7 @@ export const Profile: React.FC = () => {
               
               {recentActivity.length > 0 ? (
                 <div className="space-y-4">
-                  {recentActivity.map((activity, index) => (
+                  {recentActivity.map((activity: any, index: number) => (
                     <div key={index} className="flex items-center justify-between p-4 bg-white/5 backdrop-blur-sm border border-white/10">
                       <div className="flex items-center">
                         <Target className="w-5 h-5 text-cyan-400 mr-3" />
@@ -432,7 +432,7 @@ export const Profile: React.FC = () => {
               
               {badges.length > 0 ? (
                 <div className="grid grid-cols-2 gap-4">
-                  {badges.map((badge, index) => (
+                  {badges.map((badge: any, index: number) => (
                     <div 
                       key={index}
                       className={`p-4 text-center transition-all duration-200 bg-gradient-to-r ${getBadgeColor(badge.type)} text-white border border-white/20`}

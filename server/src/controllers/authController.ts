@@ -52,6 +52,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       totalPoints: user.totalPoints,
       badges: user.badges,
       streak: user.streak,
+      progress: user.progress,
       createdAt: user.createdAt
     };
 
@@ -301,6 +302,7 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
       totalPoints: user.totalPoints,
       badges: user.badges,
       streak: user.streak,
+      progress: user.progress,
       createdAt: user.createdAt
     };
 

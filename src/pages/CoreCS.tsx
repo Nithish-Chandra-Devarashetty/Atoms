@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Monitor, 
@@ -12,54 +12,31 @@ import {
 import { osTopics } from '../data/osTopics';
 import { dbmsTopics } from '../data/dbmsTopics';
 import { cnTopics } from '../data/cnTopics';
+import { useAuth } from '../contexts/AuthContext';
 
 export const CoreCS: React.FC = () => {
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { currentUser } = useAuth();
+  const core = currentUser?.progress?.core;
 
-  // Add listeners for automatic refresh when returning to this page
-  useEffect(() => {
-    const handleFocus = () => setRefreshTrigger(prev => prev + 1);
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        setRefreshTrigger(prev => prev + 1);
-      }
-    };
+  const osCompleted = core?.os?.topicsCompleted?.length || 0;
+  const dbmsCompleted = core?.dbms?.topicsCompleted?.length || 0;
+  const cnCompleted = core?.cn?.topicsCompleted?.length || 0;
 
-    window.addEventListener('focus', handleFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
-
-  // Calculate progress based on completed topics from localStorage
-  const calculateTopicProgress = (subjectId: string, totalTopics: number) => {
-    let completedCount = 0;
-    
-    // Check localStorage for completed topics
-    for (let i = 0; i < totalTopics; i++) {
-      const topicData = subjectId === 'os' ? osTopics[i] : 
-                       subjectId === 'dbms' ? dbmsTopics[i] : cnTopics[i];
-      if (topicData) {
-        const isCompleted = localStorage.getItem(`topic_${subjectId}_${topicData.id}_completed`) === 'true';
-        if (isCompleted) completedCount++;
-      }
-    }
-    
-    console.log(`${subjectId} progress: ${completedCount}/${totalTopics}`);
-    
-    return {
-      completed: completedCount,
-      total: totalTopics,
-      percentage: Math.round((completedCount / totalTopics) * 100)
-    };
+  const osProgress = {
+    completed: osCompleted,
+    total: osTopics.length,
+    percentage: Math.round((osCompleted / osTopics.length) * 100)
   };
-
-  const osProgress = useMemo(() => calculateTopicProgress('os', osTopics.length), [refreshTrigger]);
-  const dbmsProgress = useMemo(() => calculateTopicProgress('dbms', dbmsTopics.length), [refreshTrigger]);
-  const cnProgress = useMemo(() => calculateTopicProgress('cn', cnTopics.length), [refreshTrigger]);
+  const dbmsProgress = {
+    completed: dbmsCompleted,
+    total: dbmsTopics.length,
+    percentage: Math.round((dbmsCompleted / dbmsTopics.length) * 100)
+  };
+  const cnProgress = {
+    completed: cnCompleted,
+    total: cnTopics.length,
+    percentage: Math.round((cnCompleted / cnTopics.length) * 100)
+  };
 
   const subjects = [
     {
