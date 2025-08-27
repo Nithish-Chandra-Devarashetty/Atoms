@@ -13,7 +13,7 @@ export const submitQuiz = async (req: AuthRequest, res: Response): Promise<void>
     const { subject, topic, score, totalQuestions, timeSpent, answers } = req.body;
     const userId = req.user._id;
 
-    // Create quiz attempt record
+    // Prepare quiz attempt (we'll save after computing points to avoid counting this attempt as prior)
     const quizAttempt = new QuizAttempt({
       userId,
       subject,
@@ -24,8 +24,6 @@ export const submitQuiz = async (req: AuthRequest, res: Response): Promise<void>
       answers
     });
 
-    await quizAttempt.save();
-
     // Update user progress
     const user = await User.findById(userId);
     if (!user) {
@@ -33,15 +31,9 @@ export const submitQuiz = async (req: AuthRequest, res: Response): Promise<void>
       return;
     }
 
-    const percentage = (score / totalQuestions) * 100;
-    const passed = percentage >= 70;
-
-    // Calculate points earned
-    let pointsEarned = 0;
-    if (passed) {
-      pointsEarned = Math.floor(percentage * 10); // 70% = 700 points, 100% = 1000 points
-      if (percentage === 100) pointsEarned += 200; // Bonus for perfect score
-    }
+  const percentage = (score / totalQuestions) * 100;
+  const passed = percentage >= 70;
+  let pointsEarned = 0;
 
     // Update progress based on subject type
     if (['html', 'css', 'javascript', 'react', 'nodejs', 'mongodb'].includes(subject)) {
@@ -49,22 +41,41 @@ export const submitQuiz = async (req: AuthRequest, res: Response): Promise<void>
         user.progress.webdev[subject as keyof typeof user.progress.webdev] = {
           videosWatched: 0,
           quizPassed: false
-        };
+        } as any;
       }
-      user.progress.webdev[subject as keyof typeof user.progress.webdev].quizPassed = passed;
-      user.progress.webdev[subject as keyof typeof user.progress.webdev].score = score;
+      // Record last score
+      user.progress.webdev[subject as keyof typeof user.progress.webdev].score = score as any;
+      // Award points: +10 only on first time passing for this subject/topic
+      if (passed) {
+        const priorQuery: any = { userId, subject, $expr: { $gte: [ { $divide: ["$score", "$totalQuestions"] }, 0.7 ] } };
+        if (topic) {
+          priorQuery.topic = topic;
+        } else {
+          priorQuery.$or = [{ topic: { $exists: false } }, { topic: null }];
+        }
+        const priorPassed = await QuizAttempt.exists(priorQuery);
+        if (!priorPassed) pointsEarned += 10;
+        // For single-quiz subjects, mark quizPassed true
+        if (!topic) {
+          (user.progress.webdev as any)[subject].quizPassed = true;
+        }
+      }
     } else if (['os', 'dbms', 'cn'].includes(subject)) {
       if (topic && passed) {
         const coreSubject = user.progress.core[subject as keyof typeof user.progress.core];
         if (!coreSubject.topicsCompleted.includes(topic)) {
           coreSubject.topicsCompleted.push(topic);
           coreSubject.quizzesPassed += 1;
+          pointsEarned += 10; // +10 per topic quiz passed
         }
       }
     } else if (subject === 'aptitude' && topic) {
       if (passed && !user.progress.aptitude.completedTopics.includes(topic)) {
         user.progress.aptitude.completedTopics.push(topic);
-        user.progress.aptitude.scores.set(topic, score);
+        // Store score by topic
+        (user.progress.aptitude as any).scores = (user.progress.aptitude as any).scores || {};
+        (user.progress.aptitude as any).scores[topic] = score;
+        pointsEarned += 30; // +30 per aptitude topic
       }
     }
 
@@ -80,7 +91,9 @@ export const submitQuiz = async (req: AuthRequest, res: Response): Promise<void>
       user.badges.push(`${subject}-perfect-score`);
     }
 
-    await user.save();
+  await user.save();
+  // Now persist the quiz attempt record
+  await quizAttempt.save();
 
     res.json({
       message: 'Quiz submitted successfully',
@@ -110,11 +123,19 @@ export const markVideoWatched = async (req: AuthRequest, res: Response): Promise
     const userId = req.user._id;
 
     // Create or update video progress
-    await VideoProgress.findOneAndUpdate(
-      { userId, subject, videoId },
-      { watchedAt: new Date(), watchTime },
-      { upsert: true, new: true }
-    );
+    const existing = await VideoProgress.findOne({ userId, subject, videoId });
+    if (!existing) {
+      try {
+        await new VideoProgress({ userId, subject, videoId, watchedAt: new Date(), watchTime }).save();
+      } catch (e) {
+        // Unique index race: another request created it; treat as existing
+      }
+    } else {
+      // Update watch time and timestamp, but no points if already watched before
+      existing.watchTime = watchTime;
+      existing.watchedAt = new Date();
+      await existing.save();
+    }
 
     // Update user progress
     const user = await User.findById(userId);
@@ -130,16 +151,21 @@ export const markVideoWatched = async (req: AuthRequest, res: Response): Promise
           quizPassed: false
         };
       }
-      user.progress.webdev[subject as keyof typeof user.progress.webdev].videosWatched += 1;
+      // Increment only if first time watching this video
+      if (!existing) {
+        user.progress.webdev[subject as keyof typeof user.progress.webdev].videosWatched += 1 as any;
+      }
     }
 
-    // Award points for watching videos
-    user.totalPoints += 50;
+    // Award points for watching videos: +10 only if first time
+    if (!existing) {
+      user.totalPoints += 10;
+    }
     await user.save();
 
     res.json({
       message: 'Video marked as watched',
-      pointsEarned: 50,
+      pointsEarned: existing ? 0 : 10,
       totalPoints: user.totalPoints
     });
   } catch (error) {
@@ -173,13 +199,33 @@ export const getProgress = async (req: AuthRequest, res: Response): Promise<void
       .limit(20)
       .select('subject videoId watchedAt watchTime');
 
+    // Aggregate passed quizzes by subject/topic for webdev
+    const allWebdevPassed = await QuizAttempt.find({ userId: req.user._id, subject: { $in: ['html','css','javascript','react','nodejs','mongodb'] } })
+      .select('subject topic score totalQuestions');
+
+    const passedQuizzesBySubject: Record<string, string[]> = {};
+    for (const attempt of allWebdevPassed) {
+      const subj = (attempt as any).subject as string;
+      const totalQ = (attempt as any).totalQuestions || 0;
+      const score = (attempt as any).score || 0;
+      const passed = totalQ > 0 && (score / totalQ) >= 0.7;
+      const topic = (attempt as any).topic || 'default';
+      if (passed) {
+        if (!passedQuizzesBySubject[subj]) passedQuizzesBySubject[subj] = [];
+        if (!passedQuizzesBySubject[subj].includes(topic)) {
+          passedQuizzesBySubject[subj].push(topic);
+        }
+      }
+    }
+
     res.json({
       progress: user.progress,
       totalPoints: user.totalPoints,
       badges: user.badges,
       streak: user.streak,
       recentQuizzes,
-      videoProgress
+      videoProgress,
+      passedQuizzesBySubject
     });
   } catch (error) {
     console.error('Get progress error:', error);

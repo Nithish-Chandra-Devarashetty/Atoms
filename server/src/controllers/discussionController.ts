@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import mongoose from 'mongoose';
 import { Discussion, Reply } from '../models/Discussion.js';
+import { POINTS } from '../utils/points.js';
 import { AuthRequest } from '../middleware/auth.js';
 import { createNotification } from './notificationController.js';
 
@@ -84,8 +85,8 @@ export const createDiscussion = async (req: AuthRequest, res: Response): Promise
     await discussion.save();
     await discussion.populate('author', 'displayName photoURL');
 
-    // Award points for creating discussion
-    req.user.totalPoints += 25;
+  // Award points for creating discussion
+  req.user.totalPoints += POINTS.DISCUSSION_CREATED;
     await req.user.save();
 
     console.log('✅ Discussion created successfully:', discussion._id);
@@ -99,7 +100,7 @@ export const createDiscussion = async (req: AuthRequest, res: Response): Promise
     res.status(201).json({
       message: 'Discussion created successfully',
       discussion,
-      pointsEarned: 25
+  pointsEarned: POINTS.DISCUSSION_CREATED
     });
   } catch (error) {
     console.error('❌ Create discussion error:', error);
@@ -199,8 +200,8 @@ export const createReply = async (req: AuthRequest, res: Response): Promise<void
     discussion.replies.push(new mongoose.Types.ObjectId(reply._id));
     await discussion.save();
 
-    // Award points for replying
-    req.user.totalPoints += 15;
+  // Award points for replying
+  req.user.totalPoints += POINTS.REPLY_CREATED;
     await req.user.save();
 
     // Create notification for the discussion author (if not replying to own discussion)
@@ -227,7 +228,7 @@ export const createReply = async (req: AuthRequest, res: Response): Promise<void
     res.status(201).json({
       message: 'Reply created successfully',
       reply,
-      pointsEarned: 15
+  pointsEarned: POINTS.REPLY_CREATED
     });
   } catch (error) {
     console.error('Create reply error:', error);

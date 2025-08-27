@@ -117,11 +117,11 @@ const userSchema = new Schema<IUser>({
     },
     dsa: {
       solvedProblems: [String],
-      topicProgress: { type: Map, of: Number, default: new Map() }
+      topicProgress: { type: Schema.Types.Mixed, default: {} }
     },
     aptitude: {
       completedTopics: [String],
-      scores: { type: Map, of: Number, default: new Map() }
+      scores: { type: Schema.Types.Mixed, default: {} }
     }
   },
   totalPoints: {

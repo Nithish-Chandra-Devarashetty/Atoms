@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { User } from '../models/User.js';
 import { AuthRequest } from '../middleware/auth.js';
+import { POINTS } from '../utils/points.js';
 
 export const markProblemSolved = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -9,7 +10,7 @@ export const markProblemSolved = async (req: AuthRequest, res: Response): Promis
       return;
     }
 
-    const { problemName, topic, difficulty } = req.body;
+  const { problemName, topic, difficulty } = req.body;
     const userId = req.user._id;
 
     const user = await User.findById(userId);
@@ -24,23 +25,19 @@ export const markProblemSolved = async (req: AuthRequest, res: Response): Promis
     if (!isAlreadySolved) {
       user.progress.dsa.solvedProblems.push(problemName);
       
-      // Update topic progress
-      const currentProgress = user.progress.dsa.topicProgress.get(topic) || 0;
-      user.progress.dsa.topicProgress.set(topic, currentProgress + 1);
+  // Update topic progress (store as plain object counter)
+  const dsaProg: any = user.progress.dsa as any;
+  if (!dsaProg.topicProgress) dsaProg.topicProgress = {};
+  const currentProgress = dsaProg.topicProgress[topic] || 0;
+  dsaProg.topicProgress[topic] = currentProgress + 1;
 
-      // Calculate points based on difficulty
-      let pointsEarned = 0;
-      switch (difficulty) {
-        case 'Easy': pointsEarned = 100; break;
-        case 'Medium': pointsEarned = 200; break;
-        case 'Hard': pointsEarned = 300; break;
-        default: pointsEarned = 100;
-      }
+  // New points rule: flat +2 points per unique problem solved
+  let pointsEarned = POINTS.DSA_PROBLEM_SOLVED;
 
       user.totalPoints += pointsEarned;
 
       // Check for badges
-      const topicSolved = user.progress.dsa.topicProgress.get(topic) || 0;
+  const topicSolved = (user.progress.dsa as any).topicProgress?.[topic] || 0;
       if (topicSolved === 1 && !user.badges.includes(`${topic}-first-solve`)) {
         user.badges.push(`${topic}-first-solve`);
       }
@@ -88,16 +85,18 @@ export const unmarkProblemSolved = async (req: AuthRequest, res: Response): Prom
     );
 
     // Update topic progress
-    const currentProgress = user.progress.dsa.topicProgress.get(topic) || 0;
+    const dsaProg: any = user.progress.dsa as any;
+    if (!dsaProg.topicProgress) dsaProg.topicProgress = {};
+    const currentProgress = dsaProg.topicProgress[topic] || 0;
     if (currentProgress > 0) {
-      user.progress.dsa.topicProgress.set(topic, currentProgress - 1);
+      dsaProg.topicProgress[topic] = currentProgress - 1;
     }
 
     await user.save();
 
     res.json({
       message: 'Problem unmarked as solved',
-      topicProgress: user.progress.dsa.topicProgress.get(topic) || 0
+  topicProgress: (user.progress.dsa as any).topicProgress?.[topic] || 0
     });
   } catch (error) {
     console.error('Unmark problem solved error:', error);

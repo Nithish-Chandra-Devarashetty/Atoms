@@ -193,6 +193,24 @@ export const Home: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Points System Section */}
+      <section className="relative py-20 px-4 sm:px-6 lg:px-8 z-10">
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-white/5 backdrop-blur-md border border-white/10 p-10 text-white">
+            <h2 className="text-4xl font-black mb-6">Points System</h2>
+            <p className="text-gray-300 mb-6">Earn points as you learn. These points determine your position on the leaderboard.</p>
+            <ul className="space-y-3 text-lg">
+              <li className="flex items-start"><span className="mt-1 mr-3">•</span> Web Development: +10 points for each quiz passed (per topic) and +10 points for each video watched (first time only).</li>
+              <li className="flex items-start"><span className="mt-1 mr-3">•</span> Core CS (OS/DBMS/CN): +10 points for each topic quiz you pass.</li>
+              <li className="flex items-start"><span className="mt-1 mr-3">•</span> DSA Practice: +2 points for each unique problem you solve.</li>
+              <li className="flex items-start"><span className="mt-1 mr-3">•</span> Aptitude: +30 points for each topic you complete.</li>
+              <li className="flex items-start"><span className="mt-1 mr-3">•</span> Daily Login: +1 point the first time you log in each day.</li>
+            </ul>
+            <div className="mt-6 text-cyan-300 font-semibold">Users with the most points will be at the top of the leaderboard.</div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

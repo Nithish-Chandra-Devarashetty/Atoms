@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import { User } from '../models/User.js';
+import { POINTS } from '../utils/points.js';
 import { AuthRequest } from '../middleware/auth.js';
 
 const generateToken = (userId: string): string => {
@@ -98,6 +99,10 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       user.streak = (user.streak || 0) + 1;
     } else if (daysSinceLastLogin > 1) {
       user.streak = 1;
+    }
+    // Daily login points: +1 if logging in on a new day
+    if (daysSinceLastLogin >= 1) {
+      user.totalPoints = (user.totalPoints || 0) + POINTS.DAILY_LOGIN;
     }
     
     // Update timestamps
@@ -259,7 +264,7 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
       const today = new Date();
       const lastLogin = user.lastLogin ? new Date(user.lastLogin) : today;
       
-      const daysSinceLastLogin = Math.floor((today.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24));
+  const daysSinceLastLogin = Math.floor((today.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24));
       
       if (daysSinceLastLogin === 1) {
         user.streak = (user.streak || 0) + 1;
@@ -269,6 +274,10 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
       
       user.lastLogin = today;
       user.lastActiveDate = today;
+      // Daily login points: +1 if logging in on a new day
+      if (daysSinceLastLogin >= 1) {
+        user.totalPoints = (user.totalPoints || 0) + POINTS.DAILY_LOGIN;
+      }
       
       await user.save();
     } else {
