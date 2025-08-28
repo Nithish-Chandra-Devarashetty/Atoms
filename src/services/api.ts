@@ -442,6 +442,12 @@ class ApiService {
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
   }
+
+  // Badge endpoints
+  async getBadgeMetadata() {
+    const response = await fetch(`${API_BASE_URL}/badges/metadata`);
+    return this.handleResponse(response);
+  }
 }
 
 export const apiService = new ApiService();

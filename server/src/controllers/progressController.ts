@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { User } from '../models/User.js';
 import { QuizAttempt, VideoProgress } from '../models/Progress.js';
 import { AuthRequest } from '../middleware/auth.js';
+import { checkBadgeEligibility } from '../utils/points.js';
 
 export const submitQuiz = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -79,17 +80,61 @@ export const submitQuiz = async (req: AuthRequest, res: Response): Promise<void>
       }
     }
 
-    // Add points and check for badges
+    // Add points
     user.totalPoints += pointsEarned;
     
-    // Award badges
-    if (passed && !user.badges.includes(`${subject}-quiz-passed`)) {
-      user.badges.push(`${subject}-quiz-passed`);
+    // Check for badges
+    const newBadges: string[] = [];
+    
+    // First quiz badge
+    if (passed) {
+      const badgeResult = checkBadgeEligibility(user, 'quiz_passed', { 
+        subject, 
+        topic, 
+        percentage, 
+        passed 
+      });
+      newBadges.push(...badgeResult);
+      
+      // Check for module completion badges (WebDev)
+      if (['html', 'css', 'javascript', 'react', 'nodejs', 'mongodb'].includes(subject)) {
+        const moduleProgress = user.progress.webdev[subject as keyof typeof user.progress.webdev];
+        // Check if module is fully completed (11+ videos + quiz passed)
+        if (moduleProgress.videosWatched >= 11 && moduleProgress.quizPassed) {
+          const moduleCompletionBadges = checkBadgeEligibility(user, 'webdev_module_completed', { 
+            module: subject 
+          });
+          newBadges.push(...moduleCompletionBadges);
+        }
+      }
+      
+      // Check for core subject completion
+      if (['os', 'dbms', 'cn'].includes(subject)) {
+        const coreSubject = user.progress.core[subject as keyof typeof user.progress.core];
+        // Check if subject is completed (enough topics and quizzes)
+        if (coreSubject.topicsCompleted.length >= 10 && coreSubject.quizzesPassed >= 5) {
+          const coreCompletionBadges = checkBadgeEligibility(user, 'core_subject_completed', { 
+            subject 
+          });
+          newBadges.push(...coreCompletionBadges);
+        }
+      }
+      
+      // Check for aptitude completion
+      if (subject === 'aptitude') {
+        const aptitudeCompletionBadges = checkBadgeEligibility(user, 'aptitude_completed', { 
+          totalTopics: 50 // Adjust this number based on your actual aptitude topics count
+        });
+        newBadges.push(...aptitudeCompletionBadges);
+      }
     }
     
-    if (percentage === 100 && !user.badges.includes(`${subject}-perfect-score`)) {
-      user.badges.push(`${subject}-perfect-score`);
-    }
+    // Add new badges to user
+    newBadges.forEach(badge => {
+      if (!user.badges.includes(badge)) {
+        user.badges.push(badge);
+      }
+    });
 
   await user.save();
   // Now persist the quiz attempt record
@@ -102,9 +147,7 @@ export const submitQuiz = async (req: AuthRequest, res: Response): Promise<void>
       passed,
       pointsEarned,
       totalPoints: user.totalPoints,
-      newBadges: user.badges.filter(badge => 
-        badge === `${subject}-quiz-passed` || badge === `${subject}-perfect-score`
-      )
+      newBadges: newBadges
     });
   } catch (error) {
     console.error('Submit quiz error:', error);
@@ -161,12 +204,31 @@ export const markVideoWatched = async (req: AuthRequest, res: Response): Promise
     if (!existing) {
       user.totalPoints += 10;
     }
+    
+    // Check for module completion badges after video progress update
+    const newBadges: string[] = [];
+    if (['html', 'css', 'javascript', 'react', 'nodejs', 'mongodb'].includes(subject)) {
+      const moduleProgress = user.progress.webdev[subject as keyof typeof user.progress.webdev];
+      // Check if module is fully completed (11+ videos + quiz passed)
+      if (moduleProgress.videosWatched >= 11 && moduleProgress.quizPassed) {
+        const moduleCompletionBadges = checkBadgeEligibility(user, 'webdev_module_completed', { 
+          module: subject 
+        });
+        newBadges.forEach(badge => {
+          if (!user.badges.includes(badge)) {
+            user.badges.push(badge);
+          }
+        });
+      }
+    }
+    
     await user.save();
 
     res.json({
       message: 'Video marked as watched',
       pointsEarned: existing ? 0 : 10,
-      totalPoints: user.totalPoints
+      totalPoints: user.totalPoints,
+      newBadges: newBadges
     });
   } catch (error) {
     console.error('Mark video watched error:', error);

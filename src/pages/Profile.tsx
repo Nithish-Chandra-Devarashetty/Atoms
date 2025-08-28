@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
 import CertificatesSection from '../components/CertificatesSection';
+import BadgeDisplay from '../components/BadgeDisplay';
 import { apiService } from '../services/api';
 import { 
   Users, 
@@ -19,6 +20,7 @@ export const Profile: React.FC = () => {
   const { currentUser, logout } = useAuth();
   const [userProgress, setUserProgress] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [badgeMetadata, setBadgeMetadata] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
@@ -32,6 +34,7 @@ export const Profile: React.FC = () => {
   useEffect(() => {
     if (currentUser) {
       loadUserProgress();
+      loadBadgeMetadata();
     } else {
       setLoading(false);
       setError('Please log in to view your profile');
@@ -68,6 +71,15 @@ export const Profile: React.FC = () => {
       clearInterval(interval);
     };
   }, [currentUser]);
+
+  const loadBadgeMetadata = async () => {
+    try {
+      const response = await apiService.getBadgeMetadata();
+      setBadgeMetadata(response.badges);
+    } catch (error) {
+      console.error('Failed to load badge metadata:', error);
+    }
+  };
 
   const loadUserProgress = async () => {
     if (!currentUser) {
@@ -160,12 +172,7 @@ export const Profile: React.FC = () => {
     streak: userProfile?.streak || 0
   };
 
-  const badges = (userProfile?.badges || currentUser?.badges || []).map((badge: string) => ({
-    name: badge.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-    icon: badge.includes('quiz') ? '🏅' : badge.includes('silver') ? '🥈' : badge.includes('gold') ? '🥇' : '💎',
-    type: badge.includes('quiz') ? 'feast' : badge.includes('silver') ? 'silver' : badge.includes('gold') ? 'gold' : 'diamond',
-    earned: true
-  }));
+  const userBadges = userProfile?.badges || currentUser?.badges || [];
 
   const progress = userProgress ? {
     webdev: { 
@@ -205,16 +212,6 @@ export const Profile: React.FC = () => {
     score: Math.round((quiz.score / quiz.totalQuestions) * 100),
     date: new Date(quiz.createdAt).toLocaleDateString()
   })) || [];
-
-  const getBadgeColor = (type: string) => {
-    switch (type) {
-      case 'silver': return 'from-gray-400 to-gray-500';
-      case 'gold': return 'from-yellow-400 to-yellow-500';
-      case 'diamond': return 'from-blue-400 to-purple-500';
-      case 'feast': return 'from-green-400 to-green-500';
-      default: return 'from-gray-300 to-gray-400';
-    }
-  };
 
   if (loading) {
     return (
@@ -436,21 +433,23 @@ export const Profile: React.FC = () => {
             <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 text-white z-10">
               <h2 className="text-3xl font-black text-white mb-8">Achievement Badges</h2>
               
-              {badges.length > 0 ? (
-                <div className="grid grid-cols-2 gap-4">
-                  {badges.map((badge: any, index: number) => (
-                    <div 
+              {userBadges.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {userBadges.map((badgeId: string, index: number) => (
+                    <BadgeDisplay
                       key={index}
-                      className={`p-4 text-center transition-all duration-200 bg-gradient-to-r ${getBadgeColor(badge.type)} text-white border border-white/20`}
-                    >
-                      <div className="text-2xl mb-2">{badge.icon}</div>
-                      <div className="text-sm font-medium">{badge.name}</div>
-                    </div>
+                      badgeId={badgeId}
+                      metadata={badgeMetadata}
+                      showName={true}
+                      className="mx-auto"
+                    />
                   ))}
                 </div>
               ) : (
                 <div className="text-center text-gray-400">
-                  No badges earned yet. Complete quizzes to earn your first badge!
+                  <div className="text-6xl mb-4">🏆</div>
+                  <h3 className="text-xl font-semibold mb-2">No badges earned yet</h3>
+                  <p className="text-sm">Complete modules, solve problems, and earn quizzes to unlock achievement badges!</p>
                 </div>
               )}
             </div>

@@ -1,7 +1,7 @@
 import { Response } from 'express';
 import { User } from '../models/User.js';
 import { AuthRequest } from '../middleware/auth.js';
-import { POINTS } from '../utils/points.js';
+import { checkBadgeEligibility } from '../utils/points.js';
 
 export const markProblemSolved = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -32,15 +32,20 @@ export const markProblemSolved = async (req: AuthRequest, res: Response): Promis
   dsaProg.topicProgress[topic] = currentProgress + 1;
 
   // New points rule: flat +2 points per unique problem solved
-  let pointsEarned = POINTS.DSA_PROBLEM_SOLVED;
+  let pointsEarned = 2;
 
       user.totalPoints += pointsEarned;
 
-      // Check for badges
-  const topicSolved = (user.progress.dsa as any).topicProgress?.[topic] || 0;
-      if (topicSolved === 1 && !user.badges.includes(`${topic}-first-solve`)) {
-        user.badges.push(`${topic}-first-solve`);
-      }
+      // Check for DSA badges based on total problems solved
+      const newBadges = checkBadgeEligibility(user, 'dsa_problem_solved', { 
+        totalProblems: 200 // Adjust this to your actual total DSA problems count
+      });
+      
+      newBadges.forEach(badge => {
+        if (!user.badges.includes(badge)) {
+          user.badges.push(badge);
+        }
+      });
 
       await user.save();
 
@@ -48,7 +53,8 @@ export const markProblemSolved = async (req: AuthRequest, res: Response): Promis
         message: 'Problem marked as solved',
         pointsEarned,
         totalPoints: user.totalPoints,
-        topicProgress: topicSolved
+        topicProgress: topicSolved,
+        newBadges: newBadges
       });
     } else {
       res.json({

@@ -20,6 +20,7 @@ import userRoutes from './routes/user.js';
 import messageRoutes from './routes/messages.js';
 import notificationRoutes from './routes/notifications.js';
 import certificateRoutes from './routes/certificates.js';
+import badgeRoutes from './routes/badges.js';
 
 // Import controllers to set up WebSocket
 import { setSocketIO as setMessageSocketIO } from './controllers/messageController.js';
@@ -131,6 +132,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/certificates', certificateRoutes);
+app.use('/api/badges', badgeRoutes);
 
 // API info endpoint
 app.get('/api', (req, res) => {
