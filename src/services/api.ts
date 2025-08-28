@@ -374,6 +374,74 @@ class ApiService {
     });
     return this.handleResponse(response);
   }
+
+  // Certificate endpoints
+  async generateWebDevCertificate() {
+    const response = await fetch(`${API_BASE_URL}/certificates/webdev/generate`, {
+      method: 'POST',
+      headers: this.getAuthHeaders()
+    });
+    return this.handleResponse(response);
+  }
+
+  async getUserCertificates() {
+    const response = await fetch(`${API_BASE_URL}/certificates/user`, {
+      headers: this.getAuthHeaders()
+    });
+    return this.handleResponse(response);
+  }
+
+  async checkWebDevEligibility() {
+    const response = await fetch(`${API_BASE_URL}/certificates/webdev/eligibility`, {
+      headers: this.getAuthHeaders()
+    });
+    return this.handleResponse(response);
+  }
+
+  async verifyCertificate(certificateId: string) {
+    const response = await fetch(`${API_BASE_URL}/certificates/verify/${certificateId}`);
+    return this.handleResponse(response);
+  }
+
+  async getSignedWebDevCertificateUrl() {
+    const response = await fetch(`${API_BASE_URL}/certificates/webdev/signed-url`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
+  async downloadWebDevCertificate() {
+    const response = await fetch(`${API_BASE_URL}/certificates/webdev/download`, {
+      headers: this.getAuthHeaders(),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to download certificate');
+    }
+    
+    // Get the PDF blob and create a download
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    
+    // Get filename from Content-Disposition header or use default
+    const contentDisposition = response.headers.get('content-disposition');
+    let filename = 'Certificate.pdf';
+    if (contentDisposition) {
+      const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+      if (filenameMatch) {
+        filename = filenameMatch[1];
+      }
+    }
+    a.download = filename;
+    
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }
 }
 
 export const apiService = new ApiService();

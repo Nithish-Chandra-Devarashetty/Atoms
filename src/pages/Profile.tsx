@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
+import CertificatesSection from '../components/CertificatesSection';
 import { apiService } from '../services/api';
 import { 
   Users, 
@@ -426,6 +427,11 @@ export const Profile: React.FC = () => {
 
           {/* Right Column */}
           <div className="space-y-8">
+            {/* Certificates Section */}
+            <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 text-white z-10">
+              <CertificatesSection userProgress={userProgress} />
+            </div>
+
             {/* Badges */}
             <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 text-white z-10">
               <h2 className="text-3xl font-black text-white mb-8">Achievement Badges</h2>

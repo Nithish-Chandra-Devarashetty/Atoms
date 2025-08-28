@@ -19,6 +19,7 @@ import dsaRoutes from './routes/dsa.js';
 import userRoutes from './routes/user.js';
 import messageRoutes from './routes/messages.js';
 import notificationRoutes from './routes/notifications.js';
+import certificateRoutes from './routes/certificates.js';
 
 // Import controllers to set up WebSocket
 import { setSocketIO as setMessageSocketIO } from './controllers/messageController.js';
@@ -29,6 +30,14 @@ import { setSocketIO as setNotificationSocketIO } from './controllers/notificati
 dotenv.config();
 
 const app = express();
+// Serve local certificate fallbacks
+import path from 'path';
+import fs from 'fs';
+const staticCertDir = path.resolve(process.cwd(), 'temp', 'certificates');
+if (!fs.existsSync(staticCertDir)) {
+  fs.mkdirSync(staticCertDir, { recursive: true });
+}
+app.use('/static/certificates', express.static(staticCertDir));
 const server = createServer(app);
 const io = new SocketIOServer(server, {
   cors: {
@@ -121,7 +130,7 @@ app.use('/api/dsa', dsaRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
-app.use('/api/notifications', notificationRoutes);
+app.use('/api/certificates', certificateRoutes);
 
 // API info endpoint
 app.get('/api', (req, res) => {

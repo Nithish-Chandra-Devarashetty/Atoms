@@ -50,6 +50,14 @@ export interface IUser extends Document {
   followers: mongoose.Types.ObjectId[];
   following: mongoose.Types.ObjectId[];
   
+  // Certificates
+  certificates: {
+    type: string; // 'webdev', 'core', 'dsa', 'aptitude'
+    issuedDate: Date;
+    certificateId: string;
+    downloadUrl: string;
+  }[];
+  
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
@@ -142,6 +150,12 @@ const userSchema = new Schema<IUser>({
   following: [{
     type: Schema.Types.ObjectId,
     ref: 'User'
+  }],
+  certificates: [{
+    type: { type: String, enum: ['webdev', 'core', 'dsa', 'aptitude'] },
+    issuedDate: { type: Date, default: Date.now },
+    certificateId: { type: String, required: true },
+    downloadUrl: { type: String, required: true }
   }]
 }, {
   timestamps: true
