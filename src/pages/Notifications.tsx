@@ -78,11 +78,13 @@ export const Notifications: React.FC = () => {
     if (!notification.isRead) {
       try {
         await apiService.markNotificationRead(notification._id);
-        setNotifications(prev => 
-          prev.map(notif => 
-            notif._id === notification._id ? { ...notif, isRead: true } : notif
-          )
-        );
+        setNotifications(prev => {
+          const updated = prev.map(notif => notif._id === notification._id ? { ...notif, isRead: true } : notif);
+          // Broadcast unread count change
+          const newUnread = updated.filter(n => !n.isRead).length;
+          window.dispatchEvent(new CustomEvent('unread-count-update', { detail: { count: newUnread } }));
+          return updated;
+        });
       } catch (error) {
         console.error('Failed to mark notification as read:', error);
       }
@@ -101,7 +103,12 @@ export const Notifications: React.FC = () => {
   const handleMarkAllAsRead = async () => {
     try {
       await apiService.markAllNotificationsRead();
-      setNotifications(prev => prev.map(notif => ({ ...notif, isRead: true })));
+      setNotifications(prev => {
+        const updated = prev.map(notif => ({ ...notif, isRead: true }));
+        // Broadcast unread count reset
+        window.dispatchEvent(new CustomEvent('unread-count-update', { detail: { count: 0 } }));
+        return updated;
+      });
     } catch (error) {
       console.error('Failed to mark all as read:', error);
     }
@@ -111,6 +118,8 @@ export const Notifications: React.FC = () => {
     try {
       await apiService.clearAllNotifications();
       setNotifications([]);
+  // Broadcast unread count reset
+  window.dispatchEvent(new CustomEvent('unread-count-update', { detail: { count: 0 } }));
     } catch (error) {
       console.error('Failed to clear all notifications:', error);
     }

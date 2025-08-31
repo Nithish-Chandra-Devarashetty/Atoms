@@ -16,6 +16,8 @@ import { Discussion } from './pages/Discussion';
 import { Messages } from './pages/Messages';
 import { Notifications } from './pages/Notifications';
 import { Leaderboard } from './pages/Leaderboard';
+import Contests from './pages/Contests';
+import AdminContests from './pages/AdminContests';
 import { SubjectPage } from './pages/SubjectPage';
 import { CoreSubjectPage } from './pages/CoreSubjectPage';
 import { DSATopicPage } from './pages/DSATopicPage';
@@ -35,30 +37,34 @@ function App() {
         <Router>
           <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
             <Navbar />
-            <main className="pt-16">
+            <main>
               <Routes>
-                <Route path="/" element={<Home />} />
+                {/* Public routes */}
                 <Route path="/auth" element={<Auth />} />
-                <Route path="/webdev" element={<WebDev />} />
-                <Route path="/webdev/:subject" element={<SubjectPage />} />
-                <Route path="/core" element={<CoreCS />} />
-                <Route path="/core/:subject" element={<CoreSubjectPage />} />
-                <Route path="/dsa" element={<DSA />} />
-                <Route path="/dsa/:topic/:difficulty" element={<DSATopicPage />} />
-                <Route path="/dsa/:topic" element={<DSATopicPage />} />
-                <Route path="/aptitude" element={<Aptitude />} />
-                <Route path="/aptitude/:topic" element={<AptitudeTopicPage />} />
-                <Route path="/user/:userId" element={<UserProfile />} />
-                {/* Protected Routes */}
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/admin/contests" element={<AdminContests />} />
+
+                {/* All other routes require authentication */}
                 <Route element={<ProtectedRoute />}>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/webdev" element={<WebDev />} />
+                  <Route path="/webdev/:subject" element={<SubjectPage />} />
+                  <Route path="/core" element={<CoreCS />} />
+                  <Route path="/core/:subject" element={<CoreSubjectPage />} />
+                  <Route path="/dsa" element={<DSA />} />
+                  <Route path="/dsa/:topic/:difficulty" element={<DSATopicPage />} />
+                  <Route path="/dsa/:topic" element={<DSATopicPage />} />
+                  <Route path="/aptitude" element={<Aptitude />} />
+                  <Route path="/aptitude/:topic" element={<AptitudeTopicPage />} />
+                  <Route path="/user/:userId" element={<UserProfile />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/discussion" element={<Discussion />} />
                   <Route path="/messages" element={<Messages />} />
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/leaderboard" element={<Leaderboard />} />
+                  <Route path="/contests" element={<Contests />} />
+                  <Route path="/test-auth" element={<TestAuth />} />
                 </Route>
-                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                <Route path="/test-auth" element={<TestAuth />} />
               </Routes>
             </main>
             <Footer />

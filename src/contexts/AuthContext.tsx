@@ -8,6 +8,7 @@ export interface User {
   displayName: string;
   photoURL?: string;
   provider: string;
+  role?: 'user' | 'admin';
   totalPoints: number;
   badges: string[];
   streak: number;

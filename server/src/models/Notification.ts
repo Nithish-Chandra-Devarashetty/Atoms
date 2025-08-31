@@ -4,7 +4,7 @@ export interface INotification {
   _id: mongoose.Types.ObjectId;
   recipient: mongoose.Types.ObjectId;
   sender: mongoose.Types.ObjectId;
-  type: 'message' | 'discussion_reply' | 'discussion_like' | 'follow';
+  type: 'message' | 'discussion_reply' | 'discussion_like' | 'follow' | 'contest_created' | 'contest_results';
   title: string;
   message: string;
   data?: {
@@ -31,7 +31,7 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['message', 'discussion_reply', 'discussion_like', 'follow'],
+    enum: ['message', 'discussion_reply', 'discussion_like', 'follow', 'contest_created', 'contest_results'],
     required: true
   },
   title: {

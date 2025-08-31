@@ -14,7 +14,6 @@ import {
   Trophy,
   Menu,
   X,
-  Bot,
   LogOut,
   Bell,
   Mail
@@ -34,6 +33,18 @@ const Navbar: React.FC = () => {
       fetchNotifications();
     }
   }, [currentUser]);
+
+  // Listen for global unread count updates (e.g., from Notifications page)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { count?: number } | undefined;
+      if (detail && typeof detail.count === 'number') {
+        setUnreadCount(detail.count);
+      }
+    };
+    window.addEventListener('unread-count-update', handler as EventListener);
+    return () => window.removeEventListener('unread-count-update', handler as EventListener);
+  }, []);
 
   // WebSocket-driven notifications (instant)
   useWebSocket({
@@ -78,36 +89,17 @@ const Navbar: React.FC = () => {
     );
   };
 
-  // --- Only show navbar when at very top ---
-  const [isVisible, setIsVisible] = useState(true);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY === 0) {
-        setIsVisible(true); // show at top
-      } else {
-        setIsVisible(false); // hide when scrolling down
-      }
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  // Static navbar: no scroll-based visibility. It will be shown only when page is at top (normal flow).
 
   return (
     <>
       <nav
-        className={`bg-black/20 backdrop-blur-md border-b border-white/10 w-full z-50 fixed top-0 left-0 transform transition-transform duration-300 ${
-          isVisible ? "translate-y-0" : "-translate-y-full"
-        }`}
+        className="bg-black/20 backdrop-blur-md border-b border-white/10 w-full"
       >
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center py-4">
             <Link to="/" className="flex items-center hover:opacity-80 transition-all duration-300 group">
-              <div className="relative">
-                <Bot size={32} className="text-cyan-400 group-hover:text-cyan-300 transition-colors duration-300" />
-                <div className="absolute -inset-1 bg-cyan-400/20 blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </div>
+              <img src="/ai.png" alt="Atoms" className="w-8 h-8 object-contain" />
               <span className="ml-3 text-2xl font-black text-white tracking-tight">Atoms</span>
             </Link>
 
@@ -118,6 +110,7 @@ const Navbar: React.FC = () => {
               <NavLink to="/aptitude" icon={<Calculator size={20} />} label="Aptitude" />
               <NavLink to="/discussion" icon={<MessageCircle size={20} />} label="Discussion" />
               <NavLink to="/leaderboard" icon={<Trophy size={20} />} label="Leaderboard" />
+              
               
               {/* Notifications Icon */}
               {currentUser && (
@@ -174,6 +167,7 @@ const Navbar: React.FC = () => {
               <NavLink to="/aptitude" icon={<Calculator size={20} />} label="Aptitude" />
               <NavLink to="/discussion" icon={<MessageCircle size={20} />} label="Discussion" />
               <NavLink to="/leaderboard" icon={<Trophy size={20} />} label="Leaderboard" />
+              
               
               {currentUser && (
                 <Link 

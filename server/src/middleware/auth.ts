@@ -78,3 +78,35 @@ export const optionalAuth = async (
     next();
   }
 };
+
+// Authenticate admin using a separate JWT that carries { admin: true }
+export const authenticateAdmin = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) {
+      res.status(401).json({ error: 'Admin token required' });
+      return;
+    }
+
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      res.status(500).json({ error: 'JWT secret not configured' });
+      return;
+    }
+
+    const decoded = jwt.verify(token, jwtSecret) as any;
+    if (!decoded?.admin) {
+      res.status(403).json({ error: 'Admin access required' });
+      return;
+    }
+
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Invalid admin token' });
+  }
+};

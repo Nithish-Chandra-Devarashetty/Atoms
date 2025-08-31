@@ -53,7 +53,7 @@ export const markProblemSolved = async (req: AuthRequest, res: Response): Promis
         message: 'Problem marked as solved',
         pointsEarned,
         totalPoints: user.totalPoints,
-        topicProgress: topicSolved,
+  topicProgress: (user.progress.dsa as any).topicProgress?.[topic] || 0,
         newBadges: newBadges
       });
     } else {

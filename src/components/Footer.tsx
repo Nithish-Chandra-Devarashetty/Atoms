@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Atom, Instagram, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
+import { Instagram, Linkedin, Mail, MapPin, Phone } from 'lucide-react';
 
 export const Footer: React.FC = () => {
   return (
@@ -11,8 +11,7 @@ export const Footer: React.FC = () => {
           <div className="col-span-1">
             <div className="flex items-center mb-4">
               <div className="relative">
-                <Atom size={32} className="text-cyan-400" />
-                <div className="absolute -inset-1 bg-cyan-400/20 blur-sm opacity-100"></div>
+                <img src="/ai.png" alt="Atoms" className="w-8 h-8 object-contain" />
               </div>
               <span className="ml-3 text-2xl font-black text-white tracking-tight">Atoms</span>
             </div>

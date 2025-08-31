@@ -4,6 +4,18 @@
 
 /* Custom clip paths for modern shapes */
 @layer utilities {
+  /* Ensure text-5xl uses normal line-height across the app */
+  .text-5xl {
+    line-height: normal;
+  }
+  /* Ensure text-6xl and text-7xl use normal line-height as well */
+  .text-6xl {
+    line-height: normal;
+  }
+  .text-7xl {
+    line-height: normal;
+  }
+
   .clip-path-hexagon {
     clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
   }

@@ -21,11 +21,14 @@ import messageRoutes from './routes/messages.js';
 import notificationRoutes from './routes/notifications.js';
 import certificateRoutes from './routes/certificates.js';
 import badgeRoutes from './routes/badges.js';
+import contestRoutes from './routes/contests.js';
+import adminRoutes from './routes/admin.js';
 
 // Import controllers to set up WebSocket
 import { setSocketIO as setMessageSocketIO } from './controllers/messageController.js';
 import { setSocketIO as setDiscussionSocketIO } from './controllers/discussionController.js';
 import { setSocketIO as setNotificationSocketIO } from './controllers/notificationController.js';
+import { setSocketIO as setContestSocketIO } from './controllers/contestController.js';
 
 // Load environment variables
 dotenv.config();
@@ -73,6 +76,7 @@ connectDatabase();
 setMessageSocketIO(io);
 setDiscussionSocketIO(io);
 setNotificationSocketIO(io);
+setContestSocketIO(io);
 
 // Security middleware
 app.use(securityHeaders);
@@ -133,6 +137,8 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/badges', badgeRoutes);
+app.use('/api/contests', contestRoutes);
+app.use('/api/admin', adminRoutes);
 
 // API info endpoint
 app.get('/api', (req, res) => {

@@ -15,6 +15,7 @@ import {
   ArrowRight,
   Sparkles
 } from 'lucide-react';
+import { Link as RouterLink } from 'react-router-dom';
 
 export const Home: React.FC = () => {
   const features = [
@@ -190,6 +191,54 @@ export const Home: React.FC = () => {
                 <span>Progress Tracking</span>
               </div>
             </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Live Contests (Glassmorphism) */}
+      <section className="relative py-20 px-4 sm:px-6 lg:px-8 z-10">
+        <div className="max-w-6xl mx-auto">
+          <div className="relative rounded-xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden">
+            {/* subtle gradient overlay */}
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10" />
+            <div className="relative p-8 md:p-12">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+                <div className="max-w-2xl">
+                  <div className="inline-flex items-center px-3 py-1 bg-white/10 border border-white/20 text-white text-xs tracking-wide mb-3">
+                    LIVE CONTESTS
+                  </div>
+                  <h3 className="text-3xl md:text-4xl font-black text-white mb-3">Compete in Timed Live Contests</h3>
+                  <p className="text-gray-200/90 leading-relaxed">
+                    Join scheduled, time-bound challenges with curated questions. See a live countdown, submit during
+                    the contest window, and after it ends, get your detailed results, leaderboard rank, and a full review of right and wrong answers.
+                  </p>
+                </div>
+                <div className="shrink-0">
+                  <RouterLink
+                    to="/contests"
+                    className="group inline-flex items-center px-6 py-3 bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/15 transition-all duration-300"
+                  >
+                    Explore Contests
+                    <ArrowRight className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+                  </RouterLink>
+                </div>
+              </div>
+
+              {/* Feature bullets */}
+              <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                  { title: 'Scheduled & Notified', desc: 'Get notified instantly when a new contest is added.' },
+                  { title: 'Live Countdown', desc: 'Transparent start time and remaining time while you attempt.' },
+                  { title: 'Leaderboard & Percentile', desc: 'See how you rank and what percent you beat.' },
+                  { title: 'Answer Review', desc: 'Review which answers were correct or wrong post-contest.' }
+                ].map((f) => (
+                  <div key={f.title} className="p-4 bg-white/5 border border-white/10">
+                    <div className="text-white font-bold">{f.title}</div>
+                    <div className="text-gray-300 text-sm mt-1">{f.desc}</div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>

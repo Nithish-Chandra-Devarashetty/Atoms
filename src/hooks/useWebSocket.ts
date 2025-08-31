@@ -14,6 +14,8 @@ interface UseWebSocketOptions {
   
   // For notifications
   onNotificationCreated?: (notification: any) => void;
+  // For contests
+  onContestCreated?: (contest: any) => void;
   
   // For typing indicators
   onUserTypingPrivate?: (data: { user: any }) => void;
@@ -31,6 +33,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   onDiscussionCreated,
   onDiscussionLikeUpdated,
   onNotificationCreated,
+  onContestCreated,
     onUserTypingPrivate,
     onUserTypingDiscussion,
     enabled = true
@@ -154,6 +157,14 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
       console.log('🔔 Notification created via WebSocket:', data);
       if (onNotificationCreated) {
         onNotificationCreated(data);
+      }
+    });
+
+    // Contests
+    socket.on('contest-created', (data) => {
+      console.log('🏁 Contest created via WebSocket:', data);
+      if (onContestCreated) {
+        onContestCreated(data);
       }
     });
 

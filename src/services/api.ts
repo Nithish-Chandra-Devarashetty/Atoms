@@ -41,9 +41,11 @@ type AuthResponse = {
 class ApiService {
   private getAuthHeaders() {
     const token = localStorage.getItem('authToken');
+    const adminToken = localStorage.getItem('adminToken');
     return {
       'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` })
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...(adminToken && !token && { Authorization: `Bearer ${adminToken}` })
     };
   }
 
@@ -71,6 +73,15 @@ class ApiService {
     }
     
     return data as T;
+  }
+
+  // Admin endpoints
+  async adminLogin(credentials: { username: string; password: string }): Promise<{ message: string; token: string }> {
+    const response = await this.fetchWithErrorHandling(`${API_BASE_URL}/admin/login`, {
+      method: 'POST',
+      body: JSON.stringify(credentials)
+    });
+    return this.handleResponse(response);
   }
 
   private async fetchWithErrorHandling(url: string, options: RequestInit = {}): Promise<Response> {
@@ -446,6 +457,70 @@ class ApiService {
   // Badge endpoints
   async getBadgeMetadata() {
     const response = await fetch(`${API_BASE_URL}/badges/metadata`);
+    return this.handleResponse(response);
+  }
+
+  // Contest endpoints
+  async listContests() {
+    const response = await fetch(`${API_BASE_URL}/contests`, {
+      headers: this.getAuthHeaders()
+    });
+    return this.handleResponse(response);
+  }
+
+  async getContest(contestId: string) {
+    const response = await fetch(`${API_BASE_URL}/contests/${contestId}`, {
+      headers: this.getAuthHeaders()
+    });
+    return this.handleResponse(response);
+  }
+
+  async submitContest(contestId: string, answers: { questionIndex: number; selectedIndex: number }[]) {
+    const response = await fetch(`${API_BASE_URL}/contests/${contestId}/submit`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ answers })
+    });
+    return this.handleResponse(response);
+  }
+
+  async getContestResults(contestId: string) {
+    const response = await fetch(`${API_BASE_URL}/contests/${contestId}/results`, {
+      headers: this.getAuthHeaders()
+    });
+    return this.handleResponse(response);
+  }
+
+  async getMyContestSubmission(contestId: string) {
+    const response = await fetch(`${API_BASE_URL}/contests/${contestId}/my-submission`, {
+      headers: this.getAuthHeaders()
+    });
+    return this.handleResponse(response);
+  }
+
+  async getMyParticipatedContests() {
+    const response = await fetch(`${API_BASE_URL}/contests/me/participated`, {
+      headers: this.getAuthHeaders()
+    });
+    return this.handleResponse(response);
+  }
+
+  async createContest(payload: {
+    title: string;
+    description?: string;
+    startTime: string;
+    durationMinutes: number;
+    questions: { text: string; options: string[]; correctIndex: number }[];
+  }) {
+    const adminToken = localStorage.getItem('adminToken');
+    const response = await fetch(`${API_BASE_URL}/contests`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(adminToken ? { Authorization: `Bearer ${adminToken}` } : {})
+      },
+      body: JSON.stringify(payload)
+    });
     return this.handleResponse(response);
   }
 }
