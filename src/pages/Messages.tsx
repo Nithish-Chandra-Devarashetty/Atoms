@@ -544,11 +544,11 @@ export const Messages: React.FC = () => {
                 <div 
                   className="flex items-center cursor-pointer hover:bg-white/5 p-2 transition-colors flex-1"
                   onClick={() => {
-                    // Get the user ID to navigate to - use selectedUserId first, then fallback to selectedContact._id
                     const targetUserId = selectedUserId || selectedContact._id;
-                    // Make sure we're not navigating to our own profile
                     if (targetUserId && targetUserId !== currentUser._id) {
-                      navigate(`/profile?user=${targetUserId}`);
+                      navigate(`/user/${targetUserId}`);
+                    } else if (targetUserId === currentUser._id) {
+                      navigate('/profile');
                     }
                   }}
                 >

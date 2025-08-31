@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Clock, 
@@ -10,8 +10,14 @@ import {
   BarChart3
 } from 'lucide-react';
 import { aptitudeTopics } from '../data/aptitudeData';
+import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 
 export const Aptitude: React.FC = () => {
+  const { currentUser } = useAuth();
+  const [userProgress, setUserProgress] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
   // Get completed topics from localStorage instead of hardcoding
   const [completedTopics] = useState<string[]>(() => {
     const completed: string[] = [];
@@ -23,11 +29,31 @@ export const Aptitude: React.FC = () => {
     return completed;
   });
 
+  useEffect(() => {
+    const fetchProgress = async () => {
+      if (currentUser) {
+        try {
+          const response = await apiService.getProgress();
+          setUserProgress(response);
+        } catch (error) {
+          console.error('Failed to fetch progress:', error);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    };
+
+    fetchProgress();
+  }, [currentUser]);
+
   const topics = aptitudeTopics.map(topic => ({
     id: topic.id,
     title: topic.title,
     description: topic.description,
     icon: topic.icon,
+    color: topic.color,
     difficulty: 'Medium',
     questionsCount: topic.questions.length,
     avgTime: '15 min',
@@ -43,9 +69,66 @@ export const Aptitude: React.FC = () => {
     }
   };
 
-  const completedCount = topics.filter(topic => topic.completed).length;
-  const totalQuestions = topics.reduce((sum, topic) => sum + topic.questionsCount, 0);
-  const completedQuestions = topics.filter(topic => topic.completed).reduce((sum, topic) => sum + topic.questionsCount, 0);
+  // Merge completed topics from backend progress and localStorage for robustness
+  const completedFromBackend: string[] = userProgress?.progress?.aptitude?.completedTopics || [];
+  const completedSet = new Set<string>([...completedTopics, ...completedFromBackend]);
+
+  const completedCount = topics.filter(t => completedSet.has(t.id)).length;
+  const completedQuestions = topics
+    .filter(t => completedSet.has(t.id))
+    .reduce((sum, t) => sum + t.questionsCount, 0);
+
+  // Prefer backend score sum for accuracy; fallback to topic question totals when only local flags exist
+  const scoreSum = Object.values(userProgress?.progress?.aptitude?.scores || {}).reduce(
+    (sum: number, val: any) => sum + (typeof val === 'number' ? val : 0),
+    0
+  );
+  const questionsSolved = scoreSum > 0 ? scoreSum : completedQuestions;
+
+  // Calculate dynamic performance metrics
+  const getPerformanceMetrics = () => {
+    const aptitudeProgress = userProgress?.progress?.aptitude || {};
+    const scores = aptitudeProgress.scores || {};
+    const completedTopicsFromProgress = aptitudeProgress.completedTopics || [];
+
+    // Build a map of total questions per topic
+    const questionsPerTopic: Record<string, number> = Object.fromEntries(
+      aptitudeTopics.map(t => [t.id, t.questions.length])
+    );
+
+    // Calculate average accuracy as a percentage across topics that have scores
+    const percentValues = Object.entries(scores)
+      .map(([topicId, val]) => {
+        const correct = typeof val === 'number' ? val : 0;
+        const total = questionsPerTopic[topicId] || 0;
+        return total > 0 ? (correct / total) * 100 : null;
+      })
+      .filter((v): v is number => v !== null);
+
+    const averageAccuracy = percentValues.length > 0
+      ? Math.round(percentValues.reduce((a, b) => a + b, 0) / percentValues.length)
+      : 0;
+
+    // Keep raw values for simple improvement heuristic
+    const scoreValues = Object.values(scores) as number[];
+    // Calculate improvement rate (mock for now, could be based on recent vs older scores)
+    const improvementRate = scoreValues.length > 2 
+      ? Math.round(((scoreValues[scoreValues.length - 1] as number) - (scoreValues[0] as number)) * 100) / 100
+      : 0;
+    
+    // Calculate rank (mock based on progress)
+    const rank = completedTopicsFromProgress.length > 0 ? Math.max(1, 500 - completedTopicsFromProgress.length * 50) : 999;
+    
+    return {
+      completedTopics: completedTopicsFromProgress.length,
+      averageAccuracy,
+      improvementRate,
+      rank,
+      totalUsers: 1250
+    };
+  };
+
+  const metrics = getPerformanceMetrics();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
@@ -76,22 +159,22 @@ export const Aptitude: React.FC = () => {
               <div className="text-gray-300">Topics Completed</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-black text-green-400 mb-2">{completedQuestions}</div>
+              <div className="text-4xl font-black text-green-400 mb-2">{questionsSolved}</div>
               <div className="text-gray-300">Questions Solved</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-black text-cyan-400 mb-2">85%</div>
+              <div className="text-4xl font-black text-cyan-400 mb-2">{metrics.averageAccuracy}%</div>
               <div className="text-gray-300">Average Accuracy</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-black text-purple-400 mb-2">2.1</div>
-              <div className="text-gray-300">Avg Time (min)</div>
+              <div className="text-4xl font-black text-purple-400 mb-2">{metrics.completedTopics}</div>
+              <div className="text-gray-300">Topics Mastered</div>
             </div>
           </div>
         </div>
 
         {/* Performance Chart */}
-        <div className="relative bg-gradient-to-r from-orange-600 to-red-600 p-8 mb-16 text-white z-10 overflow-hidden">
+        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 mb-16 text-white z-10 overflow-hidden">
           {/* Geometric patterns */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 left-0 w-32 h-32 border-2 border-white transform rotate-45"></div>
@@ -107,20 +190,22 @@ export const Aptitude: React.FC = () => {
             <div className="text-center p-6 bg-white/10 backdrop-blur-sm border border-white/20">
               <TrendingUp className="w-8 h-8 mx-auto mb-3" />
               <div className="font-black">Improvement Rate</div>
-              <div className="text-2xl font-black">+15%</div>
-              <div className="text-sm opacity-90">This week</div>
+              <div className="text-2xl font-black">
+                {metrics.improvementRate > 0 ? `+${metrics.improvementRate}%` : `${metrics.improvementRate}%`}
+              </div>
+              <div className="text-sm opacity-90">Based on scores</div>
             </div>
             <div className="text-center p-6 bg-white/10 backdrop-blur-sm border border-white/20">
               <Target className="w-8 h-8 mx-auto mb-3" />
-              <div className="font-black">Accuracy Goal</div>
-              <div className="text-2xl font-black">90%</div>
-              <div className="text-sm opacity-90">Current: 85%</div>
+              <div className="font-black">Average Accuracy</div>
+              <div className="text-2xl font-black">{metrics.averageAccuracy}%</div>
+              <div className="text-sm opacity-90">Across all topics</div>
             </div>
             <div className="text-center p-6 bg-white/10 backdrop-blur-sm border border-white/20">
               <Award className="w-8 h-8 mx-auto mb-3" />
               <div className="font-black">Rank</div>
-              <div className="text-2xl font-black">#42</div>
-              <div className="text-sm opacity-90">Out of 1,250</div>
+              <div className="text-2xl font-black">#{metrics.rank}</div>
+              <div className="text-sm opacity-90">Out of {metrics.totalUsers.toLocaleString()}</div>
             </div>
           </div>
         </div>
@@ -158,13 +243,13 @@ export const Aptitude: React.FC = () => {
                   <div>
                     <h3 className="text-lg font-black text-white">{topic.title}</h3>
                     <div className="flex items-center mt-1">
-                      {topic.completed ? (
+                      {completedSet.has(topic.id) ? (
                         <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
                       ) : (
                         <Play className="w-4 h-4 text-gray-400 mr-1" />
                       )}
                       <span className="text-sm text-gray-400">
-                        {topic.completed ? 'Completed' : 'Not Started'}
+                        {completedSet.has(topic.id) ? 'Completed' : 'Not Started'}
                       </span>
                     </div>
                   </div>
@@ -196,12 +281,12 @@ export const Aptitude: React.FC = () => {
               <Link
                 to={`/aptitude/${topic.id}`}
                 className={`relative block w-full text-center py-3 font-black transition-all duration-200 z-10 ${
-                  topic.completed
+                  completedSet.has(topic.id)
                     ? 'bg-green-600 text-white hover:bg-green-700'
                     : 'bg-gradient-to-r from-orange-600 to-red-600 text-white hover:shadow-lg transform hover:scale-105'
                 }`}
               >
-                {topic.completed ? 'Review' : 'Start Practice'}
+                {completedSet.has(topic.id) ? 'Review' : 'Start Practice'}
               </Link>
             </div>
           ))}

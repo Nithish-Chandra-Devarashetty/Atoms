@@ -23,17 +23,23 @@ import { CoreSubjectPage } from './pages/CoreSubjectPage';
 import { DSATopicPage } from './pages/DSATopicPage';
 import { AptitudeTopicPage } from './pages/AptitudeTopicPage';
 import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import Terms from './pages/Terms';
+import Contact from './pages/Contact';
 import { TestAuth } from './pages/TestAuth';
 import { Footer } from './components/Footer';
+import { ActiveTimeManager } from './components/ActiveTimeManager';
 
 function App() {
   useEffect(() => {
     document.documentElement.style.setProperty('--navbar-height', '4rem'); // 4rem = h-16
   }, []);
 
+  // Heartbeat is managed by ActiveTimeManager inside AuthProvider
+
   return (
     <ThemeProvider>
       <AuthProvider>
+  <ActiveTimeManager />
         <Router>
           <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
             <Navbar />
@@ -42,6 +48,8 @@ function App() {
                 {/* Public routes */}
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/contact" element={<Contact />} />
                 <Route path="/admin/contests" element={<AdminContests />} />
 
                 {/* All other routes require authentication */}

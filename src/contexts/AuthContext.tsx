@@ -47,11 +47,12 @@ export const useAuth = (): AuthContextType => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<AuthError | null>(null);
 
   useEffect(() => {
     const loadUser = async () => {
+  setLoading(true);
       try {
         // First, check for Google redirect result
         const redirectResult = await getGoogleRedirectResult();
@@ -68,7 +69,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (response.ok) {
             setCurrentUser(data.user);
             localStorage.setItem('authToken', data.token);
-            return; // Exit early, we're done
+    setLoading(false);
+    return; // Exit early, we're done
           }
         }
         
@@ -87,6 +89,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Auth initialization error:', error);
         // Clean up on error
         localStorage.removeItem('authToken');
+  } finally {
+    setLoading(false);
       }
     };
 

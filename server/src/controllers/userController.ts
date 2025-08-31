@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import mongoose from 'mongoose';
 import { User } from '../models/User.js';
+import { QuizAttempt } from '../models/Progress.js';
 import { AuthRequest } from '../middleware/auth.js';
 import { createNotification } from './notificationController.js';
 
@@ -9,7 +10,7 @@ export const getUserProfile = async (req: AuthRequest, res: Response): Promise<v
     const { userId } = req.params;
     
     const user = await User.findById(userId)
-      .select('displayName photoURL totalPoints badges streak createdAt followers following')
+      .select('displayName photoURL totalPoints badges streak createdAt followers following progress')
       .populate('followers', 'displayName photoURL')
       .populate('following', 'displayName photoURL');
 
@@ -23,13 +24,20 @@ export const getUserProfile = async (req: AuthRequest, res: Response): Promise<v
       follower._id.toString() === req.user!._id.toString()
     ) : false;
 
+    // Recent quizzes for activity (public)
+    const recentQuizzes = await QuizAttempt.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select('subject topic score totalQuestions createdAt');
+
     res.json({
       user: {
         ...user.toObject(),
         isFollowing,
         followersCount: user.followers.length,
         followingCount: user.following.length
-      }
+      },
+      recentQuizzes
     });
   } catch (error) {
     console.error('Get user profile error:', error);

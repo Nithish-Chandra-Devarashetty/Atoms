@@ -12,9 +12,12 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { Question, Topic, aptitudeTopics } from '../data/aptitudeData';
+import { apiService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export const AptitudeTopicPage: React.FC = () => {
   const { topic } = useParams<{ topic: string }>();
+  const { currentUser } = useAuth();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
@@ -153,7 +156,8 @@ export const AptitudeTopicPage: React.FC = () => {
     }
   };
 
-  const handleQuizComplete = () => {
+  const handleQuizComplete = async () => {
+    // Calculate points (10 per correct)
     let finalScore = 0;
     answers.forEach((answer, index) => {
       if (answer === questions[index].correct) {
@@ -163,10 +167,39 @@ export const AptitudeTopicPage: React.FC = () => {
     setScore(finalScore);
     setQuizCompleted(true);
     setQuizStarted(false);
-    
-    // Mark topic as completed if score is good (let's say >= 70%) and it's not a random quiz
-    if (topic !== 'random' && finalScore >= (questions.length * 10 * 0.7)) {
+
+    // Determine pass/fail with 70% threshold
+    const passed = finalScore >= (questions.length * 10 * 0.7);
+
+    // Mark topic as completed locally if passed and it's not a random quiz
+    if (topic !== 'random' && passed) {
       localStorage.setItem(`aptitude_${topic}_completed`, 'true');
+    }
+
+    // Submit quiz to backend if user is logged in
+    try {
+      if (currentUser) {
+        // Backend expects `score` as number of correct answers (NOT points)
+        const numberCorrect = finalScore / 10;
+        const timeSpent = 900 - timeLeft; // seconds used
+        const answersPayload = answers.map((ans, idx) => ({
+          questionIndex: idx,
+          selectedAnswer: ans !== null ? ans : -1,
+          isCorrect: ans === questions[idx].correct
+        }));
+
+        await apiService.submitQuiz({
+          subject: 'aptitude',
+          topic: topic === 'random' ? undefined : topic,
+          score: numberCorrect,
+          totalQuestions: questions.length,
+          timeSpent,
+          answers: answersPayload
+        });
+      }
+    } catch (err) {
+      console.error('Failed to submit aptitude quiz:', err);
+      // Non-blocking: UI already shows results; backend submission can fail silently
     }
   };
 

@@ -93,11 +93,13 @@ export const Notifications: React.FC = () => {
 
     // Navigate based on notification type
     if (notification.type === 'message') {
-      navigate(`/messages?user=${notification.data?.userId}`);
+  navigate(`/messages?user=${notification.data?.userId}`);
     } else if (notification.type === 'discussion_reply' || notification.type === 'discussion_like') {
       navigate('/discussion');
     } else if (notification.type === 'follow') {
-      navigate(`/profile?user=${notification.data?.userId}`);
+      if (notification.data?.userId) {
+        navigate(`/user/${notification.data.userId}`);
+      }
     }
   };
 

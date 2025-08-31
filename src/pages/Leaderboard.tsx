@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import { 
@@ -22,10 +23,11 @@ interface LeaderboardEntry {
 
 export const Leaderboard: React.FC = () => {
   const { currentUser } = useAuth();
+  const navigate = useNavigate();
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRank, setUserRank] = useState<number | null>(null);
-  const [totalUsers, setTotalUsers] = useState<number>(0);
+  // Removed totalUsers display; keep only userRank
 
   React.useEffect(() => {
     loadLeaderboard();
@@ -47,7 +49,7 @@ export const Leaderboard: React.FC = () => {
       }));
       setLeaderboardData(formattedData);
       setUserRank(response.userRank);
-      setTotalUsers(response.totalUsers || 0);
+  // totalUsers not displayed
     } catch (error) {
       console.error('Failed to load leaderboard:', error);
     } finally {
@@ -95,11 +97,11 @@ export const Leaderboard: React.FC = () => {
           <p className="text-xl text-gray-300 font-light mb-4">
             See how you rank against other learners in the community
           </p>
-          {currentUser && userRank && totalUsers > 0 && (
+      {currentUser && userRank && (
             <div className="inline-flex items-center px-6 py-3 bg-white/10 backdrop-blur-md border border-white/20 text-white">
               <Trophy className="w-5 h-5 mr-2 text-yellow-400" />
               <span className="font-semibold">
-                Your Rank: #{userRank} out of {totalUsers.toLocaleString()} users
+        Your Rank: #{userRank}
               </span>
             </div>
           )}
@@ -184,7 +186,16 @@ export const Leaderboard: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center">
+                        <div
+                          className="flex items-center cursor-pointer hover:opacity-90"
+                          onClick={() => {
+                            if (currentUser && entry._id === currentUser._id) {
+                              navigate('/profile');
+                            } else {
+                              navigate(`/user/${entry._id}`);
+                            }
+                          }}
+                        >
                           <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white mr-3 font-bold">
                             {entry.name?.charAt(0)?.toUpperCase() || 'U'}
                           </div>
@@ -247,11 +258,7 @@ export const Leaderboard: React.FC = () => {
                   {userRank ? `#${userRank}` : 'N/A'}
                 </div>
                 <div className="opacity-90">Your Rank</div>
-                {totalUsers > 0 && (
-                  <div className="text-sm opacity-75 mt-1">
-                    out of {totalUsers.toLocaleString()}
-                  </div>
-                )}
+                {/* Removed total users text per requirement */}
               </div>
               <div className="text-center">
                 <div className="text-4xl font-black mb-2">--</div>

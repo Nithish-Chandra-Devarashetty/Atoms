@@ -404,7 +404,6 @@ export const SubjectPage: React.FC = () => {
               </div>
               <div className="flex items-center justify-between text-sm text-gray-300 mb-4">
                 <span>Question {currentQuestionIndex + 1} of {quizQuestions.length}</span>
-                <span>Score: {score}/{quizQuestions.length}</span>
               </div>
               <div className="w-full bg-white/20 h-2">
                 <div 

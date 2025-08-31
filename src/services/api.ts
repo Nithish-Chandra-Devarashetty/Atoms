@@ -191,6 +191,16 @@ class ApiService {
     return this.handleResponse(response);
   }
 
+  // Heartbeat to record active time while user is browsing
+  async heartbeat(seconds = 30) {
+    const response = await fetch(`${API_BASE_URL}/progress/heartbeat`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ seconds })
+    });
+    return this.handleResponse(response);
+  }
+
   async getLeaderboard(timeframe = 'all', category = 'overall') {
     const response = await fetch(
       `${API_BASE_URL}/progress/leaderboard?timeframe=${timeframe}&category=${category}`,

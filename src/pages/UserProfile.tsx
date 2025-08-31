@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
+import BadgeDisplay from '../components/BadgeDisplay';
 import { 
   Users, 
   Target, 
@@ -37,10 +38,13 @@ export const UserProfile: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [followLoading, setFollowLoading] = useState(false);
+  const [badgeMetadata, setBadgeMetadata] = useState<any>(null);
+  const [recentQuizzes, setRecentQuizzes] = useState<any[]>([]);
 
   useEffect(() => {
     if (userId && userId !== currentUser?._id) {
       fetchUserProfile();
+      loadBadgeMetadata();
     } else if (userId === currentUser?._id) {
       // Redirect to own profile page
       navigate('/profile');
@@ -54,13 +58,23 @@ export const UserProfile: React.FC = () => {
     setError(null);
     
     try {
-      const response = await apiService.getUserProfile(userId);
-      setProfile(response.user);
+  const response = await apiService.getUserProfile(userId);
+  setProfile(response.user);
+  setRecentQuizzes(response.recentQuizzes || []);
     } catch (error) {
       console.error('Failed to load user profile:', error);
       setError('Failed to load profile data. Please try again later.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadBadgeMetadata = async () => {
+    try {
+      const response = await apiService.getBadgeMetadata();
+      setBadgeMetadata(response.badges);
+    } catch (e) {
+      // non-fatal
     }
   };
 
@@ -103,7 +117,7 @@ export const UserProfile: React.FC = () => {
           <div className="text-red-400 text-xl mb-4">{error || 'Profile not found'}</div>
           <button
             onClick={() => navigate(-1)}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white transition-colors"
           >
             Go Back
           </button>
@@ -112,12 +126,29 @@ export const UserProfile: React.FC = () => {
     );
   }
 
-  const badges = profile.badges.map((badge: string) => ({
-    name: badge.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-    icon: badge.includes('quiz') ? '🏅' : badge.includes('silver') ? '🥈' : badge.includes('gold') ? '🥇' : '💎',
-    type: badge.includes('quiz') ? 'feast' : badge.includes('silver') ? 'silver' : badge.includes('gold') ? 'gold' : 'diamond',
-    earned: true
-  }));
+  // Compute progress like Profile page from embedded progress data
+  const progressData = (profile as any)?.progress || {};
+  const progress = {
+    webdev: {
+      completed: progressData.webdev ? Object.values(progressData.webdev).filter((p: any) => p?.quizPassed).length : 0,
+      total: 6
+    },
+    core: {
+      completed: (progressData.core?.os?.topicsCompleted?.length || 0) +
+                 (progressData.core?.dbms?.topicsCompleted?.length || 0) +
+                 (progressData.core?.cn?.topicsCompleted?.length || 0),
+      total: 29
+    },
+    dsa: {
+      completed: progressData.dsa?.solvedProblems?.length || 0,
+      total: 150
+    },
+    aptitude: {
+      completed: progressData.aptitude?.completedTopics?.length || 0,
+      total: 8
+    }
+  };
+  const pct = (c: number, t: number) => (t > 0 ? Math.round((c / t) * 100) : 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-indigo-900 p-4">
@@ -131,8 +162,8 @@ export const UserProfile: React.FC = () => {
           Back
         </button>
 
-        {/* Profile Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-8 mb-8 text-white relative overflow-hidden">
+        {/* Profile Header - glassmorphism, square corners */}
+        <div className="bg-white/5 backdrop-blur-md border border-white/10 p-8 mb-8 text-white relative overflow-hidden">
           {/* Geometric patterns */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 left-0 w-32 h-32 border-2 border-white transform rotate-45"></div>
@@ -161,18 +192,18 @@ export const UserProfile: React.FC = () => {
               <h1 className="text-4xl font-black text-white mb-2">{profile.displayName}</h1>
               <p className="text-gray-300 mb-4">Member since {new Date(profile.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long' })}</p>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="text-center">
-                  <div className="text-3xl font-black text-cyan-400">#{profile.totalPoints}</div>
+                  <div className="text-3xl font-black text-cyan-400">{profile.totalPoints}</div>
                   <div className="text-gray-300 text-sm">Total Points</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-black text-green-400">{profile.totalPoints}</div>
-                  <div className="text-gray-300 text-sm">Total Points</div>
+          <div className="text-3xl font-black text-green-400">{profile.followersCount}</div>
+          <div className="text-gray-300 text-sm">Followers</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-black text-purple-400">{profile.followersCount}</div>
-                  <div className="text-gray-300 text-sm">Followers</div>
+          <div className="text-3xl font-black text-purple-400">{profile.followingCount}</div>
+          <div className="text-gray-300 text-sm">Following</div>
                 </div>
                 <div className="text-center">
                   <div className="text-3xl font-black text-orange-400">{profile.streak}</div>
@@ -196,7 +227,7 @@ export const UserProfile: React.FC = () => {
                 <button
                   onClick={handleFollow}
                   disabled={followLoading}
-                  className={`flex items-center justify-center px-6 py-3 rounded-lg font-semibold transition-colors ${
+                  className={`flex items-center justify-center px-6 py-3 font-semibold transition-colors ${
                     profile.isFollowing
                       ? 'bg-gray-600 hover:bg-gray-700 text-white'
                       : 'bg-blue-600 hover:bg-blue-700 text-white'
@@ -213,7 +244,7 @@ export const UserProfile: React.FC = () => {
                 </button>
                 <button
                   onClick={handleMessage}
-                  className="flex items-center justify-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition-colors"
+                  className="flex items-center justify-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold transition-colors"
                 >
                   <MessageCircle className="w-5 h-5 mr-2" />
                   Message
@@ -223,49 +254,107 @@ export const UserProfile: React.FC = () => {
           </div>
         </div>
 
-        {/* Achievement Badges */}
-        {badges.length > 0 && (
-          <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 mb-8 text-white">
-            <h2 className="text-3xl font-black mb-8">Achievement Badges</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {badges.map((badge: any, index: number) => (
-                <div
-                  key={index}
-                  className="bg-gradient-to-r from-yellow-500 to-orange-600 p-4 rounded-lg text-center"
-                >
-                  <div className="text-3xl mb-2">{badge.icon}</div>
-                  <div className="font-black text-sm">{badge.name}</div>
+        {/* Achievement Badges - glassmorphism */}
+        <div className="bg-white/5 backdrop-blur-md border border-white/10 p-8 mb-8 text-white">
+          <h2 className="text-3xl font-black mb-8">Achievement Badges</h2>
+          {profile.badges?.length ? (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {profile.badges.map((badgeId: string, idx: number) => (
+                <BadgeDisplay key={idx} badgeId={badgeId} metadata={badgeMetadata} showName={true} className="mx-auto" />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-gray-400">No badges yet</div>
+          )}
+        </div>
+
+        {/* Learning Progress - glassmorphism with bars */}
+        <div className="bg-white/5 backdrop-blur-md border border-white/10 p-8 text-white">
+          <h2 className="text-3xl font-black text-white mb-8">Learning Progress</h2>
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Code className="w-6 h-6 text-cyan-400 mr-3" />
+                <div>
+                  <div className="font-semibold text-white">Web Development</div>
+                  <div className="text-sm text-gray-300">{progress.webdev.completed}/{progress.webdev.total} modules</div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-32 bg-white/20 h-2">
+                  <div className="h-2 bg-gradient-to-r from-cyan-400 to-blue-500" style={{ width: `${pct(progress.webdev.completed, progress.webdev.total)}%` }}></div>
+                </div>
+                <span className="text-sm font-medium text-gray-300">{pct(progress.webdev.completed, progress.webdev.total)}%</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <BookOpen className="w-6 h-6 text-green-400 mr-3" />
+                <div>
+                  <div className="font-semibold text-white">Core CS</div>
+                  <div className="text-sm text-gray-300">{progress.core.completed}/{progress.core.total} topics</div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-32 bg-white/20 h-2">
+                  <div className="h-2 bg-gradient-to-r from-green-400 to-emerald-400" style={{ width: `${pct(progress.core.completed, progress.core.total)}%` }}></div>
+                </div>
+                <span className="text-sm font-medium text-gray-300">{pct(progress.core.completed, progress.core.total)}%</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Brain className="w-6 h-6 text-purple-400 mr-3" />
+                <div>
+                  <div className="font-semibold text-white">DSA Practice</div>
+                  <div className="text-sm text-gray-300">{progress.dsa.completed}/{progress.dsa.total} problems</div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-32 bg-white/20 h-2">
+                  <div className="h-2 bg-gradient-to-r from-purple-400 to-pink-400" style={{ width: `${pct(progress.dsa.completed, progress.dsa.total)}%` }}></div>
+                </div>
+                <span className="text-sm font-medium text-gray-300">{pct(progress.dsa.completed, progress.dsa.total)}%</span>
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Calculator className="w-6 h-6 text-orange-400 mr-3" />
+                <div>
+                  <div className="font-semibold text-white">Aptitude</div>
+                  <div className="text-sm text-gray-300">{progress.aptitude.completed}/{progress.aptitude.total} topics</div>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="w-32 bg-white/20 h-2">
+                  <div className="h-2 bg-gradient-to-r from-orange-400 to-red-400" style={{ width: `${pct(progress.aptitude.completed, progress.aptitude.total)}%` }}></div>
+                </div>
+                <span className="text-sm font-medium text-gray-300">{pct(progress.aptitude.completed, progress.aptitude.total)}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        {/* Recent Activity - glassmorphism */}
+        <div className="bg-white/5 backdrop-blur-md border border-white/10 p-8 text-white mt-8">
+          <h2 className="text-3xl font-black text-white mb-8">Recent Activity</h2>
+          {recentQuizzes.length ? (
+            <div className="space-y-4">
+              {recentQuizzes.slice(0, 6).map((quiz: any, idx: number) => (
+                <div key={idx} className="flex items-center justify-between p-4 bg-white/5 backdrop-blur-sm border border-white/10">
+                  <div className="flex items-center">
+                    <Target className="w-5 h-5 text-cyan-400 mr-3" />
+                    <div>
+                      <div className="font-medium text-white">{quiz.subject} Quiz</div>
+                      <div className="text-sm text-gray-300">Score: {Math.round((quiz.score / quiz.totalQuestions) * 100)}%</div>
+                    </div>
+                  </div>
+                  <span className="text-sm text-gray-400">{new Date(quiz.createdAt).toLocaleDateString()}</span>
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {/* Learning Progress */}
-        <div className="bg-white/10 backdrop-blur-md rounded-xl p-8 text-white">
-          <h2 className="text-3xl font-black mb-8">Learning Journey</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-gradient-to-r from-blue-600 to-cyan-600 p-6 rounded-lg">
-              <Code className="w-8 h-8 mb-4" />
-              <h3 className="text-xl font-black mb-2">Web Dev</h3>
-              <p className="text-sm opacity-80">Building modern web applications</p>
-            </div>
-            <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-6 rounded-lg">
-              <BookOpen className="w-8 h-8 mb-4" />
-              <h3 className="text-xl font-black mb-2">Core CS</h3>
-              <p className="text-sm opacity-80">Computer science fundamentals</p>
-            </div>
-            <div className="bg-gradient-to-r from-purple-600 to-pink-600 p-6 rounded-lg">
-              <Brain className="w-8 h-8 mb-4" />
-              <h3 className="text-xl font-black mb-2">DSA</h3>
-              <p className="text-sm opacity-80">Data structures & algorithms</p>
-            </div>
-            <div className="bg-gradient-to-r from-orange-600 to-red-600 p-6 rounded-lg">
-              <Calculator className="w-8 h-8 mb-4" />
-              <h3 className="text-xl font-black mb-2">Aptitude</h3>
-              <p className="text-sm opacity-80">Logical reasoning & math</p>
-            </div>
-          </div>
+          ) : (
+            <div className="text-center text-gray-400">No recent activity</div>
+          )}
         </div>
       </div>
     </div>

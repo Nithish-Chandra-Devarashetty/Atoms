@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { UserProfileModal } from '../components/UserProfileModal';
 import { useWebSocket } from '../hooks/useWebSocket';
 
 interface Discussion {
@@ -32,6 +32,7 @@ interface Reply {
 }
 
 export const Discussion: React.FC = () => {
+  const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,10 +42,10 @@ export const Discussion: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
   const [replyContent, setReplyContent] = useState<{ [key: string]: string }>({});
   const [showReplies, setShowReplies] = useState<{ [key: string]: boolean }>({});
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [showProfileModal, setShowProfileModal] = useState(false);
+  // Removed old profile modal states; navigation is used instead
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [showMinCharsWarning, setShowMinCharsWarning] = useState(false);
 
   // Real-time updates with WebSocket
   const handleDiscussionReplyReceived = (data: { discussionId: string; reply: Reply }) => {
@@ -137,11 +138,12 @@ export const Discussion: React.FC = () => {
 
   const handleCreateDiscussion = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentUser || !newDiscussion.trim()) return;
+    if (!currentUser) return;
 
     // Client-side validation
     if (newDiscussion.trim().length < 10) {
-      setError('Discussion content must be at least 10 characters long');
+  // Show inline helper only after user attempts to post
+  setShowMinCharsWarning(true);
       return;
     }
 
@@ -212,14 +214,14 @@ export const Discussion: React.FC = () => {
   };
 
   const handleUserClick = (userId: string) => {
-    setSelectedUserId(userId);
-    setShowProfileModal(true);
+    if (currentUser && userId === currentUser._id) {
+      navigate('/profile');
+    } else {
+      navigate(`/user/${userId}`);
+    }
   };
 
-  const handleMessage = (userId: string) => {
-    // Navigate to messages page with the selected user
-    window.location.href = `/messages?user=${userId}`;
-  };
+  // Removed unused handleMessage; messaging is handled on the Messages page directly
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -314,22 +316,21 @@ export const Discussion: React.FC = () => {
                   onChange={(e) => setNewDiscussion(e.target.value)}
                   placeholder="What would you like to discuss? (minimum 10 characters)"
                   className={`w-full px-4 py-3 bg-white/10 backdrop-blur-sm border transition-all resize-none ${
-                    newDiscussion.trim().length > 0 && newDiscussion.trim().length < 10
+                    showMinCharsWarning && newDiscussion.trim().length < 10
                       ? 'border-red-500 focus:ring-red-500' 
                       : 'border-white/20 focus:ring-cyan-500'
                   } text-white placeholder-gray-400 focus:ring-2 focus:border-transparent`}
                   rows={4}
-                  required
                 />
                 <div className="flex justify-between items-center mt-2">
                   <div className="text-sm">
-                    {newDiscussion.trim().length < 10 ? (
+                    {showMinCharsWarning && newDiscussion.trim().length < 10 ? (
                       <span className="text-red-400">
-                        {10 - newDiscussion.trim().length} more characters needed
+                        {Math.max(0, 10 - newDiscussion.trim().length)} more characters needed
                       </span>
-                    ) : (
+                    ) : newDiscussion.trim().length >= 10 ? (
                       <span className="text-green-400">✓ Minimum length met</span>
-                    )}
+                    ) : null}
                   </div>
                   <div className="text-sm text-gray-400">
                     {newDiscussion.length}/2000 characters
@@ -354,7 +355,7 @@ export const Discussion: React.FC = () => {
               
               <button
                 type="submit"
-                disabled={submitting || !newDiscussion.trim() || newDiscussion.trim().length < 10}
+                disabled={submitting}
                 className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-6 py-3 font-semibold hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transition-all duration-200"
               >
                 {submitting ? 'Posting...' : 'Post Discussion'}
@@ -558,18 +559,7 @@ export const Discussion: React.FC = () => {
         </div>
       )}
 
-        {/* User Profile Modal */}
-        {selectedUserId && (
-          <UserProfileModal
-            userId={selectedUserId}
-            isOpen={showProfileModal}
-            onClose={() => {
-              setShowProfileModal(false);
-              setSelectedUserId(null);
-            }}
-            onMessage={handleMessage}
-          />
-        )}
+  {/* User Profile Modal removed in favor of navigation */}
         </div>
       </div>
     </div>

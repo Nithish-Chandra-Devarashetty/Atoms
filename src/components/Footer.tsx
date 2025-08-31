@@ -90,7 +90,7 @@ export const Footer: React.FC = () => {
               </div>
               <div className="flex items-center text-gray-300 text-sm">
                 <Mail className="w-4 h-4 mr-2 text-cyan-400" />
-                <span>nithishchandra@gmail.com</span>
+                <span>nithishchandra16@gmail.com</span>
               </div>
               <div className="flex items-center text-gray-300 text-sm">
                 <Phone className="w-4 h-4 mr-2 text-cyan-400" />
@@ -125,12 +125,9 @@ export const Footer: React.FC = () => {
 
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-white/10">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400 text-sm">
+          <div className="flex justify-center items-center">
+            <p className="text-gray-400 text-sm text-center">
               © 2025 Atoms. All rights reserved.
-            </p>
-            <p className="text-gray-400 text-sm mt-2 md:mt-0">
-              Made with ❤️ in India
             </p>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Shield, Eye, Lock, Users, Database, Mail } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
 export const PrivacyPolicy: React.FC = () => {
   return (
@@ -22,7 +22,6 @@ export const PrivacyPolicy: React.FC = () => {
           
           <div className="text-center mb-12">
             <div className="flex items-center justify-center mb-4">
-              <Shield className="w-12 h-12 text-cyan-400 mr-3" />
               <h1 className="text-5xl font-black bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
                 Privacy Policy
               </h1>
@@ -40,8 +39,7 @@ export const PrivacyPolicy: React.FC = () => {
         <div className="bg-white/5 backdrop-blur-md border border-white/10 p-8 space-y-8">
           {/* Introduction */}
           <section>
-            <div className="flex items-center mb-4">
-              <Eye className="w-6 h-6 text-cyan-400 mr-3" />
+            <div className="mb-4">
               <h2 className="text-2xl font-bold text-white">Introduction</h2>
             </div>
             <p className="text-gray-300 leading-relaxed">
@@ -53,8 +51,7 @@ export const PrivacyPolicy: React.FC = () => {
 
           {/* Information We Collect */}
           <section>
-            <div className="flex items-center mb-4">
-              <Database className="w-6 h-6 text-green-400 mr-3" />
+            <div className="mb-4">
               <h2 className="text-2xl font-bold text-white">Information We Collect</h2>
             </div>
             <div className="space-y-4 text-gray-300">
@@ -81,8 +78,7 @@ export const PrivacyPolicy: React.FC = () => {
 
           {/* How We Use Your Information */}
           <section>
-            <div className="flex items-center mb-4">
-              <Users className="w-6 h-6 text-purple-400 mr-3" />
+            <div className="mb-4">
               <h2 className="text-2xl font-bold text-white">How We Use Your Information</h2>
             </div>
             <ul className="list-disc list-inside space-y-2 text-gray-300 ml-4">
@@ -97,8 +93,7 @@ export const PrivacyPolicy: React.FC = () => {
 
           {/* Data Security */}
           <section>
-            <div className="flex items-center mb-4">
-              <Lock className="w-6 h-6 text-yellow-400 mr-3" />
+            <div className="mb-4">
               <h2 className="text-2xl font-bold text-white">Data Security</h2>
             </div>
             <p className="text-gray-300 leading-relaxed">
@@ -110,8 +105,7 @@ export const PrivacyPolicy: React.FC = () => {
 
           {/* Your Rights */}
           <section>
-            <div className="flex items-center mb-4">
-              <Shield className="w-6 h-6 text-blue-400 mr-3" />
+            <div className="mb-4">
               <h2 className="text-2xl font-bold text-white">Your Rights</h2>
             </div>
             <ul className="list-disc list-inside space-y-2 text-gray-300 ml-4">
@@ -146,14 +140,13 @@ export const PrivacyPolicy: React.FC = () => {
 
           {/* Contact Information */}
           <section>
-            <div className="flex items-center mb-4">
-              <Mail className="w-6 h-6 text-pink-400 mr-3" />
+            <div className="mb-4">
               <h2 className="text-2xl font-bold text-white">Contact Us</h2>
             </div>
             <div className="text-gray-300 space-y-2">
               <p>If you have any questions about this Privacy Policy, please contact us:</p>
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 p-4 space-y-2">
-                <p><strong>Email:</strong> nithishchandra@gmail.com</p>
+                <p><strong>Email:</strong> nithishchandra16@gmail.com</p>
                 <p><strong>Address:</strong> Hyderabad, Telangana, India</p>
                 <p><strong>Phone:</strong> +91 93916 35482</p>
               </div>

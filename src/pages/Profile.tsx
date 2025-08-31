@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { ProfilePhotoUpload } from '../components/ProfilePhotoUpload';
-import CertificatesSection from '../components/CertificatesSection';
-import BadgeDisplay from '../components/BadgeDisplay';
+// Removed editable photo upload UI
+// Removed Certificates and Achievements from Profile page per requirement
 import { apiService } from '../services/api';
 import { 
   Users, 
@@ -20,7 +19,6 @@ export const Profile: React.FC = () => {
   const { currentUser, logout } = useAuth();
   const [userProgress, setUserProgress] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [badgeMetadata, setBadgeMetadata] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showFollowersModal, setShowFollowersModal] = useState(false);
@@ -34,7 +32,6 @@ export const Profile: React.FC = () => {
   useEffect(() => {
     if (currentUser) {
       loadUserProgress();
-      loadBadgeMetadata();
     } else {
       setLoading(false);
       setError('Please log in to view your profile');
@@ -72,14 +69,6 @@ export const Profile: React.FC = () => {
     };
   }, [currentUser]);
 
-  const loadBadgeMetadata = async () => {
-    try {
-      const response = await apiService.getBadgeMetadata();
-      setBadgeMetadata(response.badges);
-    } catch (error) {
-      console.error('Failed to load badge metadata:', error);
-    }
-  };
 
   const loadUserProgress = async () => {
     if (!currentUser) {
@@ -114,6 +103,15 @@ export const Profile: React.FC = () => {
       navigate('/');
     } catch (error) {
       console.error('Failed to log out', error);
+    }
+  };
+
+  const handleDownloadWebDevCertificate = async () => {
+    try {
+      // Directly download the Web Dev certificate
+      await apiService.downloadWebDevCertificate();
+    } catch (error) {
+      console.error('Failed to download Web Dev certificate:', error);
     }
   };
 
@@ -172,7 +170,7 @@ export const Profile: React.FC = () => {
     streak: userProfile?.streak || 0
   };
 
-  const userBadges = userProfile?.badges || currentUser?.badges || [];
+  // Badges removed from Profile page UI
 
   const progress = userProgress ? {
     webdev: { 
@@ -213,6 +211,18 @@ export const Profile: React.FC = () => {
     date: new Date(quiz.createdAt).toLocaleDateString()
   })) || [];
 
+  const formatDuration = (totalSeconds: number) => {
+    if (!totalSeconds && totalSeconds !== 0) return 'N/A';
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    const parts = [] as string[];
+    if (hours) parts.push(`${hours}h`);
+    if (minutes) parts.push(`${minutes}m`);
+    if (!hours && !minutes) parts.push(`${seconds}s`);
+    return parts.join(' ');
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[50vh]">
@@ -251,14 +261,28 @@ export const Profile: React.FC = () => {
       
       <div className="max-w-7xl mx-auto">
         {/* Profile Header */}
-        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 mb-8 text-white z-10">
-          <div className="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
-            {/* Avatar */}
+        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 mb-8 text-white z-10 overflow-hidden">
+          {/* Geometric patterns (same as User Profile header) */}
+          <div className="absolute inset-0 opacity-10">
+            <div className="absolute top-0 left-0 w-32 h-32 border-2 border-white transform rotate-45"></div>
+            <div className="absolute top-10 right-10 w-24 h-24 border-2 border-white transform rotate-12"></div>
+            <div className="absolute bottom-10 left-1/4 w-20 h-20 border-2 border-white transform -rotate-12"></div>
+          </div>
+
+          <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
+            {/* Avatar (read-only, no camera button) */}
             <div className="relative">
-              <ProfilePhotoUpload 
-                currentPhotoURL={userProfile?.photoURL || currentUser?.photoURL || undefined}
-                onPhotoUpdate={(url) => console.log('Photo updated:', url)}
-              />
+              {userProfile?.photoURL || currentUser?.photoURL ? (
+                <img
+                  src={userProfile?.photoURL || currentUser?.photoURL}
+                  alt={userStats.name}
+                  className="w-32 h-32 object-cover border-4 border-white/20"
+                />
+              ) : (
+                <div className="w-32 h-32 bg-white/20 flex items-center justify-center text-6xl font-bold">
+                  {userStats.name[0]?.toUpperCase() || 'U'}
+                </div>
+              )}
             </div>
 
             {/* User Info */}
@@ -333,6 +357,14 @@ export const Profile: React.FC = () => {
                       ></div>
                     </div>
                     <span className="text-sm font-medium text-gray-300">{progress.webdev.percentage}%</span>
+                    {progress.webdev.percentage === 100 && (
+                      <button
+                        onClick={handleDownloadWebDevCertificate}
+                        className="ml-3 px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold"
+                      >
+                        Download Certificate
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -424,36 +456,6 @@ export const Profile: React.FC = () => {
 
           {/* Right Column */}
           <div className="space-y-8">
-            {/* Certificates Section */}
-            <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 text-white z-10">
-              <CertificatesSection userProgress={userProgress} />
-            </div>
-
-            {/* Badges */}
-            <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 text-white z-10">
-              <h2 className="text-3xl font-black text-white mb-8">Achievement Badges</h2>
-              
-              {userBadges.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                  {userBadges.map((badgeId: string, index: number) => (
-                    <BadgeDisplay
-                      key={index}
-                      badgeId={badgeId}
-                      metadata={badgeMetadata}
-                      showName={true}
-                      className="mx-auto"
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center text-gray-400">
-                  <div className="text-6xl mb-4">🏆</div>
-                  <h3 className="text-xl font-semibold mb-2">No badges earned yet</h3>
-                  <p className="text-sm">Complete modules, solve problems, and earn quizzes to unlock achievement badges!</p>
-                </div>
-              )}
-            </div>
-
             {/* Performance Stats */}
             <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-white z-10 overflow-hidden">
               {/* Geometric patterns */}
@@ -468,7 +470,7 @@ export const Profile: React.FC = () => {
               <div className="space-y-4 relative z-10">
                 <div className="flex items-center justify-between">
                   <span>Quiz Average</span>
-                  <span className="font-black">{userProgress?.averageScore || 'N/A'}</span>
+                  <span className="font-black">{userProgress?.averageQuizPercent != null ? `${userProgress.averageQuizPercent}%` : 'N/A'}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Problems Solved</span>
@@ -480,7 +482,7 @@ export const Profile: React.FC = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Time Spent</span>
-                  <span className="font-black">{userProgress?.totalTimeSpent || 'N/A'}</span>
+                  <span className="font-black">{userProgress?.totalTimeSpentSeconds != null ? formatDuration(userProgress.totalTimeSpentSeconds) : 'N/A'}</span>
                 </div>
               </div>
             </div>

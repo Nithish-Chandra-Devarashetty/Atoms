@@ -208,11 +208,10 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
       return;
     }
 
-    const { displayName, photoURL } = req.body;
-    
-    const updateData: any = {};
-    if (displayName) updateData.displayName = displayName;
-    if (photoURL !== undefined) updateData.photoURL = photoURL;
+  // Only allow displayName edits; ignore any photoURL from client
+  const { displayName } = req.body;
+  const updateData: any = {};
+  if (displayName) updateData.displayName = displayName;
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
@@ -259,8 +258,8 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    // Extract user information from Google
-    const { email, name, picture, sub: googleId } = payload;
+  // Extract user information from Google (intentionally ignore picture)
+  const { email, name, sub: googleId } = payload as { email: string; name?: string; sub: string };
 
     // Check if user already exists
     let user = await User.findOne({ 
@@ -275,9 +274,7 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
       if (!user.googleId) {
         user.googleId = googleId;
       }
-      if (!user.photoURL && picture) {
-        user.photoURL = picture;
-      }
+  // Do not set or update photoURL from Google
       if (user.provider === 'email' && !user.isEmailVerified) {
         user.isEmailVerified = true; // Google accounts are verified
       }
@@ -331,7 +328,6 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
       user = new User({
         email,
         displayName: name || email.split('@')[0],
-        photoURL: picture || '',
         provider: 'google',
         googleId,
         isEmailVerified: true,
@@ -375,6 +371,10 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
 // Debug endpoint for streak testing
 export const debugStreak = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
+    if (!req.user) {
+      res.status(401).json({ error: 'User not authenticated' });
+      return;
+    }
     const user = await User.findById(req.user._id);
     if (!user) {
       res.status(404).json({ error: 'User not found' });
