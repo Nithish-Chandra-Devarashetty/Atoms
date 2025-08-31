@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { OAuth2Client } from 'google-auth-library';
 import { User } from '../models/User.js';
-import { POINTS } from '../utils/points.js';
+import { POINTS, checkBadgeEligibility } from '../utils/points.js';
 import { AuthRequest } from '../middleware/auth.js';
 
 const generateToken = (userId: string): string => {
@@ -88,26 +88,48 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
     // Update login and streak tracking
     const today = new Date();
-    const lastLogin = user.lastLogin ? new Date(user.lastLogin) : today;
-    const lastActive = user.lastActiveDate ? new Date(user.lastActiveDate) : today;
+    today.setHours(0, 0, 0, 0); // Normalize to start of day
+    
+    const lastLogin = user.lastLogin ? new Date(user.lastLogin) : null;
+    if (lastLogin) {
+      lastLogin.setHours(0, 0, 0, 0); // Normalize to start of day
+    }
     
     // Calculate days since last login
-    const daysSinceLastLogin = Math.floor((today.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24));
+    const daysSinceLastLogin = lastLogin ? 
+      Math.floor((today.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24)) : 
+      null;
     
     // Update streak logic
-    if (daysSinceLastLogin === 1) {
+    if (daysSinceLastLogin === null) {
+      // First time login
+      user.streak = 1;
+    } else if (daysSinceLastLogin === 0) {
+      // Same day login - keep current streak
+      user.streak = user.streak || 1;
+    } else if (daysSinceLastLogin === 1) {
+      // Consecutive day login - increment streak
       user.streak = (user.streak || 0) + 1;
     } else if (daysSinceLastLogin > 1) {
+      // Missed days - reset streak
       user.streak = 1;
     }
+    
     // Daily login points: +1 if logging in on a new day
-    if (daysSinceLastLogin >= 1) {
+    if (daysSinceLastLogin === null || daysSinceLastLogin >= 1) {
       user.totalPoints = (user.totalPoints || 0) + POINTS.DAILY_LOGIN;
     }
     
     // Update timestamps
-    user.lastLogin = today;
-    user.lastActiveDate = today;
+    user.lastLogin = new Date(); // Use current timestamp for lastLogin
+    user.lastActiveDate = new Date(); // Use current timestamp for lastActiveDate
+    
+    // Check for streak-related badges
+    const newBadges = checkBadgeEligibility(user, 'streak_updated', { streak: user.streak });
+    if (newBadges.length > 0) {
+      user.badges = [...new Set([...user.badges, ...newBadges])];
+    }
+    
     await user.save();
 
     // Generate token
@@ -262,21 +284,45 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
       
       // Update login tracking
       const today = new Date();
-      const lastLogin = user.lastLogin ? new Date(user.lastLogin) : today;
+      today.setHours(0, 0, 0, 0); // Normalize to start of day
       
-  const daysSinceLastLogin = Math.floor((today.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24));
+      const lastLogin = user.lastLogin ? new Date(user.lastLogin) : null;
+      if (lastLogin) {
+        lastLogin.setHours(0, 0, 0, 0); // Normalize to start of day
+      }
       
-      if (daysSinceLastLogin === 1) {
+      // Calculate days since last login
+      const daysSinceLastLogin = lastLogin ? 
+        Math.floor((today.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24)) : 
+        null;
+      
+      // Update streak logic
+      if (daysSinceLastLogin === null) {
+        // First time login
+        user.streak = 1;
+      } else if (daysSinceLastLogin === 0) {
+        // Same day login - keep current streak
+        user.streak = user.streak || 1;
+      } else if (daysSinceLastLogin === 1) {
+        // Consecutive day login - increment streak
         user.streak = (user.streak || 0) + 1;
       } else if (daysSinceLastLogin > 1) {
+        // Missed days - reset streak
         user.streak = 1;
       }
       
-      user.lastLogin = today;
-      user.lastActiveDate = today;
+      user.lastLogin = new Date(); // Use current timestamp for lastLogin
+      user.lastActiveDate = new Date(); // Use current timestamp for lastActiveDate
+      
       // Daily login points: +1 if logging in on a new day
-      if (daysSinceLastLogin >= 1) {
+      if (daysSinceLastLogin === null || daysSinceLastLogin >= 1) {
         user.totalPoints = (user.totalPoints || 0) + POINTS.DAILY_LOGIN;
+      }
+      
+      // Check for streak-related badges
+      const newBadges = checkBadgeEligibility(user, 'streak_updated', { streak: user.streak });
+      if (newBadges.length > 0) {
+        user.badges = [...new Set([...user.badges, ...newBadges])];
       }
       
       await user.save();
@@ -323,5 +369,48 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
   } catch (error) {
     console.error('Google auth error:', error);
     res.status(500).json({ error: 'Google authentication failed' });
+  }
+};
+
+// Debug endpoint for streak testing
+export const debugStreak = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const lastLogin = user.lastLogin ? new Date(user.lastLogin) : null;
+    if (lastLogin) {
+      lastLogin.setHours(0, 0, 0, 0);
+    }
+    
+    const daysSinceLastLogin = lastLogin ? 
+      Math.floor((today.getTime() - lastLogin.getTime()) / (1000 * 60 * 60 * 24)) : 
+      null;
+
+    res.json({
+      userId: user._id,
+      currentStreak: user.streak,
+      lastLogin: user.lastLogin,
+      lastLoginNormalized: lastLogin,
+      lastActiveDate: user.lastActiveDate,
+      today: new Date(),
+      todayNormalized: today,
+      daysSinceLastLogin,
+      logic: {
+        isFirstLogin: daysSinceLastLogin === null,
+        isSameDay: daysSinceLastLogin === 0,
+        isConsecutiveDay: daysSinceLastLogin === 1,
+        isMissedDays: daysSinceLastLogin !== null && daysSinceLastLogin > 1
+      }
+    });
+  } catch (error) {
+    console.error('Debug streak error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };

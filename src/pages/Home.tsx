@@ -57,7 +57,7 @@ export const Home: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-visible">
       {/* Animated background elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-72 h-72 bg-purple-500/20 blur-3xl animate-pulse"></div>
@@ -115,6 +115,63 @@ export const Home: React.FC = () => {
                 <div className="text-gray-300">{label}</div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Live Contests (Glassmorphism) - Featured prominently */}
+      <section className="relative py-20 px-4 sm:px-6 lg:px-8 z-10">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center px-4 py-2 mb-4 bg-gradient-to-r from-red-500/20 to-orange-500/20 backdrop-blur-md border border-red-400/30 text-red-200 text-sm font-medium rounded-full">
+              🔥 FEATURED
+            </div>
+            <h2 className="text-5xl font-black text-white mb-4">
+              Live Contests
+            </h2>
+            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
+              Join scheduled competitions and earn up to 200 points based on your performance
+            </p>
+          </div>
+          
+          <div className="relative border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden">
+            {/* subtle gradient overlay */}
+            <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10" />
+            <div className="relative p-8 md:p-12">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
+                <div className="max-w-2xl">
+                  <h3 className="text-3xl md:text-4xl font-black text-white mb-3">Compete in Timed Challenges</h3>
+                  <p className="text-gray-200/90 leading-relaxed">
+                    Join scheduled, time-bound challenges with curated questions. See a live countdown, submit during
+                    the contest window, and after it ends, get your detailed results, leaderboard rank, and a full review of right and wrong answers.
+                  </p>
+                </div>
+                <div className="shrink-0">
+                  <RouterLink
+                    to="/contests"
+                    className="group inline-flex items-center px-8 py-4 bg-gradient-to-r from-cyan-500 to-purple-600 text-white font-bold text-lg transform hover:scale-105 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/25"
+                  >
+                    Join Contests Now
+                    <ArrowRight className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
+                  </RouterLink>
+                </div>
+              </div>
+
+              {/* Feature bullets */}
+              <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[
+                  { title: 'Scheduled & Notified', desc: 'Get notified instantly when a new contest is added.' },
+                  { title: 'Live Countdown', desc: 'Transparent start time and remaining time while you attempt.' },
+                  { title: 'Leaderboard & Percentile', desc: 'See how you rank and what percent you beat.' },
+                  { title: 'Answer Review', desc: 'Review which answers were correct or wrong post-contest.' }
+                ].map((f) => (
+                  <div key={f.title} className="p-4 bg-white/5 border border-white/10">
+                    <div className="text-white font-bold">{f.title}</div>
+                    <div className="text-gray-300 text-sm mt-1">{f.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -196,68 +253,21 @@ export const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Live Contests (Glassmorphism) */}
-      <section className="relative py-20 px-4 sm:px-6 lg:px-8 z-10">
-        <div className="max-w-6xl mx-auto">
-          <div className="relative rounded-xl border border-white/10 bg-white/5 backdrop-blur-md overflow-hidden">
-            {/* subtle gradient overlay */}
-            <div className="absolute inset-0 pointer-events-none bg-gradient-to-br from-cyan-500/10 via-purple-500/10 to-pink-500/10" />
-            <div className="relative p-8 md:p-12">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8">
-                <div className="max-w-2xl">
-                  <div className="inline-flex items-center px-3 py-1 bg-white/10 border border-white/20 text-white text-xs tracking-wide mb-3">
-                    LIVE CONTESTS
-                  </div>
-                  <h3 className="text-3xl md:text-4xl font-black text-white mb-3">Compete in Timed Live Contests</h3>
-                  <p className="text-gray-200/90 leading-relaxed">
-                    Join scheduled, time-bound challenges with curated questions. See a live countdown, submit during
-                    the contest window, and after it ends, get your detailed results, leaderboard rank, and a full review of right and wrong answers.
-                  </p>
-                </div>
-                <div className="shrink-0">
-                  <RouterLink
-                    to="/contests"
-                    className="group inline-flex items-center px-6 py-3 bg-white/10 border border-white/20 text-white font-semibold hover:bg-white/15 transition-all duration-300"
-                  >
-                    Explore Contests
-                    <ArrowRight className="w-5 h-5 ml-2 transition-transform duration-300 group-hover:translate-x-1" />
-                  </RouterLink>
-                </div>
-              </div>
-
-              {/* Feature bullets */}
-              <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                  { title: 'Scheduled & Notified', desc: 'Get notified instantly when a new contest is added.' },
-                  { title: 'Live Countdown', desc: 'Transparent start time and remaining time while you attempt.' },
-                  { title: 'Leaderboard & Percentile', desc: 'See how you rank and what percent you beat.' },
-                  { title: 'Answer Review', desc: 'Review which answers were correct or wrong post-contest.' }
-                ].map((f) => (
-                  <div key={f.title} className="p-4 bg-white/5 border border-white/10">
-                    <div className="text-white font-bold">{f.title}</div>
-                    <div className="text-gray-300 text-sm mt-1">{f.desc}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Badge System Section */}
       <section className="relative py-20 px-4 sm:px-6 lg:px-8 z-10">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <BadgeSystemInfo />
         </div>
       </section>
 
       {/* Points System Section */}
       <section className="relative py-20 px-4 sm:px-6 lg:px-8 z-10">
-        <div className="max-w-5xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="bg-white/5 backdrop-blur-md border border-white/10 p-10 text-white">
             <h2 className="text-4xl font-black mb-6">Points System</h2>
             <p className="text-gray-300 mb-6">Earn points as you learn. These points determine your position on the leaderboard.</p>
             <ul className="space-y-3 text-lg">
+              <li className="flex items-start"><span className="mt-1 mr-3">•</span> Live Contests: +100 points for participating; Top 10 finish: +100 bonus; Ranks 11-100: +50 bonus.</li>
               <li className="flex items-start"><span className="mt-1 mr-3">•</span> Web Development: +10 points for each quiz passed (per topic) and +10 points for each video watched (first time only).</li>
               <li className="flex items-start"><span className="mt-1 mr-3">•</span> Core CS (OS/DBMS/CN): +10 points for each topic quiz you pass.</li>
               <li className="flex items-start"><span className="mt-1 mr-3">•</span> DSA Practice: +2 points for each unique problem you solve.</li>

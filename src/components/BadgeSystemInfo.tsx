@@ -49,7 +49,7 @@ const BadgeSystemInfo: React.FC = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 p-8 rounded-lg text-white">
+    <div className="bg-white/5 backdrop-blur-md border border-white/10 p-8 text-white">
       <div className="text-center mb-8">
         <h2 className="text-4xl font-bold mb-4 flex items-center justify-center">
           <Award className="w-10 h-10 mr-3 text-yellow-400" />
@@ -69,9 +69,9 @@ const BadgeSystemInfo: React.FC = () => {
               .slice(0, 3); // Show first 3 badges as examples
 
             return (
-              <div key={categoryId} className="bg-white/10 backdrop-blur-md rounded-lg p-6 border border-white/20">
+              <div key={categoryId} className="bg-white/10 backdrop-blur-md p-6 border border-white/20">
                 <div className="flex items-center mb-4">
-                  <div className="p-2 bg-white/10 rounded-full mr-3">
+                  <div className="p-2 bg-white/10 mr-3">
                     {categoryIcons[categoryId as keyof typeof categoryIcons]}
                   </div>
                   <div>
@@ -101,12 +101,12 @@ const BadgeSystemInfo: React.FC = () => {
         </div>
       )}
 
-      <div className="bg-white/5 rounded-lg p-6 border border-white/10">
+      <div className="bg-white/5 p-6 border border-white/10">
         <h3 className="text-2xl font-bold mb-4 text-center">How to Earn Badges</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div className="flex items-start">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold mr-3 mt-1">1</div>
+              <div className="w-8 h-8 bg-blue-500 flex items-center justify-center text-white font-bold mr-3 mt-1">1</div>
               <div>
                 <h4 className="font-semibold">Complete WebDev Modules</h4>
                 <p className="text-sm text-gray-300">Watch all videos and pass quizzes in each module (HTML, CSS, JavaScript, React, Node.js, MongoDB)</p>
@@ -114,7 +114,7 @@ const BadgeSystemInfo: React.FC = () => {
             </div>
             
             <div className="flex items-start">
-              <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white font-bold mr-3 mt-1">2</div>
+              <div className="w-8 h-8 bg-red-500 flex items-center justify-center text-white font-bold mr-3 mt-1">2</div>
               <div>
                 <h4 className="font-semibold">Master Core CS Subjects</h4>
                 <p className="text-sm text-gray-300">Complete topics and quizzes in Operating Systems, DBMS, and Computer Networks</p>
@@ -124,7 +124,7 @@ const BadgeSystemInfo: React.FC = () => {
 
           <div className="space-y-4">
             <div className="flex items-start">
-              <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold mr-3 mt-1">3</div>
+              <div className="w-8 h-8 bg-purple-500 flex items-center justify-center text-white font-bold mr-3 mt-1">3</div>
               <div>
                 <h4 className="font-semibold">Solve DSA Problems</h4>
                 <p className="text-sm text-gray-300">Progress through DSA challenges: Beginner (10+), Intermediate (50+), Advanced (100+), Grandmaster (All problems!)</p>
@@ -132,7 +132,7 @@ const BadgeSystemInfo: React.FC = () => {
             </div>
             
             <div className="flex items-start">
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold mr-3 mt-1">4</div>
+              <div className="w-8 h-8 bg-green-500 flex items-center justify-center text-white font-bold mr-3 mt-1">4</div>
               <div>
                 <h4 className="font-semibold">Complete Aptitude Topics</h4>
                 <p className="text-sm text-gray-300">Master ALL quantitative aptitude topics to earn the prestigious Aptitude Genius badge</p>

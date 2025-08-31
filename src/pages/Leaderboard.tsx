@@ -6,54 +6,48 @@ import {
   Medal, 
   Crown, 
   TrendingUp, 
-  User, 
   Award,
-  Star,
-  Target,
-  Filter
+  Target
 } from 'lucide-react';
 
 interface LeaderboardEntry {
   rank: number;
   _id: string;
   name: string;
-  avatar: string;
   points: number;
   badges: number;
-  feasts: number;
   streak: number;
   change: number; // Position change from last week
 }
 
 export const Leaderboard: React.FC = () => {
   const { currentUser } = useAuth();
-  const [timeframe, setTimeframe] = useState<'week' | 'month' | 'all'>('all');
-  const [category, setCategory] = useState<'overall' | 'webdev' | 'core' | 'dsa' | 'aptitude'>('overall');
   const [leaderboardData, setLeaderboardData] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [userRank, setUserRank] = useState<number | null>(null);
+  const [totalUsers, setTotalUsers] = useState<number>(0);
 
   React.useEffect(() => {
     loadLeaderboard();
-  }, [timeframe, category]);
+  }, []);
 
   const loadLeaderboard = async () => {
     setLoading(true);
     try {
-      const response = await apiService.getLeaderboard(timeframe, category);
+      // Remove timeframe and category parameters since we only use overall points
+      const response = await apiService.getLeaderboard('all', 'overall');
       const formattedData = response.leaderboard.map((entry: any, index: number) => ({
         rank: index + 1,
         _id: entry._id,
         name: entry.name,
-        avatar: entry.photoURL ? '👤' : '👤',
         points: entry.points,
         badges: entry.badges,
-        feasts: Math.floor(entry.badges / 3), // Estimate feasts from badges
         streak: entry.streak,
         change: 0 // Would need historical data to calculate
       }));
       setLeaderboardData(formattedData);
       setUserRank(response.userRank);
+      setTotalUsers(response.totalUsers || 0);
     } catch (error) {
       console.error('Failed to load leaderboard:', error);
     } finally {
@@ -66,7 +60,7 @@ export const Leaderboard: React.FC = () => {
       case 1: return <Crown className="w-6 h-6 text-yellow-500" />;
       case 2: return <Medal className="w-6 h-6 text-gray-400" />;
       case 3: return <Medal className="w-6 h-6 text-amber-600" />;
-      default: return <span className="text-lg font-bold text-gray-600">#{rank}</span>;
+      default: return <span className="text-lg font-bold text-white">#{rank}</span>;
     }
   };
 
@@ -76,9 +70,10 @@ export const Leaderboard: React.FC = () => {
     return <div className="w-4 h-4 bg-gray-300 rounded-full"></div>;
   };
 
-  const getRowStyle = (rank: number, name: string) => {
+  const getRowStyle = (name: string) => {
+    // Only highlight current user's row
     if (currentUser && name === currentUser.displayName) return 'bg-blue-500/10 border-blue-500/30 border-2';
-    if (rank <= 3) return 'bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200';
+    // All other rows have the same normal styling
     return 'bg-white/5 border border-white/10';
   };
 
@@ -97,99 +92,65 @@ export const Leaderboard: React.FC = () => {
           <h1 className="text-5xl md:text-7xl font-black bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent mb-6 tracking-tight">
             Leaderboard
           </h1>
-          <p className="text-xl text-gray-300 font-light">
+          <p className="text-xl text-gray-300 font-light mb-4">
             See how you rank against other learners in the community
           </p>
+          {currentUser && userRank && totalUsers > 0 && (
+            <div className="inline-flex items-center px-6 py-3 bg-white/10 backdrop-blur-md border border-white/20 text-white">
+              <Trophy className="w-5 h-5 mr-2 text-yellow-400" />
+              <span className="font-semibold">
+                Your Rank: #{userRank} out of {totalUsers.toLocaleString()} users
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Top 3 Podium */}
-        <div className="mb-16 relative z-10">
-          <div className="flex justify-center items-end space-x-8">
-            {/* 2nd Place */}
-            <div className="text-center">
-              <div className="w-24 h-32 bg-gradient-to-t from-gray-300 to-gray-400 flex items-end justify-center pb-4 mb-4 clip-path-diamond">
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-2xl clip-path-hexagon">
-                  {leaderboardData[1].avatar}
-                </div>
-              </div>
-              <div className="font-black text-white">{leaderboardData[1].name}</div>
-              <div className="text-gray-300">{leaderboardData[1].points} pts</div>
-              <Medal className="w-8 h-8 text-gray-400 mx-auto mt-2" />
-            </div>
-
-            {/* 1st Place */}
-            <div className="text-center">
-              <div className="w-24 h-40 bg-gradient-to-t from-yellow-400 to-yellow-500 flex items-end justify-center pb-4 mb-4 clip-path-diamond">
-                <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-3xl clip-path-hexagon">
-                  {leaderboardData[0].avatar}
-                </div>
-              </div>
-              <div className="font-black text-white text-lg">{leaderboardData[0].name}</div>
-              <div className="text-gray-300">{leaderboardData[0].points} pts</div>
-              <Crown className="w-10 h-10 text-yellow-500 mx-auto mt-2" />
-            </div>
-
-            {/* 3rd Place */}
-            <div className="text-center">
-              <div className="w-24 h-28 bg-gradient-to-t from-amber-500 to-amber-600 flex items-end justify-center pb-4 mb-4 clip-path-diamond">
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-2xl clip-path-hexagon">
-                  {leaderboardData[2].avatar}
-                </div>
-              </div>
-              <div className="font-black text-white">{leaderboardData[2].name}</div>
-              <div className="text-gray-300">{leaderboardData[2].points} pts</div>
-              <Medal className="w-8 h-8 text-amber-600 mx-auto mt-2" />
-            </div>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-6 mb-8 z-10">
-          <div className="flex flex-col md:flex-row gap-4 items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Filter className="w-5 h-5 text-gray-300" />
-              <span className="font-medium text-white">Filters:</span>
+        {leaderboardData.length >= 3 && !loading && (
+          <div className="mb-20 relative z-10">
+            <div className="text-center mb-8">
+              <h2 className="text-4xl font-black text-white mb-2">Top 3 Champions</h2>
+              <div className="w-32 h-1 bg-gradient-to-r from-yellow-400 to-orange-400 mx-auto"></div>
             </div>
             
-            <div className="flex flex-wrap gap-4">
-              <div className="flex space-x-2">
-                <span className="text-sm text-gray-300">Timeframe:</span>
-                {(['week', 'month', 'all'] as const).map((period) => (
-                  <button
-                    key={period}
-                    onClick={() => setTimeframe(period)}
-                    className={`px-3 py-1 text-sm transition-colors ${
-                      timeframe === period
-                        ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white'
-                        : 'bg-white/10 backdrop-blur-sm border border-white/20 text-gray-300 hover:bg-white/20'
-                    }`}
-                  >
-                    {period.charAt(0).toUpperCase() + period.slice(1)}
-                  </button>
-                ))}
+            <div className="flex justify-center items-end space-x-12 max-w-4xl mx-auto">
+              {/* 2nd Place */}
+              <div className="text-center flex-1 max-w-xs">
+                <div className="w-32 h-40 bg-gradient-to-t from-gray-300 to-gray-400 flex items-center justify-center mb-6 mx-auto">
+                  <span className="text-5xl font-black text-white">2</span>
+                </div>
+                <div className="font-black text-white text-lg mb-1">{leaderboardData[1]?.name || 'N/A'}</div>
+                <div className="text-white text-lg">{leaderboardData[1]?.points?.toLocaleString() || 0} pts</div>
+                <div className="text-sm text-gray-300 mt-2">Silver Medal</div>
               </div>
-              
-              <div className="flex space-x-2">
-                <span className="text-sm text-gray-300">Category:</span>
-                {(['overall', 'webdev', 'core', 'dsa', 'aptitude'] as const).map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() => setCategory(cat)}
-                    className={`px-3 py-1 text-sm transition-colors ${
-                      category === cat
-                        ? 'bg-gradient-to-r from-yellow-500 to-orange-500 text-white'
-                        : 'bg-white/10 backdrop-blur-sm border border-white/20 text-gray-300 hover:bg-white/20'
-                    }`}
-                  >
-                    {cat === 'webdev' ? 'Web Dev' : 
-                     cat === 'core' ? 'Core CS' :
-                     cat === 'dsa' ? 'DSA' :
-                     cat.charAt(0).toUpperCase() + cat.slice(1)}
-                  </button>
-                ))}
+
+              {/* 1st Place */}
+              <div className="text-center flex-1 max-w-xs">
+                <div className="w-36 h-48 bg-gradient-to-t from-yellow-400 to-yellow-500 flex items-center justify-center mb-6 mx-auto">
+                  <span className="text-6xl font-black text-white">1</span>
+                </div>
+                <div className="font-black text-white text-xl mb-1">{leaderboardData[0]?.name || 'N/A'}</div>
+                <div className="text-white text-xl">{leaderboardData[0]?.points?.toLocaleString() || 0} pts</div>
+                <div className="text-sm text-yellow-400 mt-2 font-semibold">👑 Champion</div>
+              </div>
+
+              {/* 3rd Place */}
+              <div className="text-center flex-1 max-w-xs">
+                <div className="w-32 h-36 bg-gradient-to-t from-amber-500 to-amber-600 flex items-center justify-center mb-6 mx-auto">
+                  <span className="text-5xl font-black text-white">3</span>
+                </div>
+                <div className="font-black text-white text-lg mb-1">{leaderboardData[2]?.name || 'N/A'}</div>
+                <div className="text-white text-lg">{leaderboardData[2]?.points?.toLocaleString() || 0} pts</div>
+                <div className="text-sm text-amber-400 mt-2">Bronze Medal</div>
               </div>
             </div>
           </div>
+        )}
+
+        {/* Top 100 Users Section Header */}
+        <div className="relative mb-6 z-10">
+          <h2 className="text-3xl font-black text-white text-center mb-2">Top 100 Users</h2>
+          <div className="w-24 h-1 bg-gradient-to-r from-yellow-400 to-orange-400 mx-auto"></div>
         </div>
 
         {/* Leaderboard Table */}
@@ -207,7 +168,6 @@ export const Leaderboard: React.FC = () => {
                     <th className="px-6 py-4 text-left text-sm font-black text-white">User</th>
                     <th className="px-6 py-4 text-center text-sm font-black text-white">Points</th>
                     <th className="px-6 py-4 text-center text-sm font-black text-white">Badges</th>
-                    <th className="px-6 py-4 text-center text-sm font-black text-white">Feasts</th>
                     <th className="px-6 py-4 text-center text-sm font-black text-white">Streak</th>
                     <th className="px-6 py-4 text-center text-sm font-black text-white">Change</th>
                   </tr>
@@ -216,7 +176,7 @@ export const Leaderboard: React.FC = () => {
                   {leaderboardData.map((entry) => (
                     <tr 
                       key={entry.rank}
-                      className={`${getRowStyle(entry.rank, entry.name)} hover:bg-white/10 transition-all duration-200 border-b border-white/5`}
+                      className={`${getRowStyle(entry.name)} hover:bg-white/10 transition-all duration-200 border-b border-white/5`}
                     >
                       <td className="px-6 py-4">
                         <div className="flex items-center">
@@ -225,8 +185,8 @@ export const Leaderboard: React.FC = () => {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center">
-                          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white mr-3 clip-path-hexagon">
-                            {entry.avatar}
+                          <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white mr-3 font-bold">
+                            {entry.name?.charAt(0)?.toUpperCase() || 'U'}
                           </div>
                           <div>
                             <div className="font-semibold text-white">{entry.name}</div>
@@ -243,12 +203,6 @@ export const Leaderboard: React.FC = () => {
                         <div className="flex items-center justify-center">
                           <Award className="w-4 h-4 text-yellow-500 mr-1" />
                           <span className="font-semibold text-white">{entry.badges}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex items-center justify-center">
-                          <Trophy className="w-4 h-4 text-green-500 mr-1" />
-                          <span className="font-semibold text-white">{entry.feasts}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-center">
@@ -289,12 +243,19 @@ export const Leaderboard: React.FC = () => {
             <h2 className="text-3xl font-black mb-8 relative z-10">Your Performance</h2>
             <div className="grid md:grid-cols-4 gap-6 relative z-10">
               <div className="text-center">
-                <div className="text-4xl font-black mb-2">{userRank ? `#${userRank}` : 'N/A'}</div>
-                <div className="opacity-90">Current Rank</div>
+                <div className="text-4xl font-black mb-2">
+                  {userRank ? `#${userRank}` : 'N/A'}
+                </div>
+                <div className="opacity-90">Your Rank</div>
+                {totalUsers > 0 && (
+                  <div className="text-sm opacity-75 mt-1">
+                    out of {totalUsers.toLocaleString()}
+                  </div>
+                )}
               </div>
               <div className="text-center">
                 <div className="text-4xl font-black mb-2">--</div>
-                <div className="opacity-90">Positions Up</div>
+                <div className="opacity-90">Weekly Change</div>
               </div>
               <div className="text-center">
                 <div className="text-4xl font-black mb-2">{currentUser.totalPoints.toLocaleString()}</div>

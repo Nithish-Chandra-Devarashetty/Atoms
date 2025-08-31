@@ -14,6 +14,8 @@ export interface IContestSubmission extends Document {
   total: number; // total questions
   percentage: number; // derived convenience
   submittedAt: Date;
+  participationPointsAwarded: boolean; // +100 for participating
+  bonusPointsAwarded: number; // 0 | 50 | 100 based on rank after contest ends
 }
 
 const answerSchema = new Schema<IAnswerSelection>({
@@ -29,7 +31,9 @@ const contestSubmissionSchema = new Schema<IContestSubmission>({
   score: { type: Number, required: true },
   total: { type: Number, required: true },
   percentage: { type: Number, required: true },
-  submittedAt: { type: Date, default: Date.now }
+  submittedAt: { type: Date, default: Date.now },
+  participationPointsAwarded: { type: Boolean, default: false },
+  bonusPointsAwarded: { type: Number, default: 0 }
 }, { timestamps: true });
 
 contestSubmissionSchema.index({ contest: 1, score: -1, createdAt: 1 });

@@ -1,6 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+html, body, #root {
+  width: 100%;
+  min-width: 320px;
+  overflow-x: auto; /* allow horizontal scroll if Edge overflows to avoid cutting content */
+}
+
+/* Edge fix: ensure containers don’t clip right side due to transforms/filters */
+.container, .max-w-7xl, .max-w-4xl, .max-w-3xl, .max-w-2xl {
+  overflow: visible;
+}
+
 
 /* Custom clip paths for modern shapes */
 @layer utilities {

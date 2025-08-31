@@ -297,7 +297,7 @@ export const getProgress = async (req: AuthRequest, res: Response): Promise<void
 
 export const getLeaderboard = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const { timeframe = 'all', category = 'overall', limit = 50 } = req.query;
+    const { timeframe = 'all', category = 'overall', limit = 100 } = req.query;
 
     let dateFilter = {};
     if (timeframe === 'week') {
@@ -310,6 +310,10 @@ export const getLeaderboard = async (req: AuthRequest, res: Response): Promise<v
       dateFilter = { lastActiveDate: { $gte: monthAgo } };
     }
 
+    // Get total user count for rank calculation
+    const totalUsers = await User.countDocuments(dateFilter);
+
+    // Get top users for leaderboard display
     const users = await User.find(dateFilter)
       .select('displayName photoURL totalPoints badges streak lastActiveDate')
       .sort({ totalPoints: -1 })
@@ -326,16 +330,21 @@ export const getLeaderboard = async (req: AuthRequest, res: Response): Promise<v
       lastActive: user.lastActiveDate
     }));
 
-    // Find current user's position if authenticated
+    // Find current user's position out of ALL users (not just top 100)
     let userRank = null;
     if (req.user) {
-      const userPosition = leaderboard.findIndex(entry => entry._id.toString() === req.user!._id);
-      userRank = userPosition !== -1 ? userPosition + 1 : null;
+      // Count how many users have more points than current user
+      const usersWithMorePoints = await User.countDocuments({
+        ...dateFilter,
+        totalPoints: { $gt: req.user.totalPoints }
+      });
+      userRank = usersWithMorePoints + 1;
     }
 
     res.json({
       leaderboard,
       userRank,
+      totalUsers,
       timeframe,
       category
     });

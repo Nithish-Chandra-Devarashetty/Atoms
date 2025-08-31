@@ -63,9 +63,10 @@ export const Notifications: React.FC = () => {
       } else {
         setNotifications(prev => [...prev, ...(response.notifications || [])]);
       }
-      
-      setHasMore(response.hasMore || false);
-      setPage(pageNum);
+
+      const pagination = response.pagination || {};
+      setHasMore(!!pagination.hasMore);
+      setPage(pagination.currentPage || pageNum);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
@@ -109,6 +110,8 @@ export const Notifications: React.FC = () => {
         window.dispatchEvent(new CustomEvent('unread-count-update', { detail: { count: 0 } }));
         return updated;
       });
+  // Ensure navbar badge sync and pagination state by refetching first page
+  fetchNotifications(1);
     } catch (error) {
       console.error('Failed to mark all as read:', error);
     }

@@ -161,7 +161,23 @@ export const submitContest = async (req: AuthRequest, res: Response) => {
       percentage
     });
 
-    res.status(201).json({ submission });
+    // Award participation points (+100) once per submission
+    try {
+      const updated = await ContestSubmission.findByIdAndUpdate(
+        submission._id,
+        { $set: { participationPointsAwarded: true } },
+        { new: true }
+      ).lean();
+      await User.updateOne(
+        { _id: req.user._id },
+        { $inc: { totalPoints: 100 } }
+      );
+      res.status(201).json({ submission: { ...submission.toObject(), participationPointsAwarded: true } });
+    } catch (e) {
+      // Even if awarding points fails, don't block submission; log and continue
+      console.warn('Participation points award error:', e);
+      res.status(201).json({ submission });
+    }
   } catch (err) {
     console.error('Submit contest error:', err);
     if ((err as any).code === 11000) {
@@ -181,7 +197,7 @@ export const getContestResults = async (req: AuthRequest, res: Response) => {
     const hasEnded = new Date() > endTime;
     if (!hasEnded) return res.status(400).json({ error: 'Results available after contest ends' });
 
-    const subs = await ContestSubmission.find({ contest: contest._id })
+  const subs = await ContestSubmission.find({ contest: contest._id })
       .populate('user', 'displayName photoURL')
       .sort({ score: -1, createdAt: 1 })
       .lean();
@@ -197,6 +213,31 @@ export const getContestResults = async (req: AuthRequest, res: Response) => {
       const strictlyLower = subs.filter(s => s.score < my.score).length;
       // Define "better than" as strictly lower scores
       betterThanPercent = totalParticipants > 0 ? Math.round((strictlyLower / totalParticipants) * 100) : 0;
+    }
+
+    // Award leaderboard bonus points (Top 10: +100, 11-100: +50), idempotent
+    try {
+      const awardOps: Promise<any>[] = [];
+      const maxRankToAward = Math.min(100, subs.length);
+      for (let i = 0; i < maxRankToAward; i++) {
+        const s = subs[i];
+        if (!s || !s.user) continue;
+        const desired = i < 10 ? 100 : 50;
+        const currentAward = typeof (s as any).bonusPointsAwarded === 'number' ? (s as any).bonusPointsAwarded : 0;
+        const delta = Math.max(0, desired - currentAward);
+        if (delta > 0) {
+          // Update submission and user's points atomically-ish
+          awardOps.push(
+            (async () => {
+              await ContestSubmission.updateOne({ _id: s._id }, { $set: { bonusPointsAwarded: desired } });
+              await User.updateOne({ _id: (s.user as any)._id }, { $inc: { totalPoints: delta } });
+            })()
+          );
+        }
+      }
+      if (awardOps.length) await Promise.allSettled(awardOps);
+    } catch (e) {
+      console.warn('Bonus points award error:', e);
     }
 
     // Build leaderboard top 50

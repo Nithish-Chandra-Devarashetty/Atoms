@@ -28,9 +28,13 @@ export const getNotifications = async (req: AuthRequest, res: Response): Promise
       .lean();
 
     const totalNotifications = await Notification.countDocuments({ recipient: req.user._id });
+    // Count unread as those explicitly false or missing the field (legacy docs)
     const unreadCount = await Notification.countDocuments({ 
-      recipient: req.user._id, 
-      isRead: false 
+      recipient: req.user._id,
+      $or: [
+        { isRead: { $ne: true } },
+        { isRead: { $exists: false } }
+      ]
     });
 
     res.json({
@@ -73,6 +77,12 @@ export const markNotificationRead = async (req: AuthRequest, res: Response): Pro
       return;
     }
 
+    // Emit unread count decrement event
+    if (io) {
+      io.to(`user-${req.user._id}`).emit('notification-created', { ...notification.toObject(), isRead: true });
+      io.to(`user-${req.user._id}`).emit('notifications-marked-all-read-partial', { affectedId: notification._id });
+    }
+
     res.json({ message: 'Notification marked as read', notification });
   } catch (error) {
     console.error('Mark notification read error:', error);
@@ -88,12 +98,37 @@ export const markAllNotificationsRead = async (req: AuthRequest, res: Response):
       return;
     }
 
-    await Notification.updateMany(
-      { recipient: req.user._id, isRead: false },
-      { isRead: true }
+    console.log('🟡 markAllNotificationsRead invoked for user:', req.user._id);
+
+    // Mark as read for both explicitly unread and legacy docs lacking isRead
+  const result = await Notification.updateMany(
+      { 
+        recipient: req.user._id, 
+        $or: [
+      { isRead: { $ne: true } },
+      { isRead: { $exists: false } }
+        ]
+      },
+      { $set: { isRead: true } }
     );
 
-    res.json({ message: 'All notifications marked as read' });
+    // Recompute unread count after the update to return accurate state
+  const unreadCountAfter = await Notification.countDocuments({
+      recipient: req.user._id,
+      $or: [
+    { isRead: { $ne: true } },
+    { isRead: { $exists: false } }
+      ]
+    });
+
+    // Optional: emit a socket event so clients can react instantly
+    if (io) {
+      io.to(`user-${req.user._id}`).emit('notifications-marked-all-read', { unreadCount: unreadCountAfter, modified: result.modifiedCount });
+    }
+
+    console.log('🟢 markAll result:', { modified: result.modifiedCount, unreadCountAfter });
+
+    res.json({ message: 'All notifications marked as read', modified: result.modifiedCount, unreadCount: unreadCountAfter });
   } catch (error) {
     console.error('Mark all notifications read error:', error);
     res.status(500).json({ error: 'Internal server error' });

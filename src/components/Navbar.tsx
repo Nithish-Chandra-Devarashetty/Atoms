@@ -54,6 +54,9 @@ const Navbar: React.FC = () => {
       if (notif && !notif.isRead) {
         setUnreadCount((c) => c + 1);
       }
+    },
+    onNotificationsMarkedAllRead: () => {
+      setUnreadCount(0);
     }
   });
 
@@ -84,7 +87,7 @@ const Navbar: React.FC = () => {
         onClick={closeMenu}
       >
         {icon}
-        <span className="ml-3">{label}</span>
+  <span className="ml-3 whitespace-nowrap">{label}</span>
       </Link>
     );
   };
@@ -98,12 +101,12 @@ const Navbar: React.FC = () => {
       >
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center py-4">
-            <Link to="/" className="flex items-center hover:opacity-80 transition-all duration-300 group">
+            <Link to="/" className="flex items-center hover:opacity-80 transition-all duration-300 group flex-shrink-0">
               <img src="/ai.png" alt="Atoms" className="w-8 h-8 object-contain" />
-              <span className="ml-3 text-2xl font-black text-white tracking-tight">Atoms</span>
+              <span className="ml-3 text-2xl font-black text-white tracking-tight whitespace-nowrap">Atoms</span>
             </Link>
 
-            <div className="hidden md:flex space-x-4 items-center">
+            <div className="hidden md:flex space-x-4 items-center flex-nowrap">
               <NavLink to="/webdev" icon={<Code size={20} />} label="Web Dev" />
               <NavLink to="/core" icon={<Database size={20} />} label="Core CS" />
               <NavLink to="/dsa" icon={<Brain size={20} />} label="DSA" />

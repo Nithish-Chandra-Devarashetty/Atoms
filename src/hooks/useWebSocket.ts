@@ -14,6 +14,7 @@ interface UseWebSocketOptions {
   
   // For notifications
   onNotificationCreated?: (notification: any) => void;
+  onNotificationsMarkedAllRead?: (data: { unreadCount: number; modified: number }) => void;
   // For contests
   onContestCreated?: (contest: any) => void;
   
@@ -33,6 +34,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   onDiscussionCreated,
   onDiscussionLikeUpdated,
   onNotificationCreated,
+  onNotificationsMarkedAllRead,
   onContestCreated,
     onUserTypingPrivate,
     onUserTypingDiscussion,
@@ -157,6 +159,13 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
       console.log('🔔 Notification created via WebSocket:', data);
       if (onNotificationCreated) {
         onNotificationCreated(data);
+      }
+    });
+
+    socket.on('notifications-marked-all-read', (data) => {
+      console.log('✅ All notifications marked as read via WebSocket:', data);
+      if (onNotificationsMarkedAllRead) {
+        onNotificationsMarkedAllRead(data);
       }
     });
 
