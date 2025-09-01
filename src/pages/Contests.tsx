@@ -186,7 +186,7 @@ export const Contests: React.FC = () => {
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Hero Header */}
         <div className="text-center mb-12">
-          <h1 className="text-5xl md:text-6xl font-black bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 bg-clip-text text-transparent mb-4 tracking-tight">
+          <h1 className="heading-font text-5xl md:text-6xl font-black text-white mb-4 tracking-tight">
             Contests
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto font-light">

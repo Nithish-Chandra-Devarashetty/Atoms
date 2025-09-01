@@ -23,6 +23,7 @@ import certificateRoutes from './routes/certificates.js';
 import badgeRoutes from './routes/badges.js';
 import contestRoutes from './routes/contests.js';
 import adminRoutes from './routes/admin.js';
+import aiQuizRoutes from './routes/aiquiz.js';
 
 // Import controllers to set up WebSocket
 import { setSocketIO as setMessageSocketIO } from './controllers/messageController.js';
@@ -139,6 +140,7 @@ app.use('/api/certificates', certificateRoutes);
 app.use('/api/badges', badgeRoutes);
 app.use('/api/contests', contestRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/aiquiz', aiQuizRoutes);
 
 // API info endpoint
 app.get('/api', (req, res) => {

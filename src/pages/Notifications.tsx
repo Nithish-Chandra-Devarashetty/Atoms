@@ -172,7 +172,7 @@ export const Notifications: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-6 sm:py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 blur-3xl animate-pulse"></div>
@@ -182,13 +182,13 @@ export const Notifications: React.FC = () => {
 
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-16 relative z-10">
-          <div className="flex items-center justify-center mb-6">
-            <h1 className="text-5xl md:text-7xl font-black bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent tracking-tight">
+        <div className="text-center mb-8 sm:mb-16 relative z-10">
+          <div className="flex items-center justify-center mb-4 sm:mb-6">
+            <h1 className="heading-font text-3xl sm:text-5xl md:text-7xl font-black text-white tracking-tight">
               Notifications
             </h1>
           </div>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto font-light">
+          <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto font-light">
             Stay updated with your latest activities and interactions
           </p>
         </div>
@@ -197,13 +197,13 @@ export const Notifications: React.FC = () => {
         <div className="max-w-4xl mx-auto relative z-10">
 
           {/* Filter and Action Buttons */}
-          <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 mb-8 z-10">
-            <h2 className="text-3xl font-black text-white mb-6">Manage Notifications</h2>
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="flex space-x-3">
+          <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-8 mb-6 sm:mb-8 z-10">
+            <h2 className="text-xl sm:text-3xl font-black text-white mb-4 sm:mb-6">Manage Notifications</h2>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex flex-wrap gap-2 sm:gap-3">
                 <button
                   onClick={() => setFilter('all')}
-                  className={`px-6 py-3 font-semibold transition-all duration-300 ${
+                  className={`px-4 sm:px-6 py-2 sm:py-3 font-semibold transition-all duration-300 text-sm sm:text-base ${
                     filter === 'all'
                       ? 'bg-gradient-to-r from-cyan-500 to-purple-600 text-white shadow-lg'
                       : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white'
@@ -213,7 +213,7 @@ export const Notifications: React.FC = () => {
                 </button>
                 <button
                   onClick={() => setFilter('unread')}
-                  className={`px-6 py-3 font-semibold transition-all duration-300 ${
+                  className={`px-4 sm:px-6 py-2 sm:py-3 font-semibold transition-all duration-300 text-sm sm:text-base ${
                     filter === 'unread'
                       ? 'bg-gradient-to-r from-cyan-500 to-purple-600 text-white shadow-lg'
                       : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white'
@@ -223,22 +223,22 @@ export const Notifications: React.FC = () => {
                 </button>
               </div>
 
-              <div className="flex space-x-3">
+              <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
                 {unreadCount > 0 && (
                   <button
                     onClick={handleMarkAllAsRead}
-                    className="px-6 py-3 bg-green-500/80 hover:bg-green-500 text-white font-semibold transition-all duration-300 flex items-center space-x-2 shadow-lg"
+                    className="px-4 sm:px-6 py-2 sm:py-3 bg-green-500/80 hover:bg-green-500 text-white font-semibold transition-all duration-300 flex items-center space-x-2 shadow-lg text-sm sm:text-base"
                   >
-                    <CheckCheck className="w-5 h-5" />
+                    <CheckCheck className="w-4 h-4 sm:w-5 sm:h-5" />
                     <span>Mark All Read</span>
                   </button>
                 )}
                 {notifications.length > 0 && (
                   <button
                     onClick={handleClearAll}
-                    className="px-6 py-3 bg-red-500/80 hover:bg-red-500 text-white font-semibold transition-all duration-300 flex items-center space-x-2 shadow-lg"
+                    className="px-4 sm:px-6 py-2 sm:py-3 bg-red-500/80 hover:bg-red-500 text-white font-semibold transition-all duration-300 flex items-center space-x-2 shadow-lg text-sm sm:text-base"
                   >
-                    <Trash2 className="w-5 h-5" />
+                    <Trash2 className="w-4 h-4 sm:w-5 sm:h-5" />
                     <span>Clear All</span>
                   </button>
                 )}
@@ -249,16 +249,16 @@ export const Notifications: React.FC = () => {
         {/* Notifications List */}
         <div className="relative bg-white/5 backdrop-blur-md border border-white/10 overflow-hidden z-10">
           {loading && page === 1 ? (
-            <div className="flex justify-center items-center py-16">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500"></div>
+            <div className="flex justify-center items-center py-12 sm:py-16">
+              <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-cyan-500"></div>
             </div>
           ) : filteredNotifications.length === 0 ? (
-            <div className="text-center py-16 px-8">
-              <Bell className="w-20 h-20 text-gray-500 mx-auto mb-6" />
-              <h3 className="text-2xl font-bold text-white mb-4">
+            <div className="text-center py-12 sm:py-16 px-4 sm:px-8">
+              <Bell className="w-16 h-16 sm:w-20 sm:h-20 text-gray-500 mx-auto mb-4 sm:mb-6" />
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-3 sm:mb-4">
                 {filter === 'unread' ? 'No unread notifications' : 'No notifications'}
               </h3>
-              <p className="text-gray-400 text-lg">
+              <p className="text-gray-400 text-base sm:text-lg">
                 {filter === 'unread' 
                   ? 'All caught up! Check back later for new notifications.' 
                   : 'You\'ll see notifications here when you have activity on your account.'
@@ -271,38 +271,38 @@ export const Notifications: React.FC = () => {
                 <div
                   key={notification._id}
                   onClick={() => handleNotificationClick(notification)}
-                  className={`p-8 border-b border-white/10 hover:bg-white/5 cursor-pointer transition-all duration-300 relative ${
+                  className={`p-4 sm:p-8 border-b border-white/10 hover:bg-white/5 cursor-pointer transition-all duration-300 relative ${
                     !notification.isRead ? 'bg-cyan-500/10 border-l-4 border-l-cyan-500' : ''
                   } ${index === filteredNotifications.length - 1 ? 'border-b-0' : ''}`}
                 >
-                  <div className="flex items-start space-x-6">
+                  <div className="flex items-start space-x-3 sm:space-x-6">
                     {/* Avatar */}
                     <div className="flex-shrink-0 relative">
                       {notification.sender?.photoURL ? (
                         <img
                           src={notification.sender.photoURL}
                           alt={notification.sender.displayName}
-                          className="w-14 h-14 rounded-full object-cover shadow-lg"
+                          className="w-10 h-10 sm:w-14 sm:h-14 object-cover shadow-lg"
                         />
                       ) : (
-                        <div className="w-14 h-14 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                        <div className="w-10 h-10 sm:w-14 sm:h-14 bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm sm:text-lg shadow-lg">
                           {notification.sender?.displayName?.[0]?.toUpperCase() || 'U'}
                         </div>
                       )}
                       {!notification.isRead && (
-                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-cyan-500 rounded-full border-2 border-white shadow-lg animate-pulse"></div>
+                        <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-cyan-500 border-2 border-white shadow-lg animate-pulse"></div>
                       )}
                     </div>
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-white font-bold text-xl mb-2 leading-tight">
+                      <h3 className="text-white font-bold text-base sm:text-xl mb-1 sm:mb-2 leading-tight">
                         {notification.title}
                       </h3>
-                      <p className="text-gray-300 mb-4 leading-relaxed text-lg">
+                      <p className="text-gray-300 mb-2 sm:mb-4 leading-relaxed text-sm sm:text-lg">
                         {notification.message}
                       </p>
-                      <p className="text-gray-400 text-sm font-medium">
+                      <p className="text-gray-400 text-xs sm:text-sm font-medium">
                         {formatTime(notification.createdAt)}
                       </p>
                     </div>
@@ -310,7 +310,7 @@ export const Notifications: React.FC = () => {
                     {/* Only unread indicator, no action buttons */}
                     {!notification.isRead && (
                       <div className="flex-shrink-0">
-                        <div className="w-3 h-3 bg-cyan-500 rounded-full animate-pulse"></div>
+                        <div className="w-2 h-2 sm:w-3 sm:h-3 bg-cyan-500 animate-pulse"></div>
                       </div>
                     )}
                   </div>
@@ -319,15 +319,15 @@ export const Notifications: React.FC = () => {
 
               {/* Load More Button */}
               {hasMore && (
-                <div className="p-8 text-center border-t border-white/10">
+                <div className="p-4 sm:p-8 text-center border-t border-white/10">
                   <button
                     onClick={loadMore}
                     disabled={loading}
-                    className="px-8 py-4 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold text-lg transition-all duration-300 flex items-center space-x-3 mx-auto shadow-lg"
+                    className="px-6 sm:px-8 py-3 sm:py-4 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 disabled:from-gray-600 disabled:to-gray-700 text-white font-bold text-base sm:text-lg transition-all duration-300 flex items-center space-x-3 mx-auto shadow-lg"
                   >
                     {loading ? (
                       <>
-                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                        <div className="animate-spin rounded-full h-5 w-5 sm:h-6 sm:w-6 border-b-2 border-white"></div>
                         <span>Loading...</span>
                       </>
                     ) : (

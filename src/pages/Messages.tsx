@@ -356,7 +356,7 @@ export const Messages: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-6 sm:py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 blur-3xl animate-pulse"></div>
@@ -366,25 +366,25 @@ export const Messages: React.FC = () => {
 
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-16 relative z-10">
-          <h1 className="text-5xl md:text-7xl font-black bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-6 tracking-tight">
+        <div className="text-center mb-8 sm:mb-16 relative z-10">
+          <h1 className="heading-font text-3xl sm:text-5xl md:text-7xl font-black text-white mb-4 sm:mb-6 tracking-tight">
             Messages
           </h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto font-light">
+          <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto font-light">
             Connect with fellow learners and stay in touch with your network
           </p>
         </div>
 
         {/* Main Content - Mobile First Design */}
-        <div className="max-w-6xl mx-auto h-[calc(100vh-300px)] lg:h-[calc(100vh-200px)]">
-          <div className="lg:flex lg:space-x-6 space-y-6 lg:space-y-0 relative z-10 h-full">
+        <div className="max-w-6xl mx-auto h-[calc(100vh-250px)] sm:h-[calc(100vh-300px)] lg:h-[calc(100vh-200px)]">
+          <div className="lg:flex lg:space-x-6 space-y-4 sm:space-y-6 lg:space-y-0 relative z-10 h-full">
             
             {/* Conversations Sidebar - Mobile responsive */}
             <div className={`lg:w-1/3 ${selectedContact ? 'hidden lg:block' : 'block'} bg-white/5 backdrop-blur-md border border-white/10 overflow-hidden h-full flex flex-col`}>
               {/* Search and New Message */}
-              <div className="flex-shrink-0 p-6 border-b border-white/10">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-2xl font-black text-white">Conversations</h2>
+              <div className="flex-shrink-0 p-4 sm:p-6 border-b border-white/10">
+                <div className="flex items-center justify-between mb-3 sm:mb-4">
+                  <h2 className="text-xl sm:text-2xl font-black text-white">Conversations</h2>
                   <button
                     onClick={() => {
                       setShowNewMessageModal(true);
@@ -392,27 +392,27 @@ export const Messages: React.FC = () => {
                         fetchSuggestedUsers();
                       }
                     }}
-                    className="p-3 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 transition-all duration-300 shadow-lg"
+                    className="p-2 sm:p-3 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 transition-all duration-300 shadow-lg"
                     title="New Message"
                   >
-                    <MessageCircle className="w-5 h-5 text-white" />
+                    <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </button>
                 </div>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                   <input
                     type="text"
                     placeholder="Search conversations..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                    className="w-full pl-10 sm:pl-12 pr-4 py-2.5 sm:py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all text-sm sm:text-base"
                   />
                 </div>
               </div>
 
               {/* Error Message */}
               {error && (
-                <div className="flex-shrink-0 mx-6 mt-4 p-4 bg-red-500/20 border border-red-500/50 text-red-200 text-sm">
+                <div className="flex-shrink-0 mx-4 sm:mx-6 mt-4 p-3 sm:p-4 bg-red-500/20 border border-red-500/50 text-red-200 text-xs sm:text-sm">
                   {error}
                 </div>
               )}
@@ -421,7 +421,7 @@ export const Messages: React.FC = () => {
               <div className="flex-1 overflow-y-auto min-h-0">
                 {loading ? (
                   <div className="flex justify-center items-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-500"></div>
+                    <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-b-2 border-cyan-500"></div>
                   </div>
                 ) : filteredConversations.length > 0 ? (
                   filteredConversations.map((conversation) => {
@@ -436,32 +436,32 @@ export const Messages: React.FC = () => {
                           setSelectedUserInfo(null);
                           fetchMessages(otherParticipant._id);
                         }}
-                        className={`p-6 border-b border-white/10 hover:bg-white/10 cursor-pointer transition-all duration-300 ${
+                        className={`p-4 sm:p-6 border-b border-white/10 hover:bg-white/10 cursor-pointer transition-all duration-300 ${
                           selectedUserId === otherParticipant._id ? 'bg-white/20 border-cyan-500/50' : ''
                         }`}
                       >
-                        <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-3 sm:space-x-4">
                           <div className="relative">
                             {otherParticipant.photoURL ? (
                               <img
                                 src={otherParticipant.photoURL}
                                 alt={otherParticipant.displayName}
-                                className="w-12 h-12 rounded-full object-cover shadow-lg"
+                                className="w-10 h-10 sm:w-12 sm:h-12 object-cover shadow-lg"
                               />
                             ) : (
-                              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white text-lg font-bold shadow-lg">
+                              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-base sm:text-lg font-bold shadow-lg">
                                 {otherParticipant.displayName.charAt(0).toUpperCase()}
                               </div>
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
-                              <h3 className="font-bold text-white truncate text-lg">{otherParticipant.displayName}</h3>
+                              <h3 className="font-bold text-white truncate text-base sm:text-lg">{otherParticipant.displayName}</h3>
                               <span className="text-xs text-gray-400 font-medium">
                                 {formatTime(conversation.lastActivity)}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-300 truncate">
+                            <p className="text-xs sm:text-sm text-gray-300 truncate">
                               {conversation.lastMessage?.content || 'No messages yet'}
                             </p>
                           </div>
@@ -470,53 +470,53 @@ export const Messages: React.FC = () => {
                     );
                   })
                 ) : (
-                  <div className="p-8">
+                  <div className="p-4 sm:p-8">
                     {loadingSuggestions ? (
-                      <div className="text-center text-gray-400 p-8">
-                        <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                        <p>Loading suggested contacts...</p>
+                      <div className="text-center text-gray-400 p-6 sm:p-8">
+                        <MessageCircle className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 opacity-50" />
+                        <p className="text-sm sm:text-base">Loading suggested contacts...</p>
                       </div>
                     ) : suggestedUsers.length > 0 ? (
                       <div>
-                        <div className="text-center text-gray-400 mb-6">
-                          <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                          <p className="text-lg font-semibold">No conversations yet</p>
-                          <p className="text-sm">Start chatting with your connections!</p>
+                        <div className="text-center text-gray-400 mb-4 sm:mb-6">
+                          <MessageCircle className="w-10 h-10 sm:w-12 sm:h-12 mx-auto mb-4 opacity-50" />
+                          <p className="text-base sm:text-lg font-semibold">No conversations yet</p>
+                          <p className="text-xs sm:text-sm">Start chatting with your connections!</p>
                         </div>
-                        <div className="space-y-3">
-                          <h3 className="text-white font-bold text-lg mb-4">Suggested Contacts</h3>
+                        <div className="space-y-2 sm:space-y-3">
+                          <h3 className="text-white font-bold text-base sm:text-lg mb-3 sm:mb-4">Suggested Contacts</h3>
                           {suggestedUsers.slice(0, 5).map((user: any) => (
                             <div
                               key={user._id}
                               onClick={() => startNewConversation(user._id, user)}
-                              className="flex items-center p-4 hover:bg-white/5 cursor-pointer transition-all duration-300 border border-white/10"
+                              className="flex items-center p-3 sm:p-4 hover:bg-white/5 cursor-pointer transition-all duration-300 border border-white/10"
                             >
                               <div className="relative">
                                 {user.photoURL ? (
                                   <img
                                     src={user.photoURL}
                                     alt={user.displayName}
-                                    className="w-10 h-10 rounded-full object-cover"
+                                    className="w-8 h-8 sm:w-10 sm:h-10 object-cover"
                                   />
                                 ) : (
-                                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold">
+                                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm sm:text-base">
                                     {user.displayName?.[0]?.toUpperCase() || 'U'}
                                   </div>
                                 )}
                               </div>
                               <div className="ml-3 flex-1">
-                                <span className="text-white font-semibold">{user.displayName}</span>
-                                <p className="text-gray-400 text-sm">{user.totalPoints || 0} points</p>
+                                <span className="text-white font-semibold text-sm sm:text-base">{user.displayName}</span>
+                                <p className="text-gray-400 text-xs sm:text-sm">{user.totalPoints || 0} points</p>
                               </div>
                             </div>
                           ))}
                         </div>
                       </div>
                     ) : (
-                      <div className="text-center text-gray-400 p-8">
-                        <MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                        <p className="text-lg font-semibold mb-2">No conversations found</p>
-                        <p className="text-sm">Follow users from the discussion page to start chatting!</p>
+                      <div className="text-center text-gray-400 p-6 sm:p-8">
+                        <MessageCircle className="w-12 h-12 sm:w-16 sm:h-16 mx-auto mb-4 opacity-50" />
+                        <p className="text-base sm:text-lg font-semibold mb-2">No conversations found</p>
+                        <p className="text-xs sm:text-sm">Follow users from the discussion page to start chatting!</p>
                       </div>
                     )}
                   </div>
@@ -529,16 +529,16 @@ export const Messages: React.FC = () => {
           {selectedContact ? (
             <div className="flex flex-col h-full">
               {/* Chat Header */}
-              <div className="flex-shrink-0 p-4 bg-white/5 backdrop-blur-md border-b border-white/10 flex items-center justify-between text-white relative z-10">
+              <div className="flex-shrink-0 p-3 sm:p-4 bg-white/5 backdrop-blur-md border-b border-white/10 flex items-center justify-between text-white relative z-10">
                 {/* Back button for mobile */}
                 <button
                   onClick={() => {
                     setShowMobileConversations(true);
                     setSelectedUserId(null);
                   }}
-                  className="lg:hidden mr-3 p-2 hover:bg-white/10 transition-colors"
+                  className="lg:hidden mr-2 sm:mr-3 p-2 hover:bg-white/10 transition-colors"
                 >
-                  <ArrowLeft className="w-5 h-5 text-white" />
+                  <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </button>
                 
                 <div 
@@ -557,53 +557,53 @@ export const Messages: React.FC = () => {
                       <img
                         src={selectedContact.photoURL}
                         alt={selectedContact.displayName}
-                        className="w-10 h-10 rounded-full object-cover"
+                        className="w-8 h-8 sm:w-10 sm:h-10 object-cover"
                       />
                     ) : (
-                      <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-sm sm:text-base">
                         {selectedContact.displayName.charAt(0).toUpperCase()}
                       </div>
                     )}
                   </div>
-                  <div className="ml-3">
-                    <h2 className="font-semibold text-white hover:text-cyan-400 transition-colors">{selectedContact.displayName}</h2>
-                    <p className="text-sm text-gray-400 hidden sm:block">Click to view profile</p>
+                  <div className="ml-2 sm:ml-3">
+                    <h2 className="font-semibold text-white hover:text-cyan-400 transition-colors text-sm sm:text-base">{selectedContact.displayName}</h2>
+                    <p className="text-xs sm:text-sm text-gray-400 hidden sm:block">Click to view profile</p>
                   </div>
                 </div>
               </div>
 
               {/* Messages - Scrollable Container */}
-              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 relative z-10 bg-gradient-to-b from-transparent to-black/20 min-h-0">
+              <div ref={messagesContainerRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 relative z-10 bg-gradient-to-b from-transparent to-black/20 min-h-0">
                 {messages.map((message) => (
                   <div
                     key={message._id}
                     className={`flex ${message.sender._id === currentUser._id ? 'justify-end' : 'justify-start'}`}
                   >
-                    <div className="flex items-end space-x-2 max-w-[80%] sm:max-w-xs lg:max-w-md">
+                    <div className="flex items-end space-x-2 max-w-[85%] sm:max-w-[80%] lg:max-w-md">
                       {message.sender._id !== currentUser._id && (
-                        <div className="w-8 h-8 flex-shrink-0">
+                        <div className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0">
                           {message.sender.photoURL ? (
                             <img
                               src={message.sender.photoURL}
                               alt={message.sender.displayName}
-                              className="w-full h-full rounded-full object-cover"
+                              className="w-full h-full object-cover"
                             />
                           ) : (
-                            <div className="w-full h-full rounded-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center text-white text-sm font-bold">
+                            <div className="w-full h-full bg-gradient-to-r from-green-500 to-blue-500 flex items-center justify-center text-white text-xs sm:text-sm font-bold">
                               {message.sender.displayName.charAt(0).toUpperCase()}
                             </div>
                           )}
                         </div>
                       )}
                       <div
-                        className={`px-4 py-3 rounded-xl shadow-lg ${
+                        className={`px-3 sm:px-4 py-2 sm:py-3 shadow-lg ${
                           message.sender._id === currentUser._id
                             ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
                             : 'bg-white/10 backdrop-blur-md border border-white/20 text-white'
                         }`}
                       >
-                        <p className="text-sm leading-relaxed">{message.content}</p>
-                        <p className={`text-xs mt-2 ${
+                        <p className="text-xs sm:text-sm leading-relaxed break-words">{message.content}</p>
+                        <p className={`text-xs mt-1 sm:mt-2 ${
                           message.sender._id === currentUser._id ? 'text-cyan-100' : 'text-gray-300'
                         }`}>
                           {formatMessageTime(message.createdAt)}
@@ -616,8 +616,8 @@ export const Messages: React.FC = () => {
               </div>
 
               {/* Message Input - Fixed at Bottom */}
-              <div className="flex-shrink-0 p-4 bg-white/5 backdrop-blur-md border-t border-white/10 relative z-10">
-                <div className="flex items-end space-x-3">
+              <div className="flex-shrink-0 p-3 sm:p-4 bg-white/5 backdrop-blur-md border-t border-white/10 relative z-10">
+                <div className="flex items-end space-x-2 sm:space-x-3">
                   <div className="flex-1 relative">
                     <textarea
                       value={newMessage}
@@ -630,36 +630,36 @@ export const Messages: React.FC = () => {
                       onBlur={() => setInputFocused(false)}
                       onKeyPress={handleKeyPress}
                       placeholder="Type a message..."
-                      className="w-full p-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-gray-300 resize-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent focus:bg-white/15 transition-all duration-300"
+                      className="w-full p-2.5 sm:p-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-300 resize-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent focus:bg-white/15 transition-all duration-300 text-sm sm:text-base"
                       rows={1}
                       disabled={sendingMessage}
                       style={{
-                        minHeight: '44px',
-                        maxHeight: '120px'
+                        minHeight: '40px',
+                        maxHeight: '100px'
                       }}
                     />
                   </div>
                   <button
                     onClick={handleSendMessage}
                     disabled={!newMessage.trim() || sendingMessage}
-                    className="p-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white rounded-xl hover:from-cyan-400 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg flex-shrink-0"
+                    className="p-2.5 sm:p-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white hover:from-cyan-400 hover:to-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 shadow-lg flex-shrink-0"
                   >
                     {sendingMessage ? (
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 sm:h-5 sm:w-5 border-b-2 border-white"></div>
                     ) : (
-                      <Send className="w-5 h-5" />
+                      <Send className="w-4 h-4 sm:w-5 sm:h-5" />
                     )}
                   </button>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex items-center justify-center relative z-10 p-8">
-              <div className="text-center bg-white/5 backdrop-blur-md border border-white/10 p-12 max-w-md">
-                <MessageCircle className="w-20 h-20 text-cyan-400 mx-auto mb-6" />
-                <h2 className="text-2xl font-bold text-white mb-3">Start a Conversation</h2>
-                <p className="text-gray-300 mb-4 leading-relaxed">Select a contact from the sidebar to begin messaging</p>
-                <p className="text-gray-400 text-sm">
+            <div className="flex-1 flex items-center justify-center relative z-10 p-4 sm:p-8">
+              <div className="text-center bg-white/5 backdrop-blur-md border border-white/10 p-6 sm:p-12 max-w-md">
+                <MessageCircle className="w-16 h-16 sm:w-20 sm:h-20 text-cyan-400 mx-auto mb-4 sm:mb-6" />
+                <h2 className="text-xl sm:text-2xl font-bold text-white mb-2 sm:mb-3">Start a Conversation</h2>
+                <p className="text-gray-300 mb-3 sm:mb-4 leading-relaxed text-sm sm:text-base">Select a contact from the sidebar to begin messaging</p>
+                <p className="text-gray-400 text-xs sm:text-sm">
                   Visit the discussion page to connect with other users and start new conversations
                 </p>
               </div>
@@ -674,7 +674,7 @@ export const Messages: React.FC = () => {
           <div className="bg-gray-900/95 backdrop-blur-md border border-white/20 max-w-md w-full max-h-[80vh] overflow-hidden">
             {/* Modal Header */}
             <div className="p-4 border-b border-white/10 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">New Message</h2>
+              <h2 className="text-base sm:text-lg font-semibold text-white">New Message</h2>
               <button
                 onClick={() => setShowNewMessageModal(false)}
                 className="text-gray-400 hover:text-white transition-colors"

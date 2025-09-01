@@ -22,7 +22,7 @@ export const PrivacyPolicy: React.FC = () => {
           
           <div className="text-center mb-12">
             <div className="flex items-center justify-center mb-4">
-              <h1 className="text-5xl font-black bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">
+              <h1 className="heading-font text-5xl font-black text-white">
                 Privacy Policy
               </h1>
             </div>

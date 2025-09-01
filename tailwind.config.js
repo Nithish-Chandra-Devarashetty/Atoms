@@ -4,6 +4,9 @@ export default {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        heading: ['Poppins', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+      },
       fontSize: {
   // Remove forced line-height on large display sizes globally
   '5xl': ['4rem', { lineHeight: 'normal' }],

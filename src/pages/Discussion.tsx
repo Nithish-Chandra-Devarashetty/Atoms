@@ -247,7 +247,7 @@ export const Discussion: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-6 sm:py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 blur-3xl animate-pulse"></div>
@@ -257,11 +257,11 @@ export const Discussion: React.FC = () => {
       
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-16 relative z-10">
-          <h1 className="text-5xl md:text-7xl font-black bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-6 tracking-tight">
+        <div className="text-center mb-12 sm:mb-16 relative z-10">
+          <h1 className="heading-font text-3xl sm:text-5xl md:text-7xl font-black text-white mb-4 sm:mb-6 tracking-tight">
             Discussion Forum
           </h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto font-light">
+          <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto font-light">
             Connect with fellow learners, share knowledge, and get help from the community
           </p>
         </div>
@@ -270,36 +270,38 @@ export const Discussion: React.FC = () => {
         <div className="max-w-4xl mx-auto relative z-10">
 
         {/* Search and Filter */}
-        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 mb-8 z-10">
-          <h2 className="text-3xl font-black text-white mb-6">Search & Filter</h2>
-          <div className="space-y-4">
-            <div className="flex gap-4">
+        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-8 mb-6 sm:mb-8 z-10">
+          <h2 className="text-2xl sm:text-3xl font-black text-white mb-4 sm:mb-6">Search & Filter</h2>
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex gap-2 sm:gap-4">
               <input
                 type="text"
                 placeholder="Search discussions..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1 px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all text-sm sm:text-base"
               />
             </div>
             
             {/* Tag Filter */}
             {getAvailableTags().length > 0 && (
-              <div className="flex flex-wrap gap-2 items-center">
-                <span className="text-gray-300 mr-2">Filter by tags:</span>
-                {getAvailableTags().map(tag => (
-                  <button
-                    key={tag}
-                    onClick={() => toggleTag(tag)}
-                    className={`px-3 py-1 rounded-full text-sm transition-all duration-200 ${
-                      selectedTags.includes(tag)
-                        ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
-                        : 'bg-white/10 backdrop-blur-sm border border-white/20 text-gray-300 hover:bg-white/20'
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                ))}
+              <div className="flex flex-wrap gap-2 items-start sm:items-center">
+                <span className="text-gray-300 mr-2 text-sm sm:text-base whitespace-nowrap">Filter by tags:</span>
+                <div className="flex flex-wrap gap-2">
+                  {getAvailableTags().map(tag => (
+                    <button
+                      key={tag}
+                      onClick={() => toggleTag(tag)}
+                      className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm transition-all duration-200 ${
+                        selectedTags.includes(tag)
+                          ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white'
+                          : 'bg-white/10 backdrop-blur-sm border border-white/20 text-gray-300 hover:bg-white/20'
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
@@ -307,23 +309,23 @@ export const Discussion: React.FC = () => {
 
         {/* Create Discussion Form */}
         {currentUser && (
-          <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 mb-8 z-10">
-            <h2 className="text-3xl font-black text-white mb-6">Start a Discussion</h2>
-            <form onSubmit={handleCreateDiscussion} className="space-y-6">
+          <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-8 mb-6 sm:mb-8 z-10">
+            <h2 className="text-2xl sm:text-3xl font-black text-white mb-4 sm:mb-6">Start a Discussion</h2>
+            <form onSubmit={handleCreateDiscussion} className="space-y-4 sm:space-y-6">
               <div>
                 <textarea
                   value={newDiscussion}
                   onChange={(e) => setNewDiscussion(e.target.value)}
                   placeholder="What would you like to discuss? (minimum 10 characters)"
-                  className={`w-full px-4 py-3 bg-white/10 backdrop-blur-sm border transition-all resize-none ${
+                  className={`w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/10 backdrop-blur-sm border transition-all resize-none text-sm sm:text-base ${
                     showMinCharsWarning && newDiscussion.trim().length < 10
                       ? 'border-red-500 focus:ring-red-500' 
                       : 'border-white/20 focus:ring-cyan-500'
                   } text-white placeholder-gray-400 focus:ring-2 focus:border-transparent`}
                   rows={4}
                 />
-                <div className="flex justify-between items-center mt-2">
-                  <div className="text-sm">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-2 gap-2 sm:gap-0">
+                  <div className="text-xs sm:text-sm">
                     {showMinCharsWarning && newDiscussion.trim().length < 10 ? (
                       <span className="text-red-400">
                         {Math.max(0, 10 - newDiscussion.trim().length)} more characters needed
@@ -332,7 +334,7 @@ export const Discussion: React.FC = () => {
                       <span className="text-green-400">✓ Minimum length met</span>
                     ) : null}
                   </div>
-                  <div className="text-sm text-gray-400">
+                  <div className="text-xs sm:text-sm text-gray-400">
                     {newDiscussion.length}/2000 characters
                   </div>
                 </div>
@@ -344,10 +346,10 @@ export const Discussion: React.FC = () => {
                   value={newTags}
                   onChange={(e) => setNewTags(e.target.value)}
                   placeholder="Tags (comma-separated, e.g., javascript, react, help) - max 5 tags, 20 chars each"
-                  className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                  className="w-full px-3 sm:px-4 py-2 sm:py-3 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all text-sm sm:text-base"
                 />
                 {newTags && (
-                  <div className="mt-2 text-sm text-gray-400">
+                  <div className="mt-2 text-xs sm:text-sm text-gray-400">
                     Tags: {newTags.split(',').map(tag => tag.trim()).filter(tag => tag).length}/5
                   </div>
                 )}
@@ -356,7 +358,7 @@ export const Discussion: React.FC = () => {
               <button
                 type="submit"
                 disabled={submitting}
-                className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-6 py-3 font-semibold hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transition-all duration-200"
+                className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-4 sm:px-6 py-2 sm:py-3 font-semibold hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transition-all duration-200 text-sm sm:text-base"
               >
                 {submitting ? 'Posting...' : 'Post Discussion'}
               </button>
@@ -366,25 +368,25 @@ export const Discussion: React.FC = () => {
 
         {/* Error Message */}
         {error && (
-          <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-6 py-4 backdrop-blur-sm mb-8 relative z-10">
+          <div className="bg-red-500/20 border border-red-500/50 text-red-300 px-4 sm:px-6 py-3 sm:py-4 backdrop-blur-sm mb-6 sm:mb-8 relative z-10 text-sm sm:text-base">
             {error}
           </div>
         )}
 
         {/* Loading */}
         {loading && (
-          <div className="flex justify-center py-12 relative z-10">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400"></div>
+          <div className="flex justify-center py-8 sm:py-12 relative z-10">
+            <div className="animate-spin rounded-full h-8 w-8 sm:h-12 sm:w-12 border-b-2 border-cyan-400"></div>
           </div>
         )}
 
         {/* Discussions List */}
-        <div className="space-y-6 relative z-10">
+        <div className="space-y-4 sm:space-y-6 relative z-10">
           {discussions.map((discussion) => (
-            <div key={discussion._id} className="relative bg-white/5 backdrop-blur-md border border-white/10 p-6 hover:bg-white/10 transition-all duration-200">
+            <div key={discussion._id} className="relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-6 hover:bg-white/10 transition-all duration-200">
               {/* Discussion Header */}
-              <div className="flex items-start space-x-4 mb-4">
-                <div className="w-10 h-10 flex-shrink-0">
+              <div className="flex items-start space-x-3 sm:space-x-4 mb-3 sm:mb-4">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0">
                   {discussion.author.photoURL ? (
                     <img
                       src={discussion.author.photoURL}
@@ -394,31 +396,31 @@ export const Discussion: React.FC = () => {
                   />
                   ) : (
                     <div 
-                      className="w-full h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold cursor-pointer"
+                      className="w-full h-full rounded-full bg-gradient-to-r from-cyan-500 to-blue-500 flex items-center justify-center text-white font-bold cursor-pointer text-sm sm:text-base"
                       onClick={() => handleUserClick(discussion.author._id)}
                     >
                       {discussion.author.displayName.charAt(0).toUpperCase()}
                     </div>
                   )}
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2 mb-1">
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-1">
                     <button
                       onClick={() => handleUserClick(discussion.author._id)}
-                      className="font-semibold text-white hover:text-cyan-400 transition-colors text-base"
+                      className="font-semibold text-white hover:text-cyan-400 transition-colors text-sm sm:text-base text-left"
                     >
                       {discussion.author.displayName}
                     </button>
-                    <span className="text-gray-400">
+                    <span className="text-gray-400 text-xs sm:text-sm">
                       {formatDate(discussion.createdAt)}
                     </span>
                   </div>
                   {discussion.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-3">
+                    <div className="flex flex-wrap gap-1 sm:gap-2 mb-2 sm:mb-3">
                       {discussion.tags.map((tag, index) => (
                         <span
                           key={index}
-                          className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 text-sm px-3 py-1 border border-cyan-500/30 backdrop-blur-sm"
+                          className="bg-gradient-to-r from-cyan-500/20 to-blue-500/20 text-cyan-300 text-xs sm:text-sm px-2 sm:px-3 py-1 border border-cyan-500/30 backdrop-blur-sm"
                         >
                           {tag}
                         </span>
@@ -429,15 +431,15 @@ export const Discussion: React.FC = () => {
               </div>
 
               {/* Discussion Content */}
-              <div className="mb-6">
-                <p className="text-gray-300 whitespace-pre-wrap leading-relaxed text-base">{discussion.content}</p>
+              <div className="mb-4 sm:mb-6">
+                <p className="text-gray-300 whitespace-pre-wrap leading-relaxed text-sm sm:text-base">{discussion.content}</p>
               </div>
 
               {/* Discussion Actions */}
-              <div className="flex items-center space-x-4 mb-4">
+              <div className="flex items-center space-x-2 sm:space-x-4 mb-3 sm:mb-4">
                 <button
                   onClick={() => handleLikeDiscussion(discussion._id)}
-                  className={`flex items-center space-x-2 px-4 py-2 backdrop-blur-sm transition-all duration-200 ${
+                  className={`flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 backdrop-blur-sm transition-all duration-200 text-sm sm:text-base ${
                     currentUser && discussion.likes.includes(currentUser._id)
                       ? 'bg-red-500/20 text-red-300 border border-red-500/30'
                       : 'bg-white/10 text-gray-300 border border-white/20 hover:bg-white/20'
@@ -449,7 +451,7 @@ export const Discussion: React.FC = () => {
               </button>
                 <button
                   onClick={() => toggleReplies(discussion._id)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-white/10 text-gray-300 border border-white/20 backdrop-blur-sm hover:bg-white/20 transition-all duration-200"
+                  className="flex items-center space-x-1 sm:space-x-2 px-3 sm:px-4 py-2 bg-white/10 text-gray-300 border border-white/20 backdrop-blur-sm hover:bg-white/20 transition-all duration-200 text-sm sm:text-base"
                 >
                   <span>💬</span>
                   <span>{discussion.replies.length}</span>
@@ -458,9 +460,9 @@ export const Discussion: React.FC = () => {
 
             {/* Reply Form */}
             {currentUser && (
-              <div className="mb-4">
-                <div className="flex space-x-3">
-                  <div className="w-8 h-8 flex-shrink-0">
+              <div className="mb-3 sm:mb-4">
+                <div className="flex space-x-2 sm:space-x-3">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0">
                     {currentUser.photoURL ? (
                       <img
                         src={currentUser.photoURL}
@@ -468,12 +470,12 @@ export const Discussion: React.FC = () => {
                         className="w-full h-full rounded-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-bold">
+                      <div className="w-full h-full rounded-full bg-blue-500 flex items-center justify-center text-white text-xs sm:text-sm font-bold">
                         {currentUser.displayName.charAt(0).toUpperCase()}
                       </div>
                     )}
                   </div>
-                  <div className="flex-1 flex space-x-2">
+                  <div className="flex-1 flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
                     <input
                       type="text"
                       value={replyContent[discussion._id] || ''}
@@ -482,7 +484,7 @@ export const Discussion: React.FC = () => {
                         [discussion._id]: e.target.value 
                       }))}
                       placeholder="Write a reply..."
-                      className="flex-1 px-3 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all"
+                      className="flex-1 px-2 sm:px-3 py-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition-all text-sm sm:text-base"
                       onKeyPress={(e) => {
                         if (e.key === 'Enter') {
                           handleReply(discussion._id);
@@ -492,7 +494,7 @@ export const Discussion: React.FC = () => {
                     <button
                       onClick={() => handleReply(discussion._id)}
                       disabled={!replyContent[discussion._id]?.trim()}
-                      className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-4 py-2 font-semibold hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transition-all duration-200"
+                      className="bg-gradient-to-r from-cyan-600 to-blue-600 text-white px-3 sm:px-4 py-2 font-semibold hover:shadow-lg transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none transition-all duration-200 text-sm sm:text-base"
                     >
                       Reply
                     </button>
@@ -503,10 +505,10 @@ export const Discussion: React.FC = () => {
 
             {/* Replies */}
             {showReplies[discussion._id] && discussion.replies.length > 0 && (
-              <div className="border-l-2 border-cyan-500/30 pl-6 space-y-4 bg-white/5 backdrop-blur-sm p-4">
+              <div className="border-l-2 border-cyan-500/30 pl-3 sm:pl-6 space-y-3 sm:space-y-4 bg-white/5 backdrop-blur-sm p-3 sm:p-4">
                 {discussion.replies.map((reply) => (
-                  <div key={reply._id} className="flex space-x-3">
-                    <div className="w-8 h-8 flex-shrink-0">
+                  <div key={reply._id} className="flex space-x-2 sm:space-x-3">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0">
                       {reply.author.photoURL ? (
                         <img
                           src={reply.author.photoURL}
@@ -516,26 +518,26 @@ export const Discussion: React.FC = () => {
                         />
                       ) : (
                         <div 
-                          className="w-full h-full rounded-full bg-green-500 flex items-center justify-center text-white text-sm font-bold cursor-pointer"
+                          className="w-full h-full rounded-full bg-green-500 flex items-center justify-center text-white text-xs sm:text-sm font-bold cursor-pointer"
                           onClick={() => handleUserClick(reply.author._id)}
                         >
                           {reply.author.displayName.charAt(0).toUpperCase()}
                         </div>
                       )}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 mb-1">
                         <button
                           onClick={() => handleUserClick(reply.author._id)}
-                          className="font-medium text-white hover:text-cyan-400 transition-colors"
+                          className="font-medium text-white hover:text-cyan-400 transition-colors text-sm sm:text-base text-left"
                         >
                           {reply.author.displayName}
                         </button>
-                        <span className="text-gray-400 text-sm">
+                        <span className="text-gray-400 text-xs sm:text-sm">
                           {formatDate(reply.createdAt)}
                         </span>
                       </div>
-                      <p className="text-gray-300 leading-relaxed">{reply.content}</p>
+                      <p className="text-gray-300 leading-relaxed text-sm sm:text-base">{reply.content}</p>
                     </div>
                   </div>
                 ))}
@@ -547,10 +549,10 @@ export const Discussion: React.FC = () => {
 
       {/* Empty State */}
       {!loading && discussions.length === 0 && (
-        <div className="text-center py-12">
-          <div className="text-gray-400 text-6xl mb-4">💬</div>
-          <h3 className="text-xl font-semibold text-gray-600 mb-2">No discussions yet</h3>
-          <p className="text-gray-500 mb-4">
+        <div className="text-center py-8 sm:py-12">
+          <div className="text-gray-400 text-4xl sm:text-6xl mb-3 sm:mb-4">💬</div>
+          <h3 className="text-lg sm:text-xl font-semibold text-gray-600 mb-2">No discussions yet</h3>
+          <p className="text-gray-500 mb-4 text-sm sm:text-base">
             {currentUser 
               ? "Be the first to start a discussion!" 
               : "Sign in to join the conversation!"

@@ -12,8 +12,10 @@ import {
   Code,
   Brain,
   Calculator,
-  LogOut
+  LogOut,
+  Award
 } from 'lucide-react';
+import BadgeDisplay from '../components/BadgeDisplay';
 
 export const Profile: React.FC = () => {
   const { currentUser, logout } = useAuth();
@@ -27,6 +29,8 @@ export const Profile: React.FC = () => {
   const [following, setFollowing] = useState<any[]>([]);
   const [loadingFollowers, setLoadingFollowers] = useState(false);
   const [loadingFollowing, setLoadingFollowing] = useState(false);
+  const [badgeMetadata, setBadgeMetadata] = useState<any>(null);
+  const [badgesLoading, setBadgesLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -37,6 +41,21 @@ export const Profile: React.FC = () => {
       setError('Please log in to view your profile');
     }
   }, [currentUser]);
+
+  // Fetch badge metadata for achievements section
+  useEffect(() => {
+    const loadBadges = async () => {
+      try {
+        const res = await apiService.getBadgeMetadata();
+        setBadgeMetadata(res.badges);
+      } catch (e) {
+        console.error('Failed to load badges metadata', e);
+      } finally {
+        setBadgesLoading(false);
+      }
+    };
+    loadBadges();
+  }, []);
 
   // Add focus listener to refresh data when returning to the page
   useEffect(() => {
@@ -170,7 +189,8 @@ export const Profile: React.FC = () => {
     streak: userProfile?.streak || 0
   };
 
-  // Badges removed from Profile page UI
+  // Badges on Profile page UI — show earned badges
+  const earnedBadges: string[] = (userProfile?.badges && Array.isArray(userProfile.badges) ? userProfile.badges : currentUser?.badges) || [];
 
   const progress = userProgress ? {
     webdev: { 
@@ -251,7 +271,7 @@ export const Profile: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 py-6 sm:py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-72 h-72 bg-indigo-500/10 blur-3xl animate-pulse"></div>
@@ -261,7 +281,7 @@ export const Profile: React.FC = () => {
       
       <div className="max-w-7xl mx-auto">
         {/* Profile Header */}
-        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 mb-8 text-white z-10 overflow-hidden">
+        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-8 mb-6 sm:mb-8 text-white z-10 overflow-hidden">
           {/* Geometric patterns (same as User Profile header) */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 left-0 w-32 h-32 border-2 border-white transform rotate-45"></div>
@@ -269,17 +289,17 @@ export const Profile: React.FC = () => {
             <div className="absolute bottom-10 left-1/4 w-20 h-20 border-2 border-white transform -rotate-12"></div>
           </div>
 
-          <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
+          <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start space-y-4 sm:space-y-6 md:space-y-0 md:space-x-6 lg:space-x-8">
             {/* Avatar (read-only, no camera button) */}
             <div className="relative">
               {userProfile?.photoURL || currentUser?.photoURL ? (
                 <img
                   src={userProfile?.photoURL || currentUser?.photoURL}
                   alt={userStats.name}
-                  className="w-32 h-32 object-cover border-4 border-white/20"
+                  className="w-24 h-24 sm:w-32 sm:h-32 object-cover border-4 border-white/20"
                 />
               ) : (
-                <div className="w-32 h-32 bg-white/20 flex items-center justify-center text-6xl font-bold">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 bg-white/20 flex items-center justify-center text-4xl sm:text-6xl font-bold">
                   {userStats.name[0]?.toUpperCase() || 'U'}
                 </div>
               )}
@@ -287,80 +307,80 @@ export const Profile: React.FC = () => {
 
             {/* User Info */}
             <div className="flex-1 text-center md:text-left">
-              <h1 className="text-4xl font-black text-white mb-2">{userStats.name}</h1>
-              <p className="text-gray-300 mb-4">{userStats.username}</p>
+              <h1 className="text-2xl sm:text-4xl font-black text-white mb-1 sm:mb-2">{userStats.name}</h1>
+              <p className="text-gray-300 mb-3 sm:mb-4 text-sm sm:text-base">{userStats.username}</p>
               
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
                 <div className="text-center">
-                  <div className="text-3xl font-black text-cyan-400">#{userStats.rank}</div>
-                  <div className="text-gray-300 text-sm">Global Rank</div>
+                  <div className="text-xl sm:text-3xl font-black text-cyan-400">#{userStats.rank}</div>
+                  <div className="text-gray-300 text-xs sm:text-sm">Global Rank</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-black text-green-400">{userStats.totalPoints}</div>
-                  <div className="text-gray-300 text-sm">Total Points</div>
+                  <div className="text-xl sm:text-3xl font-black text-green-400">{userStats.totalPoints}</div>
+                  <div className="text-gray-300 text-xs sm:text-sm">Total Points</div>
                 </div>
                 <div className="text-center">
                   <button
                     onClick={handleShowFollowers}
-                    className="text-3xl font-black text-purple-400 hover:text-purple-300 transition-colors cursor-pointer"
+                    className="text-xl sm:text-3xl font-black text-purple-400 hover:text-purple-300 transition-colors cursor-pointer"
                   >
                     {userStats.followers}
                   </button>
-                  <div className="text-gray-300 text-sm">Followers</div>
+                  <div className="text-gray-300 text-xs sm:text-sm">Followers</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-black text-orange-400">{userStats.streak}</div>
-                  <div className="text-gray-300 text-sm">Day Streak</div>
+                  <div className="text-xl sm:text-3xl font-black text-orange-400">{userStats.streak}</div>
+                  <div className="text-gray-300 text-xs sm:text-sm">Day Streak</div>
                 </div>
               </div>
 
               <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 text-gray-300">
                 <div className="flex items-center">
-                  <Users className="w-4 h-4 mr-1" />
+                  <Users className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   <button
                     onClick={handleShowFollowing}
-                    className="hover:text-white transition-colors cursor-pointer"
+                    className="hover:text-white transition-colors cursor-pointer text-xs sm:text-sm"
                   >
                     {userStats.following} Following
                   </button>
                 </div>
                 <div className="flex items-center">
-                  <Calendar className="w-4 h-4 mr-1" />
-                  <span>Joined {userStats.joinDate}</span>
+                  <Calendar className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                  <span className="text-xs sm:text-sm">Joined {userStats.joinDate}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className="grid lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Left Column */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-6 sm:space-y-8">
             {/* Progress Overview */}
-            <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 text-white z-10">
-              <h2 className="text-3xl font-black text-white mb-8">Learning Progress</h2>
+            <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-8 text-white z-10">
+              <h2 className="text-xl sm:text-3xl font-black text-white mb-6 sm:mb-8">Learning Progress</h2>
               
-              <div className="space-y-6">
-                <div className="flex items-center justify-between">
+              <div className="space-y-4 sm:space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
                   <div className="flex items-center">
-                    <Code className="w-6 h-6 text-cyan-400 mr-3" />
+                    <Code className="w-5 h-5 sm:w-6 sm:h-6 text-cyan-400 mr-2 sm:mr-3" />
                     <div>
-                      <div className="font-semibold text-white">Web Development</div>
-                      <div className="text-sm text-gray-300">{progress.webdev.completed}/{progress.webdev.total} modules</div>
+                      <div className="font-semibold text-white text-sm sm:text-base">Web Development</div>
+                      <div className="text-xs sm:text-sm text-gray-300">{progress.webdev.completed}/{progress.webdev.total} modules</div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-32 bg-white/20 h-2">
+                    <div className="w-24 sm:w-32 bg-white/20 h-2">
                       <div 
                         className="h-2 bg-gradient-to-r from-cyan-400 to-blue-500"
                         style={{ width: `${progress.webdev.percentage}%` }}
                       ></div>
                     </div>
-                    <span className="text-sm font-medium text-gray-300">{progress.webdev.percentage}%</span>
+                    <span className="text-xs sm:text-sm font-medium text-gray-300">{progress.webdev.percentage}%</span>
                     {progress.webdev.percentage === 100 && (
                       <button
                         onClick={handleDownloadWebDevCertificate}
-                        className="ml-3 px-4 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold"
+                        className="ml-2 sm:ml-3 px-3 sm:px-4 py-1 sm:py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs sm:text-sm font-semibold"
                       >
                         Download Certificate
                       </button>
@@ -368,60 +388,60 @@ export const Profile: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
                   <div className="flex items-center">
-                    <BookOpen className="w-6 h-6 text-green-400 mr-3" />
+                    <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-green-400 mr-2 sm:mr-3" />
                     <div>
-                      <div className="font-semibold text-white">Core CS</div>
-                      <div className="text-sm text-gray-300">{progress.core.completed}/{progress.core.total} topics</div>
+                      <div className="font-semibold text-white text-sm sm:text-base">Core CS</div>
+                      <div className="text-xs sm:text-sm text-gray-300">{progress.core.completed}/{progress.core.total} topics</div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-32 bg-white/20 h-2">
+                    <div className="w-24 sm:w-32 bg-white/20 h-2">
                       <div 
                         className="h-2 bg-gradient-to-r from-green-400 to-emerald-400"
                         style={{ width: `${progress.core.percentage}%` }}
                       ></div>
                     </div>
-                    <span className="text-sm font-medium text-gray-300">{progress.core.percentage}%</span>
+                    <span className="text-xs sm:text-sm font-medium text-gray-300">{progress.core.percentage}%</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
                   <div className="flex items-center">
-                    <Brain className="w-6 h-6 text-purple-400 mr-3" />
+                    <Brain className="w-5 h-5 sm:w-6 sm:h-6 text-purple-400 mr-2 sm:mr-3" />
                     <div>
-                      <div className="font-semibold text-white">DSA Practice</div>
-                      <div className="text-sm text-gray-300">{progress.dsa.completed}/{progress.dsa.total} problems</div>
+                      <div className="font-semibold text-white text-sm sm:text-base">DSA Practice</div>
+                      <div className="text-xs sm:text-sm text-gray-300">{progress.dsa.completed}/{progress.dsa.total} problems</div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-32 bg-white/20 h-2">
+                    <div className="w-24 sm:w-32 bg-white/20 h-2">
                       <div 
                         className="h-2 bg-gradient-to-r from-purple-400 to-pink-400"
                         style={{ width: `${progress.dsa.percentage}%` }}
                       ></div>
                     </div>
-                    <span className="text-sm font-medium text-gray-300">{progress.dsa.percentage}%</span>
+                    <span className="text-xs sm:text-sm font-medium text-gray-300">{progress.dsa.percentage}%</span>
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-3 sm:space-y-0">
                   <div className="flex items-center">
-                    <Calculator className="w-6 h-6 text-orange-400 mr-3" />
+                    <Calculator className="w-5 h-5 sm:w-6 sm:h-6 text-orange-400 mr-2 sm:mr-3" />
                     <div>
-                      <div className="font-semibold text-white">Aptitude</div>
-                      <div className="text-sm text-gray-300">{progress.aptitude.completed}/{progress.aptitude.total} topics</div>
+                      <div className="font-semibold text-white text-sm sm:text-base">Aptitude</div>
+                      <div className="text-xs sm:text-sm text-gray-300">{progress.aptitude.completed}/{progress.aptitude.total} topics</div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <div className="w-32 bg-white/20 h-2">
+                    <div className="w-24 sm:w-32 bg-white/20 h-2">
                       <div 
                         className="h-2 bg-gradient-to-r from-orange-400 to-red-400"
                         style={{ width: `${progress.aptitude.percentage}%` }}
                       ></div>
                     </div>
-                    <span className="text-sm font-medium text-gray-300">{progress.aptitude.percentage}%</span>
+                    <span className="text-xs sm:text-sm font-medium text-gray-300">{progress.aptitude.percentage}%</span>
                   </div>
                 </div>
               </div>
@@ -456,6 +476,28 @@ export const Profile: React.FC = () => {
 
           {/* Right Column */}
           <div className="space-y-8">
+            {/* Achievements (Earned Badges) */}
+            <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 text-white z-10">
+              <h2 className="text-3xl font-black mb-6 flex items-center">
+                <Award className="w-7 h-7 mr-2 text-yellow-400" />
+                Achievements
+              </h2>
+
+              {badgesLoading ? (
+                <div className="text-gray-300">Loading badges...</div>
+              ) : earnedBadges.length === 0 ? (
+                <div className="text-gray-300">No badges yet. Keep learning and practicing to earn badges!</div>
+              ) : (
+                <div className="grid grid-cols-3 gap-4">
+                  {earnedBadges.map((badgeId) => (
+                    <BadgeDisplay key={badgeId} badgeId={badgeId} metadata={badgeMetadata} size="large" showName={false} />
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-4 text-xs text-gray-400">Badges are awarded automatically based on your progress.</div>
+            </div>
+
             {/* Performance Stats */}
             <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 p-8 text-white z-10 overflow-hidden">
               {/* Geometric patterns */}

@@ -13,7 +13,7 @@ export const Contact: React.FC = () => {
       <div className="max-w-4xl mx-auto relative z-10">
         <div className="mb-8">
           <Link to="/" className="text-cyan-400 hover:text-cyan-300">← Back to Home</Link>
-          <h1 className="mt-4 text-5xl font-black bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent">Contact Us</h1>
+          <h1 className="heading-font mt-4 text-5xl font-black text-white">Contact Us</h1>
           <p className="text-sm text-gray-400 mt-2">We usually respond within 2 business days.</p>
         </div>
 

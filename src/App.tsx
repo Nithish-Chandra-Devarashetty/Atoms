@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -18,6 +18,7 @@ import { Notifications } from './pages/Notifications';
 import { Leaderboard } from './pages/Leaderboard';
 import Contests from './pages/Contests';
 import AdminContests from './pages/AdminContests';
+import AIQuiz from './pages/AIQuiz';
 import { SubjectPage } from './pages/SubjectPage';
 import { CoreSubjectPage } from './pages/CoreSubjectPage';
 import { DSATopicPage } from './pages/DSATopicPage';
@@ -41,7 +42,7 @@ function App() {
       <AuthProvider>
   <ActiveTimeManager />
         <Router>
-          <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
+          <div className="min-h-screen bg-black text-white transition-colors duration-300">
             <Navbar />
             <main>
               <Routes>
@@ -71,6 +72,8 @@ function App() {
                   <Route path="/notifications" element={<Notifications />} />
                   <Route path="/leaderboard" element={<Leaderboard />} />
                   <Route path="/contests" element={<Contests />} />
+                  <Route path="/ai" element={<AIQuiz />} />
+                  <Route path="/AIQuiz" element={<Navigate to="/ai" replace />} />
                   <Route path="/test-auth" element={<TestAuth />} />
                 </Route>
               </Routes>

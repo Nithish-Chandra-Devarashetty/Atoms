@@ -75,7 +75,7 @@ export const CoreCS: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-6 sm:py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-72 h-72 bg-cyan-500/10 blur-3xl animate-pulse"></div>
@@ -85,42 +85,42 @@ export const CoreCS: React.FC = () => {
       
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-16 relative z-10">
-          <h1 className="text-5xl md:text-7xl font-black bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-6 tracking-tight">
+        <div className="text-center mb-12 sm:mb-16 relative z-10">
+          <h1 className="heading-font text-3xl sm:text-5xl md:text-7xl font-black text-white mb-4 sm:mb-6 tracking-tight">
             Core Computer Science
           </h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto font-light">
+          <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto font-light">
             Master the fundamental concepts that every computer science professional should know
           </p>
         </div>
 
         {/* Progress Overview */}
-        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 mb-16 z-10">
-          <h2 className="text-3xl font-black text-white mb-8">Your Progress</h2>
-          <div className="grid md:grid-cols-3 gap-6">
+        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-8 mb-8 sm:mb-16 z-10">
+          <h2 className="text-2xl sm:text-3xl font-black text-white mb-6 sm:mb-8">Your Progress</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             <div className="text-center">
-              <div className="text-4xl font-black text-cyan-400 mb-2">
+              <div className="text-3xl sm:text-4xl font-black text-cyan-400 mb-1 sm:mb-2">
                 {subjects.reduce((acc, s) => acc + s.topicsCompleted, 0)}
               </div>
-              <div className="text-gray-300">Topics Completed</div>
+              <div className="text-gray-300 text-sm sm:text-base">Topics Completed</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-black text-green-400 mb-2">
+              <div className="text-3xl sm:text-4xl font-black text-green-400 mb-1 sm:mb-2">
                 {subjects.reduce((acc, s) => acc + s.totalTopics, 0)}
               </div>
-              <div className="text-gray-300">Total Topics</div>
+              <div className="text-gray-300 text-sm sm:text-base">Total Topics</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-black text-purple-400 mb-2">
+              <div className="text-3xl sm:text-4xl font-black text-purple-400 mb-1 sm:mb-2">
                 {Math.round(subjects.reduce((acc, s) => acc + s.progress, 0) / subjects.length)}%
               </div>
-              <div className="text-gray-300">Overall Progress</div>
+              <div className="text-gray-300 text-sm sm:text-base">Overall Progress</div>
             </div>
           </div>
         </div>
 
         {/* Subjects Grid */}
-        <div className="grid lg:grid-cols-3 gap-8 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 relative z-10">
           {subjects.map(({ 
             id, 
             title, 
@@ -135,27 +135,27 @@ export const CoreCS: React.FC = () => {
             <Link
               key={id}
               to={`/core/${id}`}
-              className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-8 hover:bg-white/10 transition-all duration-500 transform hover:scale-105 hover:shadow-2xl overflow-hidden"
+              className="group relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-8 hover:bg-white/10 transition-all duration-500 transform hover:scale-105 hover:shadow-2xl overflow-hidden"
             >
               {/* Hover gradient overlay */}
               <div className={`absolute inset-0 bg-gradient-to-br ${color} opacity-0 group-hover:opacity-10 transition-opacity duration-500`}></div>
               
               {/* Icon and Title */}
-              <div className="flex items-center mb-6 relative z-10">
-                <div className={`p-4 bg-gradient-to-r ${color} mr-4 group-hover:scale-110 transition-transform duration-300 clip-path-hexagon`}>
-                  <Icon className="w-8 h-8 text-white" />
+              <div className="flex items-center mb-4 sm:mb-6 relative z-10">
+                <div className={`p-3 sm:p-4 bg-gradient-to-r ${color} mr-3 sm:mr-4 group-hover:scale-110 transition-transform duration-300 clip-path-hexagon`}>
+                  <Icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-white">{title}</h3>
+                  <h3 className="text-lg sm:text-xl font-black text-white">{title}</h3>
                   <div className="flex items-center mt-1">
                     {progress === 100 ? (
-                      <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
+                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-1" />
                     ) : progress > 0 ? (
-                      <Clock className="w-4 h-4 text-yellow-500 mr-1" />
+                      <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500 mr-1" />
                     ) : (
-                      <BookOpen className="w-4 h-4 text-gray-400 mr-1" />
+                      <BookOpen className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 mr-1" />
                     )}
-                    <span className="text-sm text-gray-400">
+                    <span className="text-xs sm:text-sm text-gray-400">
                       {progress === 100 ? 'Completed' : progress > 0 ? 'In Progress' : 'Not Started'}
                     </span>
                   </div>
@@ -163,19 +163,19 @@ export const CoreCS: React.FC = () => {
               </div>
 
               {/* Description */}
-              <p className="text-gray-300 mb-6 leading-relaxed relative z-10">{description}</p>
+              <p className="text-gray-300 mb-4 sm:mb-6 leading-relaxed relative z-10 text-sm sm:text-base">{description}</p>
 
               {/* Topics */}
-              <div className="mb-6 relative z-10">
-                <h4 className="text-sm font-semibold text-white mb-3 flex items-center">
-                  <BookOpen className="w-4 h-4 mr-1" />
+              <div className="mb-4 sm:mb-6 relative z-10">
+                <h4 className="text-xs sm:text-sm font-semibold text-white mb-2 sm:mb-3 flex items-center">
+                  <BookOpen className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
                   Key Topics
                 </h4>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1 sm:gap-2">
                   {topics.map((topic) => (
                     <span 
                       key={topic}
-                      className="px-3 py-1 bg-white/10 backdrop-blur-sm border border-white/20 text-gray-300 text-xs"
+                      className="px-2 sm:px-3 py-1 bg-white/10 backdrop-blur-sm border border-white/20 text-gray-300 text-xs"
                     >
                       {topic}
                     </span>
@@ -184,8 +184,8 @@ export const CoreCS: React.FC = () => {
               </div>
 
               {/* Progress Bar */}
-              <div className="mb-4 relative z-10">
-                <div className="flex justify-between text-sm text-gray-400 mb-2">
+              <div className="mb-3 sm:mb-4 relative z-10">
+                <div className="flex justify-between text-xs sm:text-sm text-gray-400 mb-2">
                   <span>Progress</span>
                   <span>{progress}%</span>
                 </div>
@@ -198,21 +198,21 @@ export const CoreCS: React.FC = () => {
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-2 gap-4 text-sm relative z-10">
-                <div className="text-center p-3 bg-white/5 backdrop-blur-sm border border-white/10">
+              <div className="grid grid-cols-2 gap-2 sm:gap-4 text-xs sm:text-sm relative z-10">
+                <div className="text-center p-2 sm:p-3 bg-white/5 backdrop-blur-sm border border-white/10">
                   <div className="font-semibold text-white">{topicsCompleted}/{totalTopics}</div>
                   <div className="text-gray-400">Topics</div>
                 </div>
-                <div className="text-center p-3 bg-white/5 backdrop-blur-sm border border-white/10">
+                <div className="text-center p-2 sm:p-3 bg-white/5 backdrop-blur-sm border border-white/10">
                   <div className="font-semibold text-white">{topicsCompleted}</div>
                   <div className="text-gray-400">Completed</div>
                 </div>
               </div>
               
               {/* Arrow indicator */}
-              <div className="relative mt-4 flex items-center text-cyan-400 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-0 group-hover:translate-x-2 z-10">
-                <span className="text-sm font-semibold">Explore</span>
-                <ArrowRight className="w-4 h-4 ml-2" />
+              <div className="relative mt-3 sm:mt-4 flex items-center text-cyan-400 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-0 group-hover:translate-x-2 z-10">
+                <span className="text-xs sm:text-sm font-semibold">Explore</span>
+                <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4 ml-2" />
               </div>
             </Link>
           ))}

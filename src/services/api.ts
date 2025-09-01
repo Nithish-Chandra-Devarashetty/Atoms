@@ -49,6 +49,21 @@ class ApiService {
     };
   }
 
+  // AI Quiz endpoints
+  async generateAIQuiz(payload: { track: 'webdev' | 'core'; topic: string; n?: number }) {
+    const response = await fetch(`${API_BASE_URL}/aiquiz/generate`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      body: JSON.stringify({ ...payload, n: payload.n ?? 15 })
+    });
+    return this.handleResponse<{
+      setId: string;
+      track: string;
+      topic: string;
+      questions: { id: string; question: string; options: string[]; correctIndex: number; explanation: string }[];
+    }>(response);
+  }
+
   private async handleResponse<T = any>(response: Response): Promise<T> {
     let data: any = {};
     

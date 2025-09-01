@@ -131,7 +131,7 @@ export const Aptitude: React.FC = () => {
   const metrics = getPerformanceMetrics();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-6 sm:py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       {/* Animated background elements */}
       <div className="absolute inset-0">
         <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/10 blur-3xl animate-pulse"></div>
@@ -141,40 +141,40 @@ export const Aptitude: React.FC = () => {
       
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-16 relative z-10">
-          <h1 className="text-5xl md:text-7xl font-black bg-gradient-to-r from-cyan-400 to-purple-400 bg-clip-text text-transparent mb-6 tracking-tight">
+        <div className="text-center mb-8 sm:mb-16 relative z-10">
+          <h1 className="heading-font text-3xl sm:text-5xl md:text-7xl font-black text-white mb-4 sm:mb-6 tracking-tight">
             Quantitative Aptitude
           </h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto font-light">
+          <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto font-light">
             Master quantitative aptitude with practice tests and detailed explanations
           </p>
         </div>
 
         {/* Stats Overview */}
-        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 mb-16 z-10">
-          <h2 className="text-3xl font-black text-white mb-8">Your Progress</h2>
-          <div className="grid md:grid-cols-4 gap-6">
+        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-8 mb-8 sm:mb-16 z-10">
+          <h2 className="text-xl sm:text-3xl font-black text-white mb-6 sm:mb-8">Your Progress</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
             <div className="text-center">
-              <div className="text-4xl font-black text-orange-400 mb-2">{completedCount}</div>
-              <div className="text-gray-300">Topics Completed</div>
+              <div className="text-2xl sm:text-4xl font-black text-orange-400 mb-2">{completedCount}</div>
+              <div className="text-gray-300 text-xs sm:text-base">Topics Completed</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-black text-green-400 mb-2">{questionsSolved}</div>
-              <div className="text-gray-300">Questions Solved</div>
+              <div className="text-2xl sm:text-4xl font-black text-green-400 mb-2">{questionsSolved}</div>
+              <div className="text-gray-300 text-xs sm:text-base">Questions Solved</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-black text-cyan-400 mb-2">{metrics.averageAccuracy}%</div>
-              <div className="text-gray-300">Average Accuracy</div>
+              <div className="text-2xl sm:text-4xl font-black text-cyan-400 mb-2">{metrics.averageAccuracy}%</div>
+              <div className="text-gray-300 text-xs sm:text-base">Average Accuracy</div>
             </div>
             <div className="text-center">
-              <div className="text-4xl font-black text-purple-400 mb-2">{metrics.completedTopics}</div>
-              <div className="text-gray-300">Topics Mastered</div>
+              <div className="text-2xl sm:text-4xl font-black text-purple-400 mb-2">{metrics.completedTopics}</div>
+              <div className="text-gray-300 text-xs sm:text-base">Topics Mastered</div>
             </div>
           </div>
         </div>
 
         {/* Performance Chart */}
-        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 mb-16 text-white z-10 overflow-hidden">
+        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-8 mb-8 sm:mb-16 text-white z-10 overflow-hidden">
           {/* Geometric patterns */}
           <div className="absolute inset-0 opacity-10">
             <div className="absolute top-0 left-0 w-32 h-32 border-2 border-white transform rotate-45"></div>
@@ -182,44 +182,44 @@ export const Aptitude: React.FC = () => {
             <div className="absolute bottom-10 left-1/4 w-20 h-20 border-2 border-white transform -rotate-12"></div>
           </div>
           
-          <h2 className="text-3xl font-black mb-8 flex items-center relative z-10">
-            <BarChart3 className="w-8 h-8 mr-3" />
+          <h2 className="text-xl sm:text-3xl font-black mb-6 sm:mb-8 flex items-center relative z-10">
+            <BarChart3 className="w-6 h-6 sm:w-8 sm:h-8 mr-2 sm:mr-3" />
             Performance Analytics
           </h2>
-          <div className="grid md:grid-cols-3 gap-6 relative z-10">
-            <div className="text-center p-6 bg-white/10 backdrop-blur-sm border border-white/20">
-              <TrendingUp className="w-8 h-8 mx-auto mb-3" />
-              <div className="font-black">Improvement Rate</div>
-              <div className="text-2xl font-black">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 relative z-10">
+            <div className="text-center p-4 sm:p-6 bg-white/10 backdrop-blur-sm border border-white/20">
+              <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 sm:mb-3" />
+              <div className="font-black text-sm sm:text-base">Improvement Rate</div>
+              <div className="text-lg sm:text-2xl font-black">
                 {metrics.improvementRate > 0 ? `+${metrics.improvementRate}%` : `${metrics.improvementRate}%`}
               </div>
-              <div className="text-sm opacity-90">Based on scores</div>
+              <div className="text-xs sm:text-sm opacity-90">Based on scores</div>
             </div>
-            <div className="text-center p-6 bg-white/10 backdrop-blur-sm border border-white/20">
-              <Target className="w-8 h-8 mx-auto mb-3" />
-              <div className="font-black">Average Accuracy</div>
-              <div className="text-2xl font-black">{metrics.averageAccuracy}%</div>
-              <div className="text-sm opacity-90">Across all topics</div>
+            <div className="text-center p-4 sm:p-6 bg-white/10 backdrop-blur-sm border border-white/20">
+              <Target className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 sm:mb-3" />
+              <div className="font-black text-sm sm:text-base">Average Accuracy</div>
+              <div className="text-lg sm:text-2xl font-black">{metrics.averageAccuracy}%</div>
+              <div className="text-xs sm:text-sm opacity-90">Across all topics</div>
             </div>
-            <div className="text-center p-6 bg-white/10 backdrop-blur-sm border border-white/20">
-              <Award className="w-8 h-8 mx-auto mb-3" />
-              <div className="font-black">Rank</div>
-              <div className="text-2xl font-black">#{metrics.rank}</div>
-              <div className="text-sm opacity-90">Out of {metrics.totalUsers.toLocaleString()}</div>
+            <div className="text-center p-4 sm:p-6 bg-white/10 backdrop-blur-sm border border-white/20">
+              <Award className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 sm:mb-3" />
+              <div className="font-black text-sm sm:text-base">Rank</div>
+              <div className="text-lg sm:text-2xl font-black">#{metrics.rank}</div>
+              <div className="text-xs sm:text-sm opacity-90">Out of {metrics.totalUsers.toLocaleString()}</div>
             </div>
           </div>
         </div>
 
         {/* Random Practice */}
-        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 mb-16 z-10">
-          <div className="flex items-center justify-between">
+        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-8 mb-8 sm:mb-16 z-10">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0">
             <div>
-              <h2 className="text-3xl font-black text-white mb-2">Quick Practice</h2>
-              <p className="text-gray-300">Take a random quiz with mixed questions from all topics</p>
+              <h2 className="text-xl sm:text-3xl font-black text-white mb-2">Quick Practice</h2>
+              <p className="text-gray-300 text-sm sm:text-base">Take a random quiz with mixed questions from all topics</p>
             </div>
             <Link
               to="/aptitude/random"
-              className="px-6 py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white font-black hover:shadow-lg transform hover:scale-105 transition-all duration-200"
+              className="px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-orange-600 to-red-600 text-white font-black hover:shadow-lg transform hover:scale-105 transition-all duration-200 text-center text-sm sm:text-base"
             >
               Start Random Quiz
             </Link>
@@ -227,26 +227,26 @@ export const Aptitude: React.FC = () => {
         </div>
 
         {/* Topics Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 relative z-10">
           {topics.map((topic) => (
             <div
               key={topic.id}
-              className="relative bg-white/5 backdrop-blur-md border border-white/10 p-8 hover:bg-white/10 transition-all duration-500 transform hover:scale-105 hover:shadow-2xl overflow-hidden"
+              className="relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-8 hover:bg-white/10 transition-all duration-500 transform hover:scale-105 hover:shadow-2xl overflow-hidden"
             >
               {/* Hover gradient overlay */}
               <div className={`absolute inset-0 bg-gradient-to-br ${topic.color} opacity-0 hover:opacity-10 transition-opacity duration-500`}></div>
               
               {/* Header */}
-              <div className="flex items-center justify-between mb-6 relative z-10">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 sm:mb-6 relative z-10 space-y-2 sm:space-y-0">
                 <div className="flex items-center">
-                  <span className="text-3xl mr-3">{topic.icon}</span>
+                  <span className="text-2xl sm:text-3xl mr-2 sm:mr-3">{topic.icon}</span>
                   <div>
-                    <h3 className="text-lg font-black text-white">{topic.title}</h3>
+                    <h3 className="text-base sm:text-lg font-black text-white">{topic.title}</h3>
                     <div className="flex items-center mt-1">
                       {completedSet.has(topic.id) ? (
-                        <CheckCircle className="w-4 h-4 text-green-500 mr-1" />
+                        <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-green-500 mr-1" />
                       ) : (
-                        <Play className="w-4 h-4 text-gray-400 mr-1" />
+                        <Play className="w-3 h-3 sm:w-4 sm:h-4 text-gray-400 mr-1" />
                       )}
                       <span className="text-sm text-gray-400">
                         {completedSet.has(topic.id) ? 'Completed' : 'Not Started'}
