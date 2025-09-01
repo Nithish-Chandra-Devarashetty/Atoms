@@ -3,18 +3,20 @@ import {
   getAuth, 
   GoogleAuthProvider, 
   signInWithRedirect,
+  signInWithPopup,
   getRedirectResult,
   signOut,
   onAuthStateChanged
 } from 'firebase/auth';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBtYslkFY9WrqWg3KmOXjQ7k9l1_Aj5xvg",
-  authDomain: "atoms-439417.firebaseapp.com",
-  projectId: "atoms-439417",
-  storageBucket: "atoms-439417.firebasestorage.app",
-  messagingSenderId: "866135141015",
-  appId: "1:866135141015:web:2c8e8c9e5f5e1b2a3b4c5d"
+  apiKey: "AIzaSyAWQ3C9jlfEwfxe8kZq-a9fa81MXu21_WI",
+  authDomain: "zuno-ceba7.firebaseapp.com",
+  projectId: "zuno-ceba7",
+  storageBucket: "zuno-ceba7.firebasestorage.app",
+  messagingSenderId: "508260542193",
+  appId: "1:508260542193:web:37f3c4821fb05e2e816b50",
+  measurementId: "G-VY82HQSG0T"
 };
 
 // Initialize Firebase
@@ -34,6 +36,11 @@ export { auth, googleProvider };
 // Use redirect instead of popup to avoid Cross-Origin-Opener-Policy issues
 export const signInWithGoogle = () => {
   return signInWithRedirect(auth, googleProvider);
+};
+
+// Popup variant (useful as a fallback in local dev)
+export const signInWithGooglePopup = () => {
+  return signInWithPopup(auth, googleProvider);
 };
 
 // Function to handle the redirect result

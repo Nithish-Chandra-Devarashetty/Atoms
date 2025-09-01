@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, User, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const Auth: React.FC = () => {
   const navigate = useNavigate();
-  const { login, register, googleSignIn, loading } = useAuth();
+  const { currentUser, login, register, googleSignIn, loading } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
@@ -17,6 +17,14 @@ const Auth: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Redirect if user is already authenticated
+  useEffect(() => {
+    if (currentUser && !loading) {
+      console.log('User already authenticated, redirecting to home');
+      navigate('/');
+    }
+  }, [currentUser, loading, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -79,11 +87,16 @@ const Auth: React.FC = () => {
 
   const handleGoogleSignIn = async () => {
     setError('');
+    setSubmitting(true);
     try {
+      console.log('Initiating Google Sign-In redirect...');
       await googleSignIn();
-      navigate('/');
+      // Don't navigate here - the redirect will handle the flow
+      // Navigation will happen automatically in AuthContext after redirect
     } catch (err) {
+      console.error('Google Sign-In error:', err);
       setError(err instanceof Error ? err.message : 'Google sign-in failed');
+      setSubmitting(false);
     }
   };
 
@@ -149,7 +162,12 @@ const Auth: React.FC = () => {
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
               </svg>
-              <span>{isLogin ? 'Sign in with Google' : 'Sign up with Google'}</span>
+              <span>
+                {submitting ? 
+                  (isLogin ? 'Redirecting to Google...' : 'Redirecting to Google...') : 
+                  (isLogin ? 'Sign in with Google' : 'Sign up with Google')
+                }
+              </span>
             </button>
 
             {/* Divider */}

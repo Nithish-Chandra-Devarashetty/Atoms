@@ -90,50 +90,7 @@ export const markNotificationRead = async (req: AuthRequest, res: Response): Pro
   }
 };
 
-// Mark all notifications as read
-export const markAllNotificationsRead = async (req: AuthRequest, res: Response): Promise<void> => {
-  try {
-    if (!req.user) {
-      res.status(401).json({ error: 'User not authenticated' });
-      return;
-    }
-
-    console.log('🟡 markAllNotificationsRead invoked for user:', req.user._id);
-
-    // Mark as read for both explicitly unread and legacy docs lacking isRead
-  const result = await Notification.updateMany(
-      { 
-        recipient: req.user._id, 
-        $or: [
-      { isRead: { $ne: true } },
-      { isRead: { $exists: false } }
-        ]
-      },
-      { $set: { isRead: true } }
-    );
-
-    // Recompute unread count after the update to return accurate state
-  const unreadCountAfter = await Notification.countDocuments({
-      recipient: req.user._id,
-      $or: [
-    { isRead: { $ne: true } },
-    { isRead: { $exists: false } }
-      ]
-    });
-
-    // Optional: emit a socket event so clients can react instantly
-    if (io) {
-      io.to(`user-${req.user._id}`).emit('notifications-marked-all-read', { unreadCount: unreadCountAfter, modified: result.modifiedCount });
-    }
-
-    console.log('🟢 markAll result:', { modified: result.modifiedCount, unreadCountAfter });
-
-    res.json({ message: 'All notifications marked as read', modified: result.modifiedCount, unreadCount: unreadCountAfter });
-  } catch (error) {
-    console.error('Mark all notifications read error:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
+// Mark all notifications as read removed per request
 
 // Delete notification
 export const deleteNotification = async (req: AuthRequest, res: Response): Promise<void> => {

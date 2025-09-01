@@ -3,7 +3,6 @@ import { authenticateToken } from '../middleware/auth.js';
 import {
   getNotifications,
   markNotificationRead,
-  markAllNotificationsRead,
   deleteNotification,
   clearAllNotifications
 } from '../controllers/notificationController.js';
@@ -16,8 +15,7 @@ router.get('/', authenticateToken, getNotifications);
 // Mark notification as read
 router.patch('/:notificationId/read', authenticateToken, markNotificationRead);
 
-// Mark all notifications as read
-router.patch('/read-all', authenticateToken, markAllNotificationsRead);
+// Mark all notifications as read removed per request
 
 // Clear all notifications (delete all)
 router.delete('/clear-all', authenticateToken, clearAllNotifications);

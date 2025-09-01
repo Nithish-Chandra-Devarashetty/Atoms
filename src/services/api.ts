@@ -387,13 +387,7 @@ class ApiService {
     return this.handleResponse(response);
   }
 
-  async markAllNotificationsRead() {
-    const response = await fetch(`${API_BASE_URL}/notifications/read-all`, {
-      method: 'PATCH',
-      headers: this.getAuthHeaders()
-    });
-    return this.handleResponse(response);
-  }
+  // markAllNotificationsRead removed per request
 
   async deleteNotification(notificationId: string) {
     const response = await fetch(`${API_BASE_URL}/notifications/${notificationId}`, {

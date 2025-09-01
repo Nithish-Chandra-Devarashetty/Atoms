@@ -72,13 +72,14 @@ export const submitQuiz = async (req: AuthRequest, res: Response): Promise<void>
         }
       }
     } else if (subject === 'aptitude' && topic) {
-      if (passed && !user.progress.aptitude.completedTopics.includes(topic)) {
+      // No minimum score threshold for aptitude: completing the quiz marks the topic as completed
+      if (!user.progress.aptitude.completedTopics.includes(topic)) {
         user.progress.aptitude.completedTopics.push(topic);
-        // Store score by topic
-        (user.progress.aptitude as any).scores = (user.progress.aptitude as any).scores || {};
-        (user.progress.aptitude as any).scores[topic] = score;
-        pointsEarned += 30; // +30 per aptitude topic
+        pointsEarned += 30; // +30 per aptitude topic (only first time)
       }
+      // Always store/overwrite the latest score by topic
+      (user.progress.aptitude as any).scores = (user.progress.aptitude as any).scores || {};
+      (user.progress.aptitude as any).scores[topic] = score;
     }
 
     // Add points
@@ -86,8 +87,8 @@ export const submitQuiz = async (req: AuthRequest, res: Response): Promise<void>
     
     // Check for badges
     const newBadges: string[] = [];
-    
-    // First quiz badge
+
+    // First quiz badge (only when passed)
     if (passed) {
       const badgeResult = checkBadgeEligibility(user, 'quiz_passed', { 
         subject, 
@@ -120,14 +121,14 @@ export const submitQuiz = async (req: AuthRequest, res: Response): Promise<void>
           newBadges.push(...coreCompletionBadges);
         }
       }
-      
-      // Check for aptitude completion
-      if (subject === 'aptitude') {
-        const aptitudeCompletionBadges = checkBadgeEligibility(user, 'aptitude_completed', { 
-          totalTopics: 50 // Adjust this number based on your actual aptitude topics count
-        });
-        newBadges.push(...aptitudeCompletionBadges);
-      }
+    }
+
+    // Check for aptitude completion (not gated by pass threshold)
+    if (subject === 'aptitude') {
+      const aptitudeCompletionBadges = checkBadgeEligibility(user, 'aptitude_completed', { 
+        totalTopics: 50 // Adjust this number based on your actual aptitude topics count
+      });
+      newBadges.push(...aptitudeCompletionBadges);
     }
     
     // Add new badges to user
@@ -262,16 +263,24 @@ export const getProgress = async (req: AuthRequest, res: Response): Promise<void
       .limit(20)
       .select('subject videoId watchedAt watchTime');
 
-    // Aggregate overall performance metrics
-    const allAttempts = await QuizAttempt.find({ userId: req.user._id }).select('score totalQuestions timeSpent');
+  // Aggregate overall performance metrics
+  const allAttempts = await QuizAttempt.find({ userId: req.user._id }).select('score totalQuestions timeSpent subject');
     const quizzesAttempted = allAttempts.length;
     const totalQuizTime = allAttempts.reduce((acc, a: any) => acc + (a.timeSpent || 0), 0);
     const averageQuizPercent = quizzesAttempted
       ? Math.round(
-          allAttempts.reduce((acc, a: any) => acc + (a.totalQuestions > 0 ? (a.score / a.totalQuestions) * 100 : 0), 0) /
+      allAttempts.reduce((acc, a: any) => acc + (a.totalQuestions > 0 ? (a.score / a.totalQuestions) * 100 : 0), 0) /
             quizzesAttempted
         )
       : 0;
+
+    // Aptitude-specific accuracy across all attempts
+    const aptitudeAttempts = allAttempts.filter((a: any) => a.subject === 'aptitude');
+    const aptitudeCorrect = aptitudeAttempts.reduce((acc: number, a: any) => acc + (a.score || 0), 0);
+    const aptitudeTotalQuestions = aptitudeAttempts.reduce((acc: number, a: any) => acc + (a.totalQuestions || 0), 0);
+    const aptitudeAccuracyPercent = aptitudeTotalQuestions
+  ? Math.round((aptitudeCorrect / aptitudeTotalQuestions) * 100)
+  : 0;
 
     const allVideoProgress = await VideoProgress.find({ userId: req.user._id }).select('watchTime');
     const totalVideoTime = allVideoProgress.reduce((acc, v: any) => acc + (v.watchTime || 0), 0);
@@ -323,7 +332,11 @@ export const getProgress = async (req: AuthRequest, res: Response): Promise<void
   // Performance metrics
   quizzesAttempted,
   averageQuizPercent,
-  totalTimeSpentSeconds
+  totalTimeSpentSeconds,
+  // Aptitude metrics
+  aptitudeCorrect,
+  aptitudeTotalQuestions,
+  aptitudeAccuracyPercent
     });
   } catch (error) {
     console.error('Get progress error:', error);

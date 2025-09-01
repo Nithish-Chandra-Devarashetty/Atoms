@@ -9,7 +9,8 @@ import {
   Layers,
   CheckCircle,
   Clock,
-  Play
+  Play,
+  Award
 } from 'lucide-react';
 import { htmlData } from '../data/webdev/htmlData';
 import { cssData } from '../data/webdev/cssData';
@@ -159,6 +160,20 @@ export const WebDev: React.FC = () => {
           <p className="text-base sm:text-xl text-gray-300 max-w-3xl mx-auto font-light">
             Master the complete web development stack from frontend to backend
           </p>
+        </div>
+
+        {/* Certificate Notice */}
+        <div className="relative bg-gradient-to-r from-green-500/20 to-emerald-500/20 backdrop-blur-md border border-green-400/30 p-4 sm:p-6 mb-8 sm:mb-12 mx-auto max-w-4xl z-10">
+          <div className="flex items-center justify-center text-center">
+            <div>
+              <h3 className="text-lg sm:text-xl font-bold text-white mb-2">Earn Your Certificate!</h3>
+              <p className="text-sm sm:text-base text-gray-200 leading-relaxed">
+                Complete all 6 Web Development modules to earn your 
+                <span className="font-semibold text-green-400"> official Web Development Certificate</span>. 
+                Download it instantly once you finish all modules!
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Progress Overview */}

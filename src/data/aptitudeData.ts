@@ -42,9 +42,9 @@ export const aptitudeTopics: Topic[] = [
       },
       {
         question: 'Two pipes can fill a tank in 12 hours and 15 hours respectively. If both are opened together and after 3 hours one is closed, how long will it take to fill the rest?',
-        options: ['7 hours', '7.5 hours', '8 hours', '8.5 hours'],
+        options: ['8.25 hours', '7.5 hours', '8 hours', '8.5 hours'],
   correct: 0,
-        explanation: 'In 3 hours: 3*(1/12 + 1/15) = 9/20 filled. Remaining = 11/20. Time = (11/20) / (1/15) = 8.25 hours. Total time = 3 + 8.25 = 11.25 hours. Wait, this doesn\'t match options. Correct approach: After 3 hours, 3*(1/12 + 1/15) = 27/60 = 9/20 filled. Remaining = 11/20. If first pipe is closed, remaining time = (11/20) / (1/15) = 8.25 hours. But this still doesn\'t match. Need to recheck.'
+        explanation: 'In 3 hours: 3*(1/12 + 1/15) = 9/20 filled. Remaining = 11/20. Time = (11/20) / (1/15) = 8.25 hours. Total time = 3 + 8.25 = 11.25 hours. After 3 hours, 3*(1/12 + 1/15) = 27/60 = 9/20 filled. Remaining = 11/20. If first pipe is closed, remaining time = (11/20) / (1/15) = 8.25 hours.'
       },
       {
         question: 'A pipe can fill a cistern in 5 hours. Due to a leak at the bottom, it is filled in 6 hours. If the cistern is full, how long will the leak take to empty it?',
@@ -97,8 +97,8 @@ export const aptitudeTopics: Topic[] = [
       {
         question: 'Two pipes can fill a tank in 36 minutes and 45 minutes respectively. A third pipe can empty it in 30 minutes. If all are opened together, how long will it take to fill the tank?',
         options: ['90 minutes', '100 minutes', '120 minutes', 'Never (tank will overflow)'],
-  correct: 0,
-  explanation: 'Net rate = 1/36 + 1/45 - 1/30 = (5+4-6)/180 = 3/180 = 1/60 per minute. Time = 60 minutes. (Options appear inconsistent).'
+  correct: 3,
+  explanation: 'Net rate = 1/36 + 1/45 - 1/30 = (5+4-6)/180 = 3/180 = 1/60 per minute. Time = 60 minutes.'
       },
       {
         question: 'A cistern can be filled in 10 hours by a tap and emptied in 15 hours by another. If both are opened together, how long will it take to fill the tank?',

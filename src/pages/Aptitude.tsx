@@ -2,12 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Clock, 
-  Target, 
-  TrendingUp,
   CheckCircle,
-  Play,
-  Award,
-  BarChart3
+  Play
 } from 'lucide-react';
 import { aptitudeTopics } from '../data/aptitudeData';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,7 +12,7 @@ import { apiService } from '../services/api';
 export const Aptitude: React.FC = () => {
   const { currentUser } = useAuth();
   const [userProgress, setUserProgress] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [_, setLoading] = useState(true);
 
   // Get completed topics from localStorage instead of hardcoding
   const [completedTopics] = useState<string[]>(() => {
@@ -46,6 +42,13 @@ export const Aptitude: React.FC = () => {
     };
 
     fetchProgress();
+
+    // Listen for aptitude progress updates (dispatched after quiz submit)
+    const onUpdate = () => {
+      fetchProgress();
+    };
+    window.addEventListener('aptitude-progress-updated', onUpdate);
+    return () => window.removeEventListener('aptitude-progress-updated', onUpdate);
   }, [currentUser]);
 
   const topics = aptitudeTopics.map(topic => ({
@@ -85,50 +88,12 @@ export const Aptitude: React.FC = () => {
   );
   const questionsSolved = scoreSum > 0 ? scoreSum : completedQuestions;
 
-  // Calculate dynamic performance metrics
-  const getPerformanceMetrics = () => {
-    const aptitudeProgress = userProgress?.progress?.aptitude || {};
-    const scores = aptitudeProgress.scores || {};
-    const completedTopicsFromProgress = aptitudeProgress.completedTopics || [];
-
-    // Build a map of total questions per topic
-    const questionsPerTopic: Record<string, number> = Object.fromEntries(
-      aptitudeTopics.map(t => [t.id, t.questions.length])
-    );
-
-    // Calculate average accuracy as a percentage across topics that have scores
-    const percentValues = Object.entries(scores)
-      .map(([topicId, val]) => {
-        const correct = typeof val === 'number' ? val : 0;
-        const total = questionsPerTopic[topicId] || 0;
-        return total > 0 ? (correct / total) * 100 : null;
-      })
-      .filter((v): v is number => v !== null);
-
-    const averageAccuracy = percentValues.length > 0
-      ? Math.round(percentValues.reduce((a, b) => a + b, 0) / percentValues.length)
-      : 0;
-
-    // Keep raw values for simple improvement heuristic
-    const scoreValues = Object.values(scores) as number[];
-    // Calculate improvement rate (mock for now, could be based on recent vs older scores)
-    const improvementRate = scoreValues.length > 2 
-      ? Math.round(((scoreValues[scoreValues.length - 1] as number) - (scoreValues[0] as number)) * 100) / 100
-      : 0;
-    
-    // Calculate rank (mock based on progress)
-    const rank = completedTopicsFromProgress.length > 0 ? Math.max(1, 500 - completedTopicsFromProgress.length * 50) : 999;
-    
-    return {
-      completedTopics: completedTopicsFromProgress.length,
-      averageAccuracy,
-      improvementRate,
-      rank,
-      totalUsers: 1250
-    };
-  };
-
-  const metrics = getPerformanceMetrics();
+  // Real average accuracy from backend: correct/attempted across all aptitude quizzes
+  const aptitudeCorrect = userProgress?.aptitudeCorrect ?? 0;
+  const aptitudeTotalQuestions = userProgress?.aptitudeTotalQuestions ?? 0;
+  const realAverageAccuracy = userProgress?.aptitudeAccuracyPercent ?? (
+    aptitudeTotalQuestions ? Math.round((aptitudeCorrect / aptitudeTotalQuestions) * 100) : 0
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 py-6 sm:py-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
@@ -153,7 +118,7 @@ export const Aptitude: React.FC = () => {
         {/* Stats Overview */}
         <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-8 mb-8 sm:mb-16 z-10">
           <h2 className="text-xl sm:text-3xl font-black text-white mb-6 sm:mb-8">Your Progress</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6">
             <div className="text-center">
               <div className="text-2xl sm:text-4xl font-black text-orange-400 mb-2">{completedCount}</div>
               <div className="text-gray-300 text-xs sm:text-base">Topics Completed</div>
@@ -163,52 +128,16 @@ export const Aptitude: React.FC = () => {
               <div className="text-gray-300 text-xs sm:text-base">Questions Solved</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl sm:text-4xl font-black text-cyan-400 mb-2">{metrics.averageAccuracy}%</div>
+        <div className="text-2xl sm:text-4xl font-black text-cyan-400 mb-2">{realAverageAccuracy}%</div>
               <div className="text-gray-300 text-xs sm:text-base">Average Accuracy</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl sm:text-4xl font-black text-purple-400 mb-2">{metrics.completedTopics}</div>
-              <div className="text-gray-300 text-xs sm:text-base">Topics Mastered</div>
+        <div className="text-2xl sm:text-4xl font-black text-purple-400 mb-2">{completedCount}</div>
+        <div className="text-gray-300 text-xs sm:text-base">Topics Attempted</div>
             </div>
           </div>
         </div>
 
-        {/* Performance Chart */}
-        <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-8 mb-8 sm:mb-16 text-white z-10 overflow-hidden">
-          {/* Geometric patterns */}
-          <div className="absolute inset-0 opacity-10">
-            <div className="absolute top-0 left-0 w-32 h-32 border-2 border-white transform rotate-45"></div>
-            <div className="absolute top-10 right-10 w-24 h-24 border-2 border-white transform rotate-12"></div>
-            <div className="absolute bottom-10 left-1/4 w-20 h-20 border-2 border-white transform -rotate-12"></div>
-          </div>
-          
-          <h2 className="text-xl sm:text-3xl font-black mb-6 sm:mb-8 flex items-center relative z-10">
-            <BarChart3 className="w-6 h-6 sm:w-8 sm:h-8 mr-2 sm:mr-3" />
-            Performance Analytics
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 relative z-10">
-            <div className="text-center p-4 sm:p-6 bg-white/10 backdrop-blur-sm border border-white/20">
-              <TrendingUp className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 sm:mb-3" />
-              <div className="font-black text-sm sm:text-base">Improvement Rate</div>
-              <div className="text-lg sm:text-2xl font-black">
-                {metrics.improvementRate > 0 ? `+${metrics.improvementRate}%` : `${metrics.improvementRate}%`}
-              </div>
-              <div className="text-xs sm:text-sm opacity-90">Based on scores</div>
-            </div>
-            <div className="text-center p-4 sm:p-6 bg-white/10 backdrop-blur-sm border border-white/20">
-              <Target className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 sm:mb-3" />
-              <div className="font-black text-sm sm:text-base">Average Accuracy</div>
-              <div className="text-lg sm:text-2xl font-black">{metrics.averageAccuracy}%</div>
-              <div className="text-xs sm:text-sm opacity-90">Across all topics</div>
-            </div>
-            <div className="text-center p-4 sm:p-6 bg-white/10 backdrop-blur-sm border border-white/20">
-              <Award className="w-6 h-6 sm:w-8 sm:h-8 mx-auto mb-2 sm:mb-3" />
-              <div className="font-black text-sm sm:text-base">Rank</div>
-              <div className="text-lg sm:text-2xl font-black">#{metrics.rank}</div>
-              <div className="text-xs sm:text-sm opacity-90">Out of {metrics.totalUsers.toLocaleString()}</div>
-            </div>
-          </div>
-        </div>
 
         {/* Random Practice */}
         <div className="relative bg-white/5 backdrop-blur-md border border-white/10 p-4 sm:p-8 mb-8 sm:mb-16 z-10">

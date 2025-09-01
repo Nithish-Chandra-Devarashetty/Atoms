@@ -76,6 +76,8 @@ export const DSATopicPage: React.FC = () => {
         } else {
           await apiService.markProblemSolved(problemName, problemTopic, problemDifficulty);
         }
+  // Notify other views to refresh aggregate DSA progress (e.g., DSA dashboard)
+  window.dispatchEvent(new CustomEvent('dsa-progress-updated'));
       } catch (error) {
         console.error('Failed to update problem status:', error);
         // Revert optimistic update on error

@@ -11,7 +11,7 @@ import {
   X,
   ArrowLeft
 } from 'lucide-react';
-import { Question, Topic, aptitudeTopics } from '../data/aptitudeData';
+import { Question, aptitudeTopics } from '../data/aptitudeData';
 import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -27,6 +27,8 @@ export const AptitudeTopicPage: React.FC = () => {
   const [quizStarted, setQuizStarted] = useState(false);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [answers, setAnswers] = useState<(number | null)[]>([]);
+  // Track whether the answer for each question has been revealed (locks that question)
+  const [revealedAnswers, setRevealedAnswers] = useState<boolean[]>([]);
 
   useEffect(() => {
     loadTopicQuestions(topic || '');
@@ -65,11 +67,13 @@ export const AptitudeTopicPage: React.FC = () => {
         const randomQuestions = generateRandomQuestions(15);
         setQuestions(randomQuestions);
         setAnswers(new Array(randomQuestions.length).fill(null));
+        setRevealedAnswers(new Array(randomQuestions.length).fill(false));
       } else {
         const topic = aptitudeTopics.find(t => t.id === topicName);
         if (topic) {
           setQuestions(topic.questions);
           setAnswers(new Array(topic.questions.length).fill(null));
+          setRevealedAnswers(new Array(topic.questions.length).fill(false));
         }
       }
     };
@@ -117,8 +121,10 @@ export const AptitudeTopicPage: React.FC = () => {
       const newQuestions = generateRandomQuestions(15);
       setQuestions(newQuestions);
       setAnswers(new Array(newQuestions.length).fill(null));
+      setRevealedAnswers(new Array(newQuestions.length).fill(false));
     } else {
       setAnswers(new Array(questions.length).fill(null));
+      setRevealedAnswers(new Array(questions.length).fill(false));
     }
     
     setSelectedAnswer(null);
@@ -142,7 +148,7 @@ export const AptitudeTopicPage: React.FC = () => {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
       setSelectedAnswer(answers[currentQuestionIndex + 1]);
-      setShowResult(false);
+      setShowResult(revealedAnswers[currentQuestionIndex + 1] || false);
     } else {
       handleQuizComplete();
     }
@@ -152,7 +158,7 @@ export const AptitudeTopicPage: React.FC = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
       setSelectedAnswer(answers[currentQuestionIndex - 1]);
-      setShowResult(false);
+      setShowResult(revealedAnswers[currentQuestionIndex - 1] || false);
     }
   };
 
@@ -168,11 +174,8 @@ export const AptitudeTopicPage: React.FC = () => {
     setQuizCompleted(true);
     setQuizStarted(false);
 
-    // Determine pass/fail with 70% threshold
-    const passed = finalScore >= (questions.length * 10 * 0.7);
-
-    // Mark topic as completed locally if passed and it's not a random quiz
-    if (topic !== 'random' && passed) {
+    // No minimum score threshold for aptitude completion; mark as completed for non-random
+    if (topic !== 'random') {
       localStorage.setItem(`aptitude_${topic}_completed`, 'true');
     }
 
@@ -196,6 +199,11 @@ export const AptitudeTopicPage: React.FC = () => {
           timeSpent,
           answers: answersPayload
         });
+
+        // Notify other views that aptitude progress changed
+        try {
+          window.dispatchEvent(new CustomEvent('aptitude-progress-updated'));
+        } catch {}
       }
     } catch (err) {
       console.error('Failed to submit aptitude quiz:', err);
@@ -449,7 +457,15 @@ export const AptitudeTopicPage: React.FC = () => {
               </button>
               {!showResult && selectedAnswer !== null && (
                 <button
-                  onClick={() => setShowResult(true)}
+                  onClick={() => {
+                    // Reveal and lock this question
+                    setShowResult(true);
+                    setRevealedAnswers(prev => {
+                      const next = [...prev];
+                      next[currentQuestionIndex] = true;
+                      return next;
+                    });
+                  }}
                   className="px-4 py-2 bg-gradient-to-r from-yellow-600 to-orange-600 text-white hover:shadow-lg transform hover:scale-105 transition-all duration-200"
                 >
                   Show Answer
@@ -488,7 +504,7 @@ export const AptitudeTopicPage: React.FC = () => {
                 onClick={() => {
                   setCurrentQuestionIndex(index);
                   setSelectedAnswer(answers[index]);
-                  setShowResult(false);
+                  setShowResult(revealedAnswers[index] || false);
                 }}
                 className={`w-10 h-10 font-semibold text-sm transition-colors ${
                   index === currentQuestionIndex

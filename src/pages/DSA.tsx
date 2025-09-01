@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { apiService } from '../services/api';
 import { CheckCircle, Clock, Star, Filter, Search } from 'lucide-react';
 import { dsaProblems, type DsaProblem } from '../data/dsaProblems';
 
@@ -17,26 +18,45 @@ export const DSA: React.FC = () => {
 
   useEffect(() => {
     loadDSAProgress();
+    // Listen for updates from topic pages
+    const onProgressUpdate = () => loadDSAProgress();
+    window.addEventListener('dsa-progress-updated', onProgressUpdate as EventListener);
+    return () => window.removeEventListener('dsa-progress-updated', onProgressUpdate as EventListener);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser]);
 
-  const loadDSAProgress = () => {
-    const solvedArray: string[] = currentUser?.progress?.dsa?.solvedProblems || [];
-    const solvedSet = new Set<string>(solvedArray);
+  const loadDSAProgress = async () => {
+    try {
+      setLoading(true);
+      let solvedArray: string[] = [];
 
-    const problemsData: Problem[] = dsaProblems.map((p) => ({
-      ...p,
-      solved: solvedSet.has(p.Name),
-    }));
-    setProblems(problemsData);
+      if (currentUser) {
+        // Prefer fresh data from backend to avoid stale AuthContext
+        const response = await apiService.getDSAProgress();
+        solvedArray = response?.dsaProgress?.solvedProblems || [];
+      } else {
+        // Fallback for logged-out users
+        solvedArray = [];
+      }
 
-    const topicsData: Record<string, Problem[]> = {};
-    problemsData.forEach((p) => {
-      if (!topicsData[p.Topic]) topicsData[p.Topic] = [];
-      topicsData[p.Topic].push(p);
-    });
-    setTopics(topicsData);
-    setLoading(false);
+      const solvedSet = new Set<string>(solvedArray);
+      const problemsData: Problem[] = dsaProblems.map((p) => ({
+        ...p,
+        solved: solvedSet.has(p.Name),
+      }));
+      setProblems(problemsData);
+
+      const topicsData: Record<string, Problem[]> = {};
+      problemsData.forEach((p) => {
+        if (!topicsData[p.Topic]) topicsData[p.Topic] = [];
+        topicsData[p.Topic].push(p);
+      });
+      setTopics(topicsData);
+    } catch (e) {
+      console.error('Failed to load DSA progress:', e);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getDifficultyColor = (difficulty: string) => {

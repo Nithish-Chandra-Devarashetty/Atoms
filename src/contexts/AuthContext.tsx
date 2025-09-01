@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiService } from '../services/api';
-import { signInWithGoogle, getGoogleRedirectResult } from '../config/firebase';
+import { signInWithGoogle, getGoogleRedirectResult, signInWithGooglePopup } from '../config/firebase';
+import { GoogleAuthProvider } from 'firebase/auth';
 
 export interface User {
   _id: string;
@@ -52,50 +53,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const loadUser = async () => {
-  setLoading(true);
+      setLoading(true);
       try {
-        // First, check for Google redirect result
+        // Handle Google redirect result (popup doesn't use this)
         const redirectResult = await getGoogleRedirectResult();
-        if (redirectResult) {
-          // User just completed Google OAuth redirect
-          const idToken = await redirectResult.user.getIdToken();
-          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/google`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ idToken }),
-          });
-          
-          const data = await response.json();
-          if (response.ok) {
-            setCurrentUser(data.user);
-            localStorage.setItem('authToken', data.token);
-    setLoading(false);
-    return; // Exit early, we're done
-          }
+        if (redirectResult && redirectResult.user) {
+          const idToken = extractGoogleIdToken(redirectResult);
+          if (!idToken) throw new Error('Google sign-in failed: missing ID token');
+          await completeBackendLogin(idToken);
+          return;
         }
-        
-        // Otherwise, check for existing token
+
+        // Otherwise, try existing session (our backend JWT)
         const token = localStorage.getItem('authToken');
         if (token) {
           try {
             const response = await apiService.getProfile();
             setCurrentUser(response.user);
-          } catch (error) {
-            // Invalid token, remove it
+          } catch {
             localStorage.removeItem('authToken');
           }
         }
-      } catch (error) {
-        console.error('Auth initialization error:', error);
-        // Clean up on error
+      } catch (e: any) {
+        setError({ message: e?.message || 'Authentication initialization failed' });
         localStorage.removeItem('authToken');
-  } finally {
-    setLoading(false);
+      } finally {
+        setLoading(false);
       }
     };
 
     loadUser();
   }, []);
+
+  // Extract Google ID token from Firebase UserCredential
+  const extractGoogleIdToken = (result: any): string | undefined => {
+    const cred = GoogleAuthProvider.credentialFromResult(result as any);
+    if (cred?.idToken) return cred.idToken as string;
+    // Fallback to internal token response if available
+    const oauthIdToken = (result as any)?._tokenResponse?.oauthIdToken;
+    return oauthIdToken as string | undefined;
+  };
+
+  // Complete app login by exchanging Google ID token with backend
+  const completeBackendLogin = async (googleIdToken: string) => {
+    const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/google`;
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ idToken: googleIdToken }),
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data?.error || data?.message || 'Google authentication failed');
+    setCurrentUser(data.user);
+    localStorage.setItem('authToken', data.token);
+    // Hard redirect to ensure full app state updates
+    window.location.href = '/';
+  };
 
   const emailSignup = async (email: string, password: string, displayName: string) => {
     setLoading(true);
@@ -137,13 +150,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     setError(null);
     try {
-      // signInWithGoogle now triggers a redirect, so this function won't return normally
-      // The actual authentication will be handled in the useEffect when the user returns
-      await signInWithGoogle();
-      // This line won't be reached because of the redirect
+      // Try popup first for smoother UX
+      try {
+        const popupResult = await signInWithGooglePopup();
+        if (popupResult && popupResult.user) {
+          const idToken = extractGoogleIdToken(popupResult);
+          if (!idToken) throw new Error('Google sign-in failed: missing ID token');
+          await completeBackendLogin(idToken);
+          return;
+        }
+      } catch (popupError) {
+        // Fallback to redirect when popup blocked
+        await signInWithGoogle();
+      }
     } catch (error: any) {
-      const errorMessage = error.message || 'Google sign-in failed';
-      setError({ message: errorMessage, code: error.code });
+      const errorMessage = error?.message || 'Google sign-in failed';
+      setError({ message: errorMessage, code: error?.code });
       setLoading(false);
       throw new Error(errorMessage);
     }

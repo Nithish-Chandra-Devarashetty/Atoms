@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, CheckCheck, Trash2 } from 'lucide-react';
+import { Bell, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import { useRealTimeUpdates } from '../hooks/useRealTimeUpdates';
@@ -103,21 +103,7 @@ export const Notifications: React.FC = () => {
     }
   };
 
-  const handleMarkAllAsRead = async () => {
-    try {
-      await apiService.markAllNotificationsRead();
-      setNotifications(prev => {
-        const updated = prev.map(notif => ({ ...notif, isRead: true }));
-        // Broadcast unread count reset
-        window.dispatchEvent(new CustomEvent('unread-count-update', { detail: { count: 0 } }));
-        return updated;
-      });
-  // Ensure navbar badge sync and pagination state by refetching first page
-  fetchNotifications(1);
-    } catch (error) {
-      console.error('Failed to mark all as read:', error);
-    }
-  };
+  // Removed mark-all-as-read per request
 
   const handleClearAll = async () => {
     try {
@@ -224,15 +210,7 @@ export const Notifications: React.FC = () => {
               </div>
 
               <div className="flex flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
-                {unreadCount > 0 && (
-                  <button
-                    onClick={handleMarkAllAsRead}
-                    className="px-4 sm:px-6 py-2 sm:py-3 bg-green-500/80 hover:bg-green-500 text-white font-semibold transition-all duration-300 flex items-center space-x-2 shadow-lg text-sm sm:text-base"
-                  >
-                    <CheckCheck className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span>Mark All Read</span>
-                  </button>
-                )}
+                {/* Mark All Read removed */}
                 {notifications.length > 0 && (
                   <button
                     onClick={handleClearAll}
@@ -290,7 +268,7 @@ export const Notifications: React.FC = () => {
                         </div>
                       )}
                       {!notification.isRead && (
-                        <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-cyan-500 border-2 border-white shadow-lg animate-pulse"></div>
+                        <div className="absolute -top-1 -right-1 w-3 h-3 sm:w-4 sm:h-4 bg-cyan-500 border-2 border-white shadow-lg"></div>
                       )}
                     </div>
 
@@ -310,7 +288,7 @@ export const Notifications: React.FC = () => {
                     {/* Only unread indicator, no action buttons */}
                     {!notification.isRead && (
                       <div className="flex-shrink-0">
-                        <div className="w-2 h-2 sm:w-3 sm:h-3 bg-cyan-500 animate-pulse"></div>
+                        <div className="w-2 h-2 sm:w-3 sm:h-3 bg-cyan-500"></div>
                       </div>
                     )}
                   </div>

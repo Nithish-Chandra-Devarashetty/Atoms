@@ -111,7 +111,7 @@ export const Leaderboard: React.FC = () => {
         {leaderboardData.length >= 3 && !loading && (
           <div className="mb-12 sm:mb-20 relative z-10">
             <div className="text-center mb-6 sm:mb-8">
-              <h2 className="text-2xl sm:text-4xl font-black text-white mb-2">Top 3 Champions</h2>
+              <h2 className="text-2xl sm:text-4xl font-black text-white mb-2">Top 3</h2>
               <div className="w-24 sm:w-32 h-1 bg-gradient-to-r from-yellow-400 to-orange-400 mx-auto"></div>
             </div>
             

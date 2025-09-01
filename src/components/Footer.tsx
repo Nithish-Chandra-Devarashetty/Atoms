@@ -103,7 +103,7 @@ export const Footer: React.FC = () => {
               <h4 className="text-sm font-semibold text-white mb-3">Follow Us</h4>
               <div className="flex space-x-3">
                 <a
-                  href="https://instagram.com"
+                  href="https://www.instagram.com/atomslearningplatform?igsh=bGVxb2l3ZXlyYnI="
                   target="_blank"
                   rel="noopener noreferrer"
                   className="p-2 bg-white/10 backdrop-blur-sm border border-white/20 hover:bg-white/20 transition-all duration-300 hover:scale-110"
