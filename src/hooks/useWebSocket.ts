@@ -48,26 +48,37 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
   // Build a Socket.IO base URL that matches the API host but without the trailing /api
   const getSocketBaseUrl = () => {
+    // 1) If VITE_API_URL is provided, derive the origin from it (best for production)
+    const envApi = (import.meta as any)?.env?.VITE_API_URL;
+    if (envApi) {
+      try {
+        const url = new URL(envApi);
+        return `${url.protocol}//${url.hostname}${url.port ? `:${url.port}` : ''}`;
+      } catch {
+        // fall through to other strategies
+      }
+    }
+
+    // 2) For local dev, prefer same host with backend port 5000
     try {
-      // Prefer the same host the app is loaded from (works for LAN/IP dev too)
       if (typeof window !== 'undefined') {
-        const protocol = window.location.protocol;
         const host = window.location.hostname; // localhost or 192.168.x.x
-        const port = '5000'; // backend server port
-        return `${protocol}//${host}:${port}`;
+        const isLocal = host === 'localhost' || host === '127.0.0.1' || /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.)/.test(host);
+        if (isLocal) {
+          const protocol = window.location.protocol;
+          return `${protocol}//${host}:5000`;
+        }
       }
     } catch {
       // ignore
     }
 
-    // Fallback to VITE_API_URL origin (strip any path like /api)
-    const envUrl = (import.meta as any)?.env?.VITE_API_URL || 'http://localhost:5000/api';
+    // 3) Fallbacks
     try {
-      const url = new URL(envUrl);
-      // Remove path (like /api)
+      const fallback = (import.meta as any)?.env?.VITE_API_URL || 'http://localhost:5000/api';
+      const url = new URL(fallback);
       return `${url.protocol}//${url.hostname}${url.port ? `:${url.port}` : ''}`;
     } catch {
-      // Last resort
       return 'http://localhost:5000';
     }
   };
@@ -112,42 +123,42 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
       setIsConnected(false);
     });
 
-    socket.on('connect_error', (error) => {
+  socket.on('connect_error', (error: any) => {
       console.error('❌ WebSocket connection error:', error);
       setError('Failed to connect to real-time server');
       setIsConnected(false);
     });
 
     // Message event handlers
-    socket.on('private-message-received', (message) => {
+  socket.on('private-message-received', (message: any) => {
       console.log('💌 Private message received via WebSocket:', message);
       if (onPrivateMessageReceived) {
         onPrivateMessageReceived(message);
       }
     });
 
-    socket.on('conversation-updated', (data) => {
+  socket.on('conversation-updated', (data: any) => {
       console.log('🗂️ Conversation updated via WebSocket:', data);
       if (onConversationUpdated) {
         onConversationUpdated(data);
       }
     });
 
-    socket.on('discussion-reply-received', (data) => {
+  socket.on('discussion-reply-received', (data: any) => {
       console.log('💬 Discussion reply received via WebSocket:', data);
       if (onDiscussionReplyReceived) {
         onDiscussionReplyReceived(data);
       }
     });
 
-    socket.on('discussion-created', (data) => {
+  socket.on('discussion-created', (data: any) => {
       console.log('🆕 Discussion created via WebSocket:', data);
       if (onDiscussionCreated) {
         onDiscussionCreated(data);
       }
     });
 
-    socket.on('discussion-like-updated', (data) => {
+  socket.on('discussion-like-updated', (data: any) => {
       console.log('👍 Discussion like updated via WebSocket:', data);
       if (onDiscussionLikeUpdated) {
         onDiscussionLikeUpdated(data);
@@ -155,14 +166,14 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     });
 
     // Notifications
-    socket.on('notification-created', (data) => {
+  socket.on('notification-created', (data: any) => {
       console.log('🔔 Notification created via WebSocket:', data);
       if (onNotificationCreated) {
         onNotificationCreated(data);
       }
     });
 
-    socket.on('notifications-marked-all-read', (data) => {
+  socket.on('notifications-marked-all-read', (data: any) => {
       console.log('✅ All notifications marked as read via WebSocket:', data);
       if (onNotificationsMarkedAllRead) {
         onNotificationsMarkedAllRead(data);
@@ -170,7 +181,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     });
 
     // Contests
-    socket.on('contest-created', (data) => {
+  socket.on('contest-created', (data: any) => {
       console.log('🏁 Contest created via WebSocket:', data);
       if (onContestCreated) {
         onContestCreated(data);
@@ -178,14 +189,14 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     });
 
     // Typing indicator handlers
-    socket.on('user-typing-private', (data) => {
+  socket.on('user-typing-private', (data: any) => {
       console.log('⌨️ User typing (private):', data);
       if (onUserTypingPrivate) {
         onUserTypingPrivate(data);
       }
     });
 
-    socket.on('user-typing-discussion', (data) => {
+  socket.on('user-typing-discussion', (data: any) => {
       console.log('⌨️ User typing (discussion):', data);
       if (onUserTypingDiscussion) {
         onUserTypingDiscussion(data);

@@ -1,20 +1,35 @@
-// Automatically determine the API base URL
+// Automatically determine and normalize the API base URL
 const getApiBaseUrl = () => {
-  // If we're in development and the current host is not localhost, use the current host
-  if (import.meta.env.DEV && typeof window !== 'undefined') {
+  // In development, if we're accessing via LAN IP, point API to same host:5000
+  if ((import.meta as any).env?.DEV && typeof window !== 'undefined') {
     const currentHost = window.location.hostname;
-    
-    // If accessing via IP address (not localhost), use the same IP for API
-    if (currentHost !== 'localhost' && currentHost !== '127.0.0.1') {
+    const isLocalhost = currentHost === 'localhost' || currentHost === '127.0.0.1';
+    if (!isLocalhost) {
       console.log('🌐 Using network API URL for host:', currentHost);
       return `http://${currentHost}:5000/api`;
     }
   }
-  
-  // Default to localhost for development or use environment variable
-  const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-  console.log('🔗 API Base URL:', baseUrl);
-  return baseUrl;
+
+  // Use env var or localhost fallback
+  const raw = (import.meta as any).env?.VITE_API_URL || 'http://localhost:5000/api';
+
+  // Normalize to ensure it ends with /api
+  let normalized = raw;
+  try {
+    const url = new URL(raw);
+    const path = url.pathname.replace(/\/$/, '');
+    if (!/\/api$/.test(path)) {
+      url.pathname = `${path}/api`;
+    }
+    normalized = url.toString().replace(/\/$/, '');
+  } catch {
+    // If not a valid URL string, fallback to string ops
+    normalized = raw.replace(/\/$/, '');
+    if (!normalized.endsWith('/api')) normalized = `${normalized}/api`;
+  }
+
+  console.log('🔗 API Base URL:', normalized);
+  return normalized;
 };
 
 const API_BASE_URL = getApiBaseUrl();
