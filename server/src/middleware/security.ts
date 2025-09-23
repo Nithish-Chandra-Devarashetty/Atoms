@@ -1,37 +1,32 @@
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction, RequestHandler } from 'express';
 
-// Rate limiting
-export const createRateLimit = (windowMs: number, max: number, message: string) => {
-  return rateLimit({
-    windowMs,
-    max,
-    message: { error: message },
-    standardHeaders: true,
-    legacyHeaders: false,
-  });
-};
+// Pre-create limiter instances at module load (required by express-rate-limit)
+const generalRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,
+  message: { error: 'Too many requests from this IP, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-// General rate limit - disabled in development
-export const generalLimiter = (req: any, res: any, next: any) => {
-  if (process.env.NODE_ENV === 'development') return next();
-  return createRateLimit(
-    15 * 60 * 1000, // 15 minutes
-    100, // limit each IP to 100 requests per windowMs
-    'Too many requests from this IP, please try again later'
-  )(req, res, next);
-};
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,
+  message: { error: 'Too many authentication attempts, please try again later' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-// Auth rate limit - disabled in development
-export const authLimiter = (req: any, res: any, next: any) => {
-  if (process.env.NODE_ENV === 'development') return next();
-  return createRateLimit(
-    15 * 60 * 1000, // 15 minutes
-    5, // limit each IP to 5 auth requests per windowMs
-    'Too many authentication attempts, please try again later'
-  )(req, res, next);
-};
+// Export middlewares that no-op in development but reuse single limiter instances in prod
+const noop: RequestHandler = (_req, _res, next) => next();
+
+export const generalLimiter: RequestHandler =
+  process.env.NODE_ENV === 'development' ? noop : generalRateLimiter;
+
+export const authLimiter: RequestHandler =
+  process.env.NODE_ENV === 'development' ? noop : authRateLimiter;
 
 // Security headers
 export const securityHeaders = helmet({
