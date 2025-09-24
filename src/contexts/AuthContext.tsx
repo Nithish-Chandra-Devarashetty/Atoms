@@ -85,35 +85,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadUser();
   }, []);
 
-  // Extract Google ID token from Firebase UserCredential
-  const extractGoogleIdToken = (result: any): string | undefined => {
+  // Extract Google ID token from Firebase UserCredential with multiple fallbacks
+  const extractGoogleIdToken = async (result: any): Promise<string | undefined> => {
+    // Priority 1: Credential object
     try {
       const cred = GoogleAuthProvider.credentialFromResult(result as any);
       if (cred?.idToken) return cred.idToken as string;
     } catch (e) {
-      console.warn('Google credential extraction warning:', e);
+      console.warn('[GoogleAuth] credentialFromResult failed:', e);
     }
-    const tokenResponse = (result as any)?._tokenResponse;
-    const oauthIdToken = tokenResponse?.oauthIdToken || tokenResponse?.idToken;
-    if (oauthIdToken) return oauthIdToken as string;
-    console.error('Failed to extract Google ID token from result:', result);
+    // Priority 2: _tokenResponse fields
+    try {
+      const tokenResponse = (result as any)?._tokenResponse;
+      const oauthIdToken = tokenResponse?.oauthIdToken || tokenResponse?.idToken;
+      if (oauthIdToken) return oauthIdToken as string;
+    } catch (e) {
+      console.warn('[GoogleAuth] tokenResponse parse failed:', e);
+    }
+    // Priority 3: Ask Firebase user directly
+    try {
+      const user = (result as any)?.user;
+      if (user && typeof user.getIdToken === 'function') {
+        const direct = await user.getIdToken();
+        if (direct) return direct as string;
+      }
+    } catch (e) {
+      console.warn('[GoogleAuth] user.getIdToken() failed:', e);
+    }
+    console.error('[GoogleAuth] Failed to extract Google ID token from sign-in result');
     return undefined;
   };
 
   // Complete app login by exchanging Google ID token with backend
   const completeBackendLogin = async (googleIdToken: string) => {
-    const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/auth/google`;
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken: googleIdToken }),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data?.error || data?.message || 'Google authentication failed');
-    setCurrentUser(data.user);
-    localStorage.setItem('authToken', data.token);
-    // Hard redirect to ensure full app state updates
-    window.location.href = '/';
+    // Build base API URL robustly (avoid duplicate /api)
+    const rawBase = (import.meta as any).env?.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const base = rawBase.replace(/\/$/, '');
+    const apiBase = base.endsWith('/api') ? base : `${base}`; // we already expect api route base
+    const endpoint = `${apiBase}/auth/google`;
+
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: googleIdToken }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        console.error('[GoogleAuth] Backend auth failed', { status: response.status, data });
+        throw new Error(data?.error || data?.message || 'Google authentication failed');
+      }
+      if (!data?.token || !data?.user) {
+        console.error('[GoogleAuth] Backend response missing token or user', data);
+        throw new Error('Invalid authentication response');
+      }
+      localStorage.setItem('authToken', data.token);
+      setCurrentUser(data.user);
+      // Soft navigation rather than hard reload to preserve SPA state; fallback to full reload if needed
+      window.location.replace('/');
+    } catch (e: any) {
+      setError({ message: e?.message || 'Google authentication failed' });
+      throw e;
+    }
   };
 
   const emailSignup = async (email: string, password: string, displayName: string) => {
@@ -160,9 +193,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const popupResult = await signInWithGooglePopup();
         if (popupResult && popupResult.user) {
-          const idToken = extractGoogleIdToken(popupResult);
-          if (!idToken) throw new Error('Google sign-in failed: missing ID token');
-          await completeBackendLogin(idToken);
+          const idTokenExtracted = await extractGoogleIdToken(popupResult);
+            if (!idTokenExtracted) throw new Error('Google sign-in failed: missing ID token');
+          await completeBackendLogin(idTokenExtracted);
           return;
         }
       } catch (popupError) {
@@ -175,6 +208,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
       throw new Error(errorMessage);
     }
+    // If we reached here without redirect or completion, stop loading
+    setLoading(false);
   };
 
   const logout = async () => {
