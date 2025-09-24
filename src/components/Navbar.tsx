@@ -102,7 +102,7 @@ const Navbar: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="flex justify-between items-center py-4">
             <Link to="/" className="flex items-center hover:opacity-80 transition-all duration-300 group flex-shrink-0">
-              <img src="/ai.png" alt="Atoms" className="w-8 h-8 object-contain" />
+              <img src="/ai.png" alt="Atoms" className="w-8 h-8 object-contain" loading="lazy" />
               <span className="ml-3 text-2xl font-black text-white tracking-tight whitespace-nowrap">Atoms</span>
             </Link>
 

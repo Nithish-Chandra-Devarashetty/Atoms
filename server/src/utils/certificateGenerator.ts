@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import dotenv from 'dotenv';
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import logger from './logger.js';
 // Removed Cloudinary dependency for a fully local solution
 
 // Ensure env vars are loaded even if this file loads before server.ts calls dotenv.config
@@ -27,7 +28,7 @@ export class CertificateGenerator {
     // Logo is baked into the certificate template; do not embed a separate logo
     this.logoPath = '';
     
-    console.log('📄 Template path:', this.templatePath);
+  logger.debug('Certificate template path', this.templatePath);
   }
 
   generateCertificateId(): string {
@@ -61,14 +62,13 @@ export class CertificateGenerator {
     const port = process.env.PORT || '5000';
     const finalUrl = `http://localhost:${port}/static/certificates/${data.certificateId}.pdf`;
 
-    console.log('🎉 Certificate generated locally:', localPath);
-    console.log('🔗 Local URL:', finalUrl);
+    logger.info(`Certificate generated: ${data.certificateId}`);
     return finalUrl;
   }
 
   async generateWebDevCertificatePDF(data: CertificateData): Promise<Uint8Array> {
     try {
-      console.log('🎓 Starting certificate generation for:', data.userName);
+  logger.debug('Generating certificate for', data.userName);
       
       // Check if template file exists
       if (!fs.existsSync(this.templatePath)) {
@@ -76,7 +76,6 @@ export class CertificateGenerator {
       }
       
       // Read the template PDF
-      console.log('📖 Reading template PDF...');
       const templateBytes = fs.readFileSync(this.templatePath);
       const pdfDoc = await PDFDocument.load(templateBytes);
       
@@ -85,7 +84,6 @@ export class CertificateGenerator {
       const firstPage = pages[0];
       const { width, height } = firstPage.getSize();
       
-      console.log(`📐 PDF dimensions: ${width}x${height}`);
 
       // Embed fonts
       const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
@@ -115,7 +113,6 @@ export class CertificateGenerator {
       }
 
       // Draw name (bottom-left)
-      console.log(`📍 Drawing name "${data.userName}" at (${nameX}, ${nameY}) with size ${nameFontSize}`);
       firstPage.drawText(data.userName, {
         x: nameX,
         y: nameY,
@@ -127,7 +124,6 @@ export class CertificateGenerator {
   // Note: Course title is on the template; we don't overlay it
 
       // Add completion date (bottom-left under name)
-      console.log(`📍 Drawing date "Date: ${data.completionDate}" at (${dateX}, ${dateY}) with size ${dateSize}`);
       firstPage.drawText(`Date: ${data.completionDate}`, {
         x: dateX,
         y: dateY,
@@ -141,9 +137,8 @@ export class CertificateGenerator {
   // Note: Template already contains the icon/logo; skip embedding any logo here
 
       // Serialize the PDF
-      console.log('💾 Serializing PDF...');
-      const pdfBytes = await pdfDoc.save();
-      console.log(`📦 PDF generated, size: ${pdfBytes.length} bytes`);
+  const pdfBytes = await pdfDoc.save();
+  logger.debug(`PDF bytes: ${pdfBytes.length}`);
 
       return pdfBytes;
     } catch (error) {

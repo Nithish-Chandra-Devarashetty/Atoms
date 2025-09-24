@@ -87,11 +87,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Extract Google ID token from Firebase UserCredential
   const extractGoogleIdToken = (result: any): string | undefined => {
-    const cred = GoogleAuthProvider.credentialFromResult(result as any);
-    if (cred?.idToken) return cred.idToken as string;
-    // Fallback to internal token response if available
-    const oauthIdToken = (result as any)?._tokenResponse?.oauthIdToken;
-    return oauthIdToken as string | undefined;
+    try {
+      const cred = GoogleAuthProvider.credentialFromResult(result as any);
+      if (cred?.idToken) return cred.idToken as string;
+    } catch (e) {
+      console.warn('Google credential extraction warning:', e);
+    }
+    const tokenResponse = (result as any)?._tokenResponse;
+    const oauthIdToken = tokenResponse?.oauthIdToken || tokenResponse?.idToken;
+    if (oauthIdToken) return oauthIdToken as string;
+    console.error('Failed to extract Google ID token from result:', result);
+    return undefined;
   };
 
   // Complete app login by exchanging Google ID token with backend

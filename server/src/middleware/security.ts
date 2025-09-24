@@ -12,8 +12,8 @@ const generalRateLimiter = rateLimit({
 });
 
 const authRateLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5,
+  windowMs: 1 * 60 * 1000, 
+  max: 100,
   message: { error: 'Too many authentication attempts, please try again later' },
   standardHeaders: true,
   legacyHeaders: false,
@@ -70,11 +70,8 @@ export const corsOptions = {
       const isLocalDev = /^https?:\/\/\d+\.\d+\.\d+\.\d+:(5173|5174|4173)$/.test(origin);
       
       if (isLocalhost || isLocalNetwork || isViteHMR || isLocalDev) {
-        console.log('✅ CORS: Allowing local development origin:', origin);
         return callback(null, true);
       }
-      
-      console.log('❌ CORS: Rejecting origin:', origin);
     }
     
     // Production allowed origins
@@ -85,8 +82,7 @@ export const corsOptions = {
       'https://atoms-learning.netlify.app'
     ];
     
-    console.log('Origin:', origin);
-    console.log('Allowed origins:', allowedOrigins);
+  // Only minimal logging; remove noisy origin dumps
     
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);

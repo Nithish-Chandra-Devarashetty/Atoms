@@ -242,19 +242,35 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
       res.status(400).json({ error: 'ID token is required' });
       return;
     }
+    const googleClientId = process.env.GOOGLE_CLIENT_ID;
+    if (!googleClientId) {
+      console.error('❌ GOOGLE_CLIENT_ID not configured. Set it in environment variables to enable Google auth.');
+      res.status(500).json({ error: 'Google authentication not configured' });
+      return;
+    }
 
     // Initialize Google OAuth client
-    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    const client = new OAuth2Client(googleClientId);
 
-    // Verify the ID token
-    const ticket = await client.verifyIdToken({
-      idToken,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
+    let ticket;
+    try {
+      ticket = await client.verifyIdToken({
+        idToken,
+        audience: googleClientId,
+      });
+    } catch (verifyErr: any) {
+      console.error('❌ Google ID token verification failed:', verifyErr?.message, {
+        code: verifyErr?.code,
+        name: verifyErr?.name
+      });
+      res.status(401).json({ error: 'Invalid Google token' });
+      return;
+    }
 
     const payload = ticket.getPayload();
     if (!payload || !payload.email) {
-      res.status(400).json({ error: 'Invalid Google token' });
+      console.error('❌ Google token payload missing email. Payload:', payload);
+      res.status(400).json({ error: 'Invalid Google token payload' });
       return;
     }
 

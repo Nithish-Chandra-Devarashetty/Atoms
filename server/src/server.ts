@@ -9,6 +9,7 @@ import { Server as SocketIOServer } from 'socket.io';
 // Import middleware
 import { connectDatabase } from './config/database.js';
 import { errorHandler, notFoundHandler } from './utils/errorHandler.js';
+import logger from './utils/logger.js';
 import { generalLimiter, authLimiter, securityHeaders, corsOptions } from './middleware/security.js';
 
 // Import routes
@@ -83,10 +84,12 @@ setContestSocketIO(io);
 app.use(securityHeaders);
 
 // Request logging middleware
-app.use((req, res, next) => {
-  console.log(`📡 ${new Date().toISOString()} - ${req.method} ${req.path} from ${req.ip} (Origin: ${req.get('Origin') || 'none'})`);
-  next();
-});
+if (process.env.REQUEST_LOG !== 'minimal') {
+  app.use((req, _res, next) => {
+    logger.debug(`${req.method} ${req.path}`);
+    next();
+  });
+}
 
 // Handle preflight requests
 app.options('*', cors(corsOptions));
@@ -105,7 +108,7 @@ app.use(morgan('combined'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  console.log('🏥 Health check requested from:', req.ip, req.get('Origin'));
+  logger.debug('Health check');
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
@@ -119,7 +122,7 @@ app.get('/health', (req, res) => {
 
 // CORS test endpoint
 app.get('/api/test', (req, res) => {
-  console.log('🧪 API test requested from:', req.ip, req.get('Origin'));
+  logger.debug('API connectivity test');
   res.json({ 
     message: 'CORS and API connection working!',
     origin: req.get('Origin'),
@@ -165,20 +168,20 @@ app.use(errorHandler);
 
 // WebSocket connection handling
 io.on('connection', (socket) => {
-  console.log(`🔌 User connected: ${socket.id}`);
+  logger.debug(`WS connect ${socket.id}`);
 
   // Auto-join user room if userId provided in auth
   const authUserId = (socket as any).handshake?.auth?.userId;
   if (authUserId) {
     socket.join(`user-${authUserId}`);
-    console.log(`👤 Auto-joined user room from auth: user-${authUserId}`);
+  logger.debug(`WS auto join user-${authUserId}`);
   }
 
   // Join user-specific room for private messages
   socket.on('join-user-room', (userId) => {
     if (userId) {
       socket.join(`user-${userId}`);
-      console.log(`👤 User ${userId} joined their room (socket: ${socket.id})`);
+  logger.debug(`WS join user-${userId}`);
     }
   });
 
@@ -186,7 +189,7 @@ io.on('connection', (socket) => {
   socket.on('join-discussion', (discussionId) => {
     if (discussionId) {
       socket.join(`discussion-${discussionId}`);
-      console.log(`💬 Socket ${socket.id} joined discussion ${discussionId}`);
+  logger.debug(`WS join discussion-${discussionId}`);
     }
   });
 
@@ -194,7 +197,7 @@ io.on('connection', (socket) => {
   socket.on('leave-discussion', (discussionId) => {
     if (discussionId) {
       socket.leave(`discussion-${discussionId}`);
-      console.log(`👋 Socket ${socket.id} left discussion ${discussionId}`);
+  logger.debug(`WS leave discussion-${discussionId}`);
     }
   });
 
@@ -204,7 +207,7 @@ io.on('connection', (socket) => {
     if (discussionId && message) {
       // Broadcast to all users in the discussion room except sender
       socket.to(`discussion-${discussionId}`).emit('discussion-message-received', message);
-      console.log(`📨 Discussion message broadcasted to discussion-${discussionId}`);
+  logger.debug(`WS broadcast discussion-${discussionId}`);
     }
   });
 
@@ -214,7 +217,7 @@ io.on('connection', (socket) => {
     if (recipientId && message) {
       // Send to recipient's room
       socket.to(`user-${recipientId}`).emit('private-message-received', message);
-      console.log(`💌 Private message sent to user-${recipientId}`);
+  logger.debug(`WS private message user-${recipientId}`);
     }
   });
 
@@ -236,19 +239,15 @@ io.on('connection', (socket) => {
 
   // Handle user disconnect
   socket.on('disconnect', () => {
-    console.log(`🔌 User disconnected: ${socket.id}`);
+  logger.debug(`WS disconnect ${socket.id}`);
   });
 });
 
 // Start server
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
-  console.log(`📡 Server accessible on all network interfaces`);
-  console.log(`🔗 Local: http://localhost:${PORT}`);
-  console.log(`🔗 Network: http://[YOUR_IP]:${PORT}`);
-  console.log(`🔌 WebSocket server initialized`);
+  logger.info(`Server listening on :${PORT}`);
+  logger.info(`Env: ${process.env.NODE_ENV || 'development'}`);
+  logger.info(`Frontend: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
 });
 
 export { io };
