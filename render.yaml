@@ -26,8 +26,9 @@ services:
     publishPath: dist
     autoDeploy: true
     routes:
+      # SPA fallback: rewrite every non-file path to index.html so React Router can handle it
       - type: rewrite
-        source: /**
+        source: /*
         destination: /index.html
     envVars:
       - key: VITE_API_URL
