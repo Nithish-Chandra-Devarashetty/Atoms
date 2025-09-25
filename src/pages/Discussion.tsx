@@ -77,12 +77,6 @@ export const Discussion: React.FC = () => {
         if (prev.some(d => d._id === data.discussion._id)) return prev;
         return [data.discussion, ...prev];
       });
-      // Immediately join the newly created discussion's room to receive subsequent events
-      try {
-        if (data?.discussion?._id) {
-          joinDiscussion(data.discussion._id);
-        }
-      } catch {}
     },
     onDiscussionLikeUpdated: (data: { discussionId: string; likes: string[]; likesCount: number; actorId: string; liked: boolean }) => {
       setDiscussions(prev => prev.map(d => {

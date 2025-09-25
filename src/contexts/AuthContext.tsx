@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { apiService } from '../services/api';
-import { signInWithGoogle, getGoogleRedirectResult, signInWithGooglePopup } from '../config/firebase';
+import { signInWithGoogle, getGoogleRedirectResult, signInWithGooglePopup, auth } from '../config/firebase';
 import { GoogleAuthProvider } from 'firebase/auth';
 
 export interface User {
@@ -57,11 +57,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         // Handle Google redirect result (popup doesn't use this)
         const redirectResult = await getGoogleRedirectResult();
+        try { console.debug('[GoogleAuth] Redirect result present:', !!redirectResult && !!(redirectResult as any).user); } catch {}
         if (redirectResult && redirectResult.user) {
           const idToken = await extractGoogleIdToken(redirectResult);
           if (!idToken) throw new Error('Google sign-in failed: missing ID token');
+          try { console.debug('[GoogleAuth] Using redirect result token to login'); } catch {}
           await completeBackendLogin(idToken);
           return;
+        }
+
+        // Fallback: if Firebase has a current user, try to get a fresh ID token
+        try {
+          const fbUser = auth?.currentUser;
+          try { console.debug('[GoogleAuth] auth.currentUser present:', !!fbUser); } catch {}
+          if (fbUser && typeof fbUser.getIdToken === 'function') {
+            const idToken = await fbUser.getIdToken();
+            if (idToken) {
+              try { console.debug('[GoogleAuth] Using auth.currentUser token to login'); } catch {}
+              await completeBackendLogin(idToken);
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('[GoogleAuth] auth.currentUser token fallback failed', e);
         }
 
         // Otherwise, try existing session (our backend JWT)
@@ -119,10 +137,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Complete app login by exchanging Google ID token with backend
   const completeBackendLogin = async (googleIdToken: string) => {
     // Build base API URL robustly (avoid duplicate /api)
-    const rawBase = (import.meta as any).env?.VITE_API_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-    const base = rawBase.replace(/\/$/, '');
-    const apiBase = base.endsWith('/api') ? base : `${base}`; // we already expect api route base
-    const endpoint = `${apiBase}/auth/google`;
+  const rawBase = (import.meta as any).env?.VITE_API_URL || (import.meta as any).env?.VITE_API_URL || 'http://localhost:5000/api';
+  let base = String(rawBase).replace(/\/$/, '');
+  if (!/\/api$/.test(base)) base = `${base}/api`;
+  const endpoint = `${base}/auth/google`;
+  // Optional: minimal debug to help trace endpoint
+  try { console.debug('[GoogleAuth] Auth endpoint:', endpoint); } catch {}
 
     try {
       const response = await fetch(endpoint, {
