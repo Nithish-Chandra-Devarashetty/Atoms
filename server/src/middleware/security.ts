@@ -75,16 +75,24 @@ export const corsOptions = {
     }
     
     // Production allowed origins
+    // Build allowed origins from env
+    const fromEnv = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+    const extra = (process.env.ALLOWED_ORIGINS || '')
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
+      .map(s => s.replace(/\/$/, ''));
     const allowedOrigins = [
-      process.env.FRONTEND_URL || 'http://localhost:5173',
+      fromEnv,
+      ...extra,
       'http://localhost:5174',
       'http://localhost:3000',
-      'https://atoms-learning.netlify.app'
     ];
     
   // Only minimal logging; remove noisy origin dumps
     
-    if (!origin || allowedOrigins.includes(origin)) {
+    const normalized = origin ? origin.replace(/\/$/, '') : undefined;
+    if (!normalized || allowedOrigins.includes(normalized)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));

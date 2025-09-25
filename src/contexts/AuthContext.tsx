@@ -58,7 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Handle Google redirect result (popup doesn't use this)
         const redirectResult = await getGoogleRedirectResult();
         if (redirectResult && redirectResult.user) {
-          const idToken = extractGoogleIdToken(redirectResult);
+          const idToken = await extractGoogleIdToken(redirectResult);
           if (!idToken) throw new Error('Google sign-in failed: missing ID token');
           await completeBackendLogin(idToken);
           return;
