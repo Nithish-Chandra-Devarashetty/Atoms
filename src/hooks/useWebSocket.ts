@@ -46,6 +46,44 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Keep latest callbacks in refs to avoid stale closures
+  const callbacksRef = useRef({
+    onPrivateMessageReceived,
+    onConversationUpdated,
+    onDiscussionReplyReceived,
+    onDiscussionCreated,
+    onDiscussionLikeUpdated,
+    onNotificationCreated,
+    onNotificationsMarkedAllRead,
+    onContestCreated,
+    onUserTypingPrivate,
+    onUserTypingDiscussion,
+  });
+
+  useEffect(() => {
+    callbacksRef.current.onPrivateMessageReceived = onPrivateMessageReceived;
+    callbacksRef.current.onConversationUpdated = onConversationUpdated;
+    callbacksRef.current.onDiscussionReplyReceived = onDiscussionReplyReceived;
+    callbacksRef.current.onDiscussionCreated = onDiscussionCreated;
+    callbacksRef.current.onDiscussionLikeUpdated = onDiscussionLikeUpdated;
+    callbacksRef.current.onNotificationCreated = onNotificationCreated;
+    callbacksRef.current.onNotificationsMarkedAllRead = onNotificationsMarkedAllRead;
+    callbacksRef.current.onContestCreated = onContestCreated;
+    callbacksRef.current.onUserTypingPrivate = onUserTypingPrivate;
+    callbacksRef.current.onUserTypingDiscussion = onUserTypingDiscussion;
+  }, [
+    onPrivateMessageReceived,
+    onConversationUpdated,
+    onDiscussionReplyReceived,
+    onDiscussionCreated,
+    onDiscussionLikeUpdated,
+    onNotificationCreated,
+    onNotificationsMarkedAllRead,
+    onContestCreated,
+    onUserTypingPrivate,
+    onUserTypingDiscussion,
+  ]);
+
   // Build a Socket.IO base URL that matches the API host but without the trailing /api
   const getSocketBaseUrl = () => {
     // 1) If VITE_API_URL is provided, derive the origin from it (best for production)
@@ -132,74 +170,84 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     // Message event handlers
   socket.on('private-message-received', (message: any) => {
       console.log('💌 Private message received via WebSocket:', message);
-      if (onPrivateMessageReceived) {
-        onPrivateMessageReceived(message);
+      const cb = callbacksRef.current.onPrivateMessageReceived;
+      if (cb) {
+        cb(message);
       }
     });
 
   socket.on('conversation-updated', (data: any) => {
       console.log('🗂️ Conversation updated via WebSocket:', data);
-      if (onConversationUpdated) {
-        onConversationUpdated(data);
+      const cb = callbacksRef.current.onConversationUpdated;
+      if (cb) {
+        cb(data);
       }
     });
 
   socket.on('discussion-reply-received', (data: any) => {
       console.log('💬 Discussion reply received via WebSocket:', data);
-      if (onDiscussionReplyReceived) {
-        onDiscussionReplyReceived(data);
+      const cb = callbacksRef.current.onDiscussionReplyReceived;
+      if (cb) {
+        cb(data);
       }
     });
 
   socket.on('discussion-created', (data: any) => {
       console.log('🆕 Discussion created via WebSocket:', data);
-      if (onDiscussionCreated) {
-        onDiscussionCreated(data);
+      const cb = callbacksRef.current.onDiscussionCreated;
+      if (cb) {
+        cb(data);
       }
     });
 
   socket.on('discussion-like-updated', (data: any) => {
       console.log('👍 Discussion like updated via WebSocket:', data);
-      if (onDiscussionLikeUpdated) {
-        onDiscussionLikeUpdated(data);
+      const cb = callbacksRef.current.onDiscussionLikeUpdated;
+      if (cb) {
+        cb(data);
       }
     });
 
     // Notifications
   socket.on('notification-created', (data: any) => {
       console.log('🔔 Notification created via WebSocket:', data);
-      if (onNotificationCreated) {
-        onNotificationCreated(data);
+      const cb = callbacksRef.current.onNotificationCreated;
+      if (cb) {
+        cb(data);
       }
     });
 
   socket.on('notifications-marked-all-read', (data: any) => {
       console.log('✅ All notifications marked as read via WebSocket:', data);
-      if (onNotificationsMarkedAllRead) {
-        onNotificationsMarkedAllRead(data);
+      const cb = callbacksRef.current.onNotificationsMarkedAllRead;
+      if (cb) {
+        cb(data);
       }
     });
 
     // Contests
   socket.on('contest-created', (data: any) => {
       console.log('🏁 Contest created via WebSocket:', data);
-      if (onContestCreated) {
-        onContestCreated(data);
+      const cb = callbacksRef.current.onContestCreated;
+      if (cb) {
+        cb(data);
       }
     });
 
     // Typing indicator handlers
   socket.on('user-typing-private', (data: any) => {
       console.log('⌨️ User typing (private):', data);
-      if (onUserTypingPrivate) {
-        onUserTypingPrivate(data);
+      const cb = callbacksRef.current.onUserTypingPrivate;
+      if (cb) {
+        cb(data);
       }
     });
 
   socket.on('user-typing-discussion', (data: any) => {
       console.log('⌨️ User typing (discussion):', data);
-      if (onUserTypingDiscussion) {
-        onUserTypingDiscussion(data);
+      const cb = callbacksRef.current.onUserTypingDiscussion;
+      if (cb) {
+        cb(data);
       }
     });
 
