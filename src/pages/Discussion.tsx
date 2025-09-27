@@ -77,6 +77,10 @@ export const Discussion: React.FC = () => {
         if (prev.some(d => d._id === data.discussion._id)) return prev;
         return [data.discussion, ...prev];
       });
+      // Immediately join the new discussion room to receive live updates
+      if (data?.discussion?._id) {
+        joinDiscussion(data.discussion._id);
+      }
     },
     onDiscussionLikeUpdated: (data: { discussionId: string; likes: string[]; likesCount: number; actorId: string; liked: boolean }) => {
       setDiscussions(prev => prev.map(d => {

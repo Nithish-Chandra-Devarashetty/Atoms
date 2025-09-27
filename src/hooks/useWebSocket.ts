@@ -14,7 +14,7 @@ interface UseWebSocketOptions {
   
   // For notifications
   onNotificationCreated?: (notification: any) => void;
-  onNotificationsMarkedAllRead?: (data: { unreadCount: number; modified: number }) => void;
+  onNotificationsMarkedAllRead?: (data: { unreadCount?: number; modified?: number; affectedId?: string }) => void;
   // For contests
   onContestCreated?: (contest: any) => void;
   
@@ -45,6 +45,46 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Always use the latest callbacks to avoid stale closures across re-renders
+  const handlersRef = useRef({
+    onPrivateMessageReceived,
+    onConversationUpdated,
+    onDiscussionReplyReceived,
+    onDiscussionCreated,
+    onDiscussionLikeUpdated,
+    onNotificationCreated,
+    onNotificationsMarkedAllRead,
+    onContestCreated,
+    onUserTypingPrivate,
+    onUserTypingDiscussion
+  });
+
+  useEffect(() => {
+    handlersRef.current = {
+      onPrivateMessageReceived,
+      onConversationUpdated,
+      onDiscussionReplyReceived,
+      onDiscussionCreated,
+      onDiscussionLikeUpdated,
+      onNotificationCreated,
+      onNotificationsMarkedAllRead,
+      onContestCreated,
+      onUserTypingPrivate,
+      onUserTypingDiscussion
+    };
+  }, [
+    onPrivateMessageReceived,
+    onConversationUpdated,
+    onDiscussionReplyReceived,
+    onDiscussionCreated,
+    onDiscussionLikeUpdated,
+    onNotificationCreated,
+    onNotificationsMarkedAllRead,
+    onContestCreated,
+    onUserTypingPrivate,
+    onUserTypingDiscussion
+  ]);
 
   // Build a Socket.IO base URL that matches the API host but without the trailing /api
   const getSocketBaseUrl = () => {
@@ -132,52 +172,44 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     // Message event handlers
   socket.on('private-message-received', (message: any) => {
       console.log('💌 Private message received via WebSocket:', message);
-      if (onPrivateMessageReceived) {
-        onPrivateMessageReceived(message);
-      }
+      handlersRef.current.onPrivateMessageReceived?.(message);
     });
 
   socket.on('conversation-updated', (data: any) => {
       console.log('🗂️ Conversation updated via WebSocket:', data);
-      if (onConversationUpdated) {
-        onConversationUpdated(data);
-      }
+      handlersRef.current.onConversationUpdated?.(data);
     });
 
   socket.on('discussion-reply-received', (data: any) => {
       console.log('💬 Discussion reply received via WebSocket:', data);
-      if (onDiscussionReplyReceived) {
-        onDiscussionReplyReceived(data);
-      }
+      handlersRef.current.onDiscussionReplyReceived?.(data);
     });
 
   socket.on('discussion-created', (data: any) => {
       console.log('🆕 Discussion created via WebSocket:', data);
-      if (onDiscussionCreated) {
-        onDiscussionCreated(data);
-      }
+      handlersRef.current.onDiscussionCreated?.(data);
     });
 
   socket.on('discussion-like-updated', (data: any) => {
       console.log('👍 Discussion like updated via WebSocket:', data);
-      if (onDiscussionLikeUpdated) {
-        onDiscussionLikeUpdated(data);
-      }
+      handlersRef.current.onDiscussionLikeUpdated?.(data);
     });
 
     // Notifications
   socket.on('notification-created', (data: any) => {
       console.log('🔔 Notification created via WebSocket:', data);
-      if (onNotificationCreated) {
-        onNotificationCreated(data);
-      }
+      handlersRef.current.onNotificationCreated?.(data);
     });
 
   socket.on('notifications-marked-all-read', (data: any) => {
       console.log('✅ All notifications marked as read via WebSocket:', data);
-      if (onNotificationsMarkedAllRead) {
-        onNotificationsMarkedAllRead(data);
-      }
+      handlersRef.current.onNotificationsMarkedAllRead?.(data);
+    });
+
+    // Some server flows emit a partial variant when single items are read
+    socket.on('notifications-marked-all-read-partial', (data: any) => {
+      console.log('✅ Notifications partial read update via WebSocket:', data);
+      handlersRef.current.onNotificationsMarkedAllRead?.(data);
     });
 
     // Contests
@@ -191,16 +223,12 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     // Typing indicator handlers
   socket.on('user-typing-private', (data: any) => {
       console.log('⌨️ User typing (private):', data);
-      if (onUserTypingPrivate) {
-        onUserTypingPrivate(data);
-      }
+      handlersRef.current.onUserTypingPrivate?.(data);
     });
 
   socket.on('user-typing-discussion', (data: any) => {
       console.log('⌨️ User typing (discussion):', data);
-      if (onUserTypingDiscussion) {
-        onUserTypingDiscussion(data);
-      }
+      handlersRef.current.onUserTypingDiscussion?.(data);
     });
 
     // Cleanup function

@@ -52,11 +52,17 @@ const Navbar: React.FC = () => {
     onNotificationCreated: (notif) => {
       // Simple increment unless it's read or malformed
       if (notif && !notif.isRead) {
-        setUnreadCount((c) => c + 1);
+        setUnreadCount((c: number) => c + 1);
       }
     },
-    onNotificationsMarkedAllRead: () => {
-      setUnreadCount(0);
+    onNotificationsMarkedAllRead: (data?: { affectedId?: string }) => {
+      if (data && data.affectedId) {
+        // Single item marked read elsewhere
+        setUnreadCount((c: number) => (c > 0 ? c - 1 : 0));
+      } else {
+        // Bulk mark-all or reset
+        setUnreadCount(0);
+      }
     }
   });
 

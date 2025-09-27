@@ -4,6 +4,7 @@ import { Bell, Trash2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import { useRealTimeUpdates } from '../hooks/useRealTimeUpdates';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 interface Notification {
   _id: string;
@@ -44,11 +45,34 @@ export const Notifications: React.FC = () => {
     }
   };
 
+  // WebSocket: instant notifications and read-state updates
+  const { isConnected } = useWebSocket({
+    enabled: !!currentUser,
+    onNotificationCreated: (notif: Notification) => {
+      if (!notif) return;
+      // Prepend new notification, avoid duplicates by id
+      setNotifications((prev: Notification[]) => {
+        const exists = prev.some((n: Notification) => n._id === notif._id);
+        if (exists) return prev;
+        return [notif, ...prev];
+      });
+    },
+    onNotificationsMarkedAllRead: (data: { affectedId?: string }) => {
+      if (data?.affectedId) {
+        setNotifications((prev: Notification[]) => prev.map((n: Notification) => n._id === data.affectedId ? { ...n, isRead: true } : n));
+      } else {
+        // Fallback: mark all as read if server sent a bulk event
+        setNotifications((prev: Notification[]) => prev.map((n: Notification) => ({ ...n, isRead: true })));
+      }
+    }
+  });
+
+  // Polling fallback (disabled when WebSocket is connected)
   useRealTimeUpdates({
     onNotificationsUpdate: handleNotificationsUpdate,
     shouldFetchNotifications: true,
-    interval: 20000, // Poll every 20 seconds for notifications
-    enabled: !loading // Don't poll while loading
+    interval: 30000, // Back off polling slightly; rely on WS for instant
+    enabled: !loading && !isConnected // Don't poll while loading or when WS is live
   });
 
   const fetchNotifications = async (pageNum = 1) => {
@@ -61,7 +85,7 @@ export const Notifications: React.FC = () => {
       if (pageNum === 1) {
         setNotifications(response.notifications || []);
       } else {
-        setNotifications(prev => [...prev, ...(response.notifications || [])]);
+  setNotifications((prev: Notification[]) => [...prev, ...(response.notifications || [])]);
       }
 
       const pagination = response.pagination || {};
@@ -79,12 +103,14 @@ export const Notifications: React.FC = () => {
     if (!notification.isRead) {
       try {
         await apiService.markNotificationRead(notification._id);
-        setNotifications(prev => {
-          const updated = prev.map(notif => notif._id === notification._id ? { ...notif, isRead: true } : notif);
+        setNotifications((prev: Notification[]) => {
+          const updatedList: Notification[] = prev.map((n: Notification) =>
+            n._id === notification._id ? { ...n, isRead: true } : n
+          );
           // Broadcast unread count change
-          const newUnread = updated.filter(n => !n.isRead).length;
+          const newUnread = updatedList.filter((n: Notification) => !n.isRead).length;
           window.dispatchEvent(new CustomEvent('unread-count-update', { detail: { count: newUnread } }));
-          return updated;
+          return updatedList;
         });
       } catch (error) {
         console.error('Failed to mark notification as read:', error);
@@ -141,9 +167,9 @@ export const Notifications: React.FC = () => {
   };
 
   const filteredNotifications = filter === 'unread' 
-    ? notifications.filter(n => !n.isRead) 
+    ? notifications.filter((n: Notification) => !n.isRead) 
     : notifications;
-  const unreadCount = notifications.filter(n => !n.isRead).length;
+  const unreadCount = notifications.filter((n: Notification) => !n.isRead).length;
 
   if (!currentUser) {
     return (
