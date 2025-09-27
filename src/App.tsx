@@ -28,6 +28,7 @@ import Terms from './pages/Terms';
 import Contact from './pages/Contact';
 import { TestAuth } from './pages/TestAuth';
 import { Footer } from './components/Footer';
+import { WebSocketDebugger } from './components/WebSocketDebugger';
 import { ActiveTimeManager } from './components/ActiveTimeManager';
 
 function App() {
@@ -79,6 +80,8 @@ function App() {
               </Routes>
             </main>
             <Footer />
+            {/* WebSocket Debugger - only show in development or when needed */}
+            {((import.meta as any)?.env?.DEV || window.location.search.includes('debug=ws')) && <WebSocketDebugger />}
           </div>
         </Router>
       </AuthProvider>

@@ -93,8 +93,12 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     if (envApi) {
       try {
         const url = new URL(envApi);
-        return `${url.protocol}//${url.hostname}${url.port ? `:${url.port}` : ''}`;
-      } catch {
+        // Remove /api suffix if present to get the root URL for socket.io
+        const baseUrl = `${url.protocol}//${url.hostname}${url.port ? `:${url.port}` : ''}`;
+        console.log('🔗 Production WebSocket URL derived from VITE_API_URL:', baseUrl);
+        return baseUrl;
+      } catch (e) {
+        console.error('❌ Failed to parse VITE_API_URL for WebSocket:', envApi, e);
         // fall through to other strategies
       }
     }
@@ -106,19 +110,24 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
         const isLocal = host === 'localhost' || host === '127.0.0.1' || /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.)/.test(host);
         if (isLocal) {
           const protocol = window.location.protocol;
-          return `${protocol}//${host}:5000`;
+          const localUrl = `${protocol}//${host}:5000`;
+          console.log('🔗 Local dev WebSocket URL:', localUrl);
+          return localUrl;
         }
       }
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error('❌ Error detecting local environment:', e);
     }
 
     // 3) Fallbacks
     try {
       const fallback = (import.meta as any)?.env?.VITE_API_URL || 'http://localhost:5000/api';
       const url = new URL(fallback);
-      return `${url.protocol}//${url.hostname}${url.port ? `:${url.port}` : ''}`;
-    } catch {
+      const fallbackUrl = `${url.protocol}//${url.hostname}${url.port ? `:${url.port}` : ''}`;
+      console.log('🔗 Fallback WebSocket URL:', fallbackUrl);
+      return fallbackUrl;
+    } catch (e) {
+      console.error('❌ All WebSocket URL strategies failed, using localhost fallback:', e);
       return 'http://localhost:5000';
     }
   };
@@ -132,22 +141,34 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
     
   // Initialize socket connection (must point to server root, not /api)
   const socketBaseUrl = getSocketBaseUrl();
+  console.log('🔌 Connecting to WebSocket at:', socketBaseUrl);
+  console.log('🔌 Environment:', (import.meta as any)?.env?.MODE, 'Production:', (import.meta as any)?.env?.PROD);
+  
   const socket = io(socketBaseUrl, {
       withCredentials: true,
-      transports: ((import.meta as any)?.env?.PROD ? ['websocket'] : ['websocket', 'polling']),
+      // Use polling first in production for better compatibility, then upgrade to websocket
+      transports: (import.meta as any)?.env?.PROD ? ['polling', 'websocket'] : ['websocket', 'polling'],
       auth: currentUser?._id ? { userId: currentUser._id } : undefined,
       reconnection: true,
-      reconnectionAttempts: Infinity,
-      reconnectionDelay: 500,
-      reconnectionDelayMax: 2000,
-      timeout: 8000
+      reconnectionAttempts: 10, // Reduced for production
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      timeout: 20000, // Increased timeout for production
+      // Force new connection to avoid cached connection issues
+      forceNew: true,
+      // Additional production-friendly options
+      upgrade: true,
+      rememberUpgrade: false
     });
 
     socketRef.current = socket;
 
     // Connection event handlers
     socket.on('connect', () => {
-      console.log('✅ WebSocket connected:', socket.id);
+      console.log('✅ WebSocket connected successfully!');
+      console.log('✅ Socket ID:', socket.id);
+      console.log('✅ Transport:', socket.io.engine.transport.name);
+      console.log('✅ Socket URL:', socketBaseUrl);
       setIsConnected(true);
       setError(null);
       
@@ -165,7 +186,11 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
   socket.on('connect_error', (error: any) => {
       console.error('❌ WebSocket connection error:', error);
-      setError('Failed to connect to real-time server');
+      console.error('❌ Error type:', error.type);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Attempted URL:', socketBaseUrl);
+      console.error('❌ Transport:', socket.io.engine?.transport?.name || 'unknown');
+      setError(`Failed to connect to real-time server: ${error.message || error.type || 'Unknown error'}`);
       setIsConnected(false);
     });
 

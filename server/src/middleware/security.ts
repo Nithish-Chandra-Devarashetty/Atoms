@@ -85,17 +85,21 @@ export const corsOptions = {
     const allowedOrigins = [
       fromEnv,
       ...extra,
+      'http://localhost:5173',
       'http://localhost:5174',
       'http://localhost:3000',
     ];
     
-  // Only minimal logging; remove noisy origin dumps
-    
     const normalized = origin ? origin.replace(/\/$/, '') : undefined;
+    
+    // Log for debugging production issues
+    console.log(`🔗 REST CORS check - Origin: ${origin}, Allowed: ${allowedOrigins.join(', ')}`);
+    
     if (!normalized || allowedOrigins.includes(normalized)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      console.error(`❌ REST CORS blocked origin: ${origin}`);
+      callback(new Error(`Not allowed by CORS: ${origin}`));
     }
   },
   credentials: true,

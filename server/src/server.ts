@@ -57,17 +57,46 @@ const io = new SocketIOServer(server, {
         const isLocalDev = /^https?:\/\/\d+\.\d+\.\d+\.\d+:(5173|5174|4173)$/.test(origin);
         if (isLocalhost || isLocalNetwork || isViteHMR || isLocalDev) return callback(null, true);
       }
-      const allowed = [process.env.FRONTEND_URL || 'http://localhost:5173'];
-      if (!origin || allowed.includes(origin)) return callback(null, true);
-      return callback(new Error('Socket.IO CORS blocked'));
+      
+      // Production: Build allowed origins from environment variables
+      const fromEnv = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
+      const extra = (process.env.ALLOWED_ORIGINS || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .map(s => s.replace(/\/$/, ''));
+      
+      const allowed = [
+        fromEnv,
+        ...extra,
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://localhost:3000'
+      ];
+      
+      const normalized = origin ? origin.replace(/\/$/, '') : undefined;
+      
+      // Log for debugging production issues
+      console.log(`🔗 WebSocket CORS check - Origin: ${origin}, Allowed: ${allowed.join(', ')}`);
+      
+      if (!origin || allowed.includes(normalized || '')) {
+        return callback(null, true);
+      }
+      
+      console.error(`❌ WebSocket CORS blocked origin: ${origin}`);
+      return callback(new Error(`Socket.IO CORS blocked origin: ${origin}`));
     },
     methods: ["GET", "POST"],
     credentials: true
   },
-  // Keep both; client can choose WS-only in PROD. If you enforce WS-only at LB, this stays compatible.
-  transports: ['websocket', 'polling'],
-  pingTimeout: 10000,
-  pingInterval: 5000
+  // Start with polling for better production compatibility, allow upgrade to websocket
+  transports: ['polling', 'websocket'],
+  // Increased timeouts for production reliability
+  pingTimeout: 20000,
+  pingInterval: 25000,
+  // Additional production settings
+  allowEIO3: true, // Allow older socket.io clients
+  serveClient: false // Don't serve socket.io client files
 });
 const PORT = parseInt(process.env.PORT || '5000', 10);
 
