@@ -88,60 +88,49 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
   // Build a Socket.IO base URL that matches the API host but without the trailing /api
   const getSocketBaseUrl = () => {
+    // Read env statically so Vite can replace at build time
+    const VITE_SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+    const VITE_API_URL = import.meta.env.VITE_API_URL;
+
     // 0) Explicit socket host override (use when API and WS have different origins)
-    const explicitSocketUrl = (import.meta as any)?.env?.VITE_SOCKET_URL;
-    if (explicitSocketUrl) {
+    if (VITE_SOCKET_URL) {
       try {
-        const url = new URL(explicitSocketUrl);
-        const base = `${url.protocol}//${url.hostname}${url.port ? `:${url.port}` : ''}`;
+        const u = new URL(VITE_SOCKET_URL);
+        const base = u.origin;
         console.log('🔗 WebSocket URL from VITE_SOCKET_URL:', base);
         return base;
       } catch (e) {
-        console.error('❌ Invalid VITE_SOCKET_URL:', explicitSocketUrl, e);
+        console.error('❌ Invalid VITE_SOCKET_URL:', VITE_SOCKET_URL, e);
       }
     }
+
     // 1) If VITE_API_URL is provided, derive the origin from it (best for production)
-    const envApi = (import.meta as any)?.env?.VITE_API_URL;
-    if (envApi) {
+    if (VITE_API_URL) {
       try {
-        const url = new URL(envApi);
-        // Remove /api suffix if present to get the root URL for socket.io
-        const baseUrl = `${url.protocol}//${url.hostname}${url.port ? `:${url.port}` : ''}`;
-        console.log('🔗 Production WebSocket URL derived from VITE_API_URL:', baseUrl);
-        return baseUrl;
+        const u = new URL(VITE_API_URL);
+        const base = u.origin; // strips any /api path
+        console.log('🔗 WebSocket URL derived from VITE_API_URL:', base);
+        return base;
       } catch (e) {
-        console.error('❌ Failed to parse VITE_API_URL for WebSocket:', envApi, e);
-        // fall through to other strategies
+        console.error('❌ Failed to parse VITE_API_URL for WebSocket:', VITE_API_URL, e);
       }
     }
 
     // 2) For local dev, prefer same host with backend port 5000
-    try {
-      if (typeof window !== 'undefined') {
-        const host = window.location.hostname; // localhost or 192.168.x.x
-        const isLocal = host === 'localhost' || host === '127.0.0.1' || /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.)/.test(host);
-        if (isLocal) {
-          const protocol = window.location.protocol;
-          const localUrl = `${protocol}//${host}:5000`;
-          console.log('🔗 Local dev WebSocket URL:', localUrl);
-          return localUrl;
-        }
+    if (typeof window !== 'undefined') {
+      const host = window.location.hostname; // localhost or 192.168.x.x
+      const isLocal = host === 'localhost' || host === '127.0.0.1' || /^(10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.)/.test(host);
+      if (isLocal) {
+        const protocol = window.location.protocol;
+        const localUrl = `${protocol}//${host}:5000`;
+        console.log('🔗 Local dev WebSocket URL:', localUrl);
+        return localUrl;
       }
-    } catch (e) {
-      console.error('❌ Error detecting local environment:', e);
     }
 
-    // 3) Fallbacks
-    try {
-      const fallback = (import.meta as any)?.env?.VITE_API_URL || 'http://localhost:5000/api';
-      const url = new URL(fallback);
-      const fallbackUrl = `${url.protocol}//${url.hostname}${url.port ? `:${url.port}` : ''}`;
-      console.log('🔗 Fallback WebSocket URL:', fallbackUrl);
-      return fallbackUrl;
-    } catch (e) {
-      console.error('❌ All WebSocket URL strategies failed, using localhost fallback:', e);
-      return 'http://localhost:5000';
-    }
+    // 3) Absolute fallback (development safety)
+    console.warn('⚠️ Falling back to localhost:5000 for Socket.IO');
+    return 'http://localhost:5000';
   };
 
   useEffect(() => {
@@ -154,14 +143,14 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   // Initialize socket connection (must point to server root, not /api)
   const socketBaseUrl = getSocketBaseUrl();
   console.log('🔌 Connecting to WebSocket at:', socketBaseUrl);
-  console.log('🔌 Environment:', (import.meta as any)?.env?.MODE, 'Production:', (import.meta as any)?.env?.PROD);
+  console.log('🔌 Environment:', import.meta.env.MODE, 'Production:', import.meta.env.PROD);
   
   const socket = io(socketBaseUrl, {
       withCredentials: true,
-    // In production, allow polling as a fallback and upgrade to websocket if possible
-    transports: (import.meta as any)?.env?.PROD ? ['polling', 'websocket'] : ['websocket', 'polling'],
+    // Always allow polling as a fallback and upgrade to websocket if possible
+    transports: ['polling', 'websocket'],
       // Allow overriding socket path if the server is mounted on a sub-path
-      path: (import.meta as any)?.env?.VITE_SOCKET_PATH || '/socket.io',
+      path: import.meta.env.VITE_SOCKET_PATH || '/socket.io',
       auth: currentUser?._id ? { userId: currentUser._id } : undefined,
       reconnection: true,
     reconnectionAttempts: Infinity,
