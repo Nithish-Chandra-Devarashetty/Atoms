@@ -88,6 +88,18 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
 
   // Build a Socket.IO base URL that matches the API host but without the trailing /api
   const getSocketBaseUrl = () => {
+    // 0) Explicit socket host override (use when API and WS have different origins)
+    const explicitSocketUrl = (import.meta as any)?.env?.VITE_SOCKET_URL;
+    if (explicitSocketUrl) {
+      try {
+        const url = new URL(explicitSocketUrl);
+        const base = `${url.protocol}//${url.hostname}${url.port ? `:${url.port}` : ''}`;
+        console.log('🔗 WebSocket URL from VITE_SOCKET_URL:', base);
+        return base;
+      } catch (e) {
+        console.error('❌ Invalid VITE_SOCKET_URL:', explicitSocketUrl, e);
+      }
+    }
     // 1) If VITE_API_URL is provided, derive the origin from it (best for production)
     const envApi = (import.meta as any)?.env?.VITE_API_URL;
     if (envApi) {
@@ -146,8 +158,10 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   
   const socket = io(socketBaseUrl, {
       withCredentials: true,
-      // Use polling first in production for better compatibility, then upgrade to websocket
-      transports: (import.meta as any)?.env?.PROD ? ['polling', 'websocket'] : ['websocket', 'polling'],
+      // Prefer websocket in prod; some hosts require explicit websocket-only
+      transports: (import.meta as any)?.env?.PROD ? ['websocket'] : ['websocket', 'polling'],
+      // Allow overriding socket path if the server is mounted on a sub-path
+      path: (import.meta as any)?.env?.VITE_SOCKET_PATH || '/socket.io',
       auth: currentUser?._id ? { userId: currentUser._id } : undefined,
       reconnection: true,
       reconnectionAttempts: 10, // Reduced for production
@@ -158,7 +172,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
       forceNew: true,
       // Additional production-friendly options
       upgrade: true,
-      rememberUpgrade: false
+      rememberUpgrade: true
     });
 
     socketRef.current = socket;
