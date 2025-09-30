@@ -19,14 +19,11 @@ const authRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Export middlewares that no-op in development but reuse single limiter instances in prod
+// Export middlewares as NO-OP in all environments (disable rate limiting entirely)
 const noop: RequestHandler = (_req, _res, next) => next();
 
-export const generalLimiter: RequestHandler =
-  process.env.NODE_ENV === 'development' ? noop : generalRateLimiter;
-
-export const authLimiter: RequestHandler =
-  process.env.NODE_ENV === 'development' ? noop : authRateLimiter;
+export const generalLimiter: RequestHandler = noop;
+export const authLimiter: RequestHandler = noop;
 
 // Security headers
 export const securityHeaders = helmet({
