@@ -158,13 +158,13 @@ export const useWebSocket = (options: UseWebSocketOptions = {}) => {
   
   const socket = io(socketBaseUrl, {
       withCredentials: true,
-      // Prefer websocket in prod; some hosts require explicit websocket-only
-      transports: (import.meta as any)?.env?.PROD ? ['websocket'] : ['websocket', 'polling'],
+    // In production, allow polling as a fallback and upgrade to websocket if possible
+    transports: (import.meta as any)?.env?.PROD ? ['polling', 'websocket'] : ['websocket', 'polling'],
       // Allow overriding socket path if the server is mounted on a sub-path
       path: (import.meta as any)?.env?.VITE_SOCKET_PATH || '/socket.io',
       auth: currentUser?._id ? { userId: currentUser._id } : undefined,
       reconnection: true,
-      reconnectionAttempts: 10, // Reduced for production
+    reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 20000, // Increased timeout for production

@@ -10,6 +10,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../services/api';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { useRealTimeUpdates } from '../hooks/useRealTimeUpdates';
 
 interface Conversation {
   _id: string;
@@ -156,6 +157,41 @@ export const Messages: React.FC = () => {
     console.log('🔗 WebSocket connection status:', isConnected ? 'Connected' : 'Disconnected');
   }, [isConnected]);
 
+  // Fallback polling when WebSocket is not connected
+  useRealTimeUpdates({
+    onMessagesUpdate: (msgs: any[]) => {
+      // Only update if we have a selected user and data is for that conversation
+      if (selectedUserId) {
+        setMessages(msgs as any);
+      }
+    },
+    shouldFetchMessages: !!selectedUserId,
+    selectedUserId: selectedUserId || undefined,
+    onConversationsUpdate: (convs: any[]) => {
+      setConversations(convs as any);
+    },
+    shouldFetchConversations: true,
+    interval: 10000,
+    // Always enable a modest polling cadence to cover missed WS events
+    enabled: !!currentUser
+  });
+
+  // Refresh messages/conversations when the tab gains focus or becomes visible
+  useEffect(() => {
+    const onActivate = () => {
+      if (document.visibilityState === 'visible') {
+        if (selectedUserId) fetchMessages(selectedUserId);
+        fetchConversations();
+      }
+    };
+    window.addEventListener('focus', onActivate);
+    document.addEventListener('visibilitychange', onActivate);
+    return () => {
+      window.removeEventListener('focus', onActivate);
+      document.removeEventListener('visibilitychange', onActivate);
+    };
+  }, [selectedUserId]);
+
   const fetchConversations = async () => {
     try {
       const response = await apiService.getConversations();
@@ -208,10 +244,16 @@ export const Messages: React.FC = () => {
       // Mark messages as read
       await apiService.markMessagesAsRead(userId);
     } catch (err) {
-      // If no messages exist yet (new conversation), just set empty messages
-      console.log('No messages found for user, starting new conversation');
-      setMessages([]);
-      prevMessagesLengthRef.current = 0;
+      // Distinguish auth errors from empty threads
+      const status = (err as any)?.response?.status;
+      if (status === 401) {
+        setError('Your session expired. Please sign in again.');
+      } else {
+        // If no messages exist yet (new conversation), just set empty messages
+        console.log('No messages found for user, starting new conversation');
+        setMessages([]);
+        prevMessagesLengthRef.current = 0;
+      }
     }
   };
 

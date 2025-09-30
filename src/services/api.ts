@@ -116,13 +116,18 @@ class ApiService {
 
   private async fetchWithErrorHandling(url: string, options: RequestInit = {}): Promise<Response> {
     try {
-      console.log('🔄 Making API request to:', url);
+      const method = (options.method || 'GET').toUpperCase();
+      const mergedHeaders = {
+        ...this.getAuthHeaders(),
+        ...options.headers
+      } as Record<string, string>;
+      const hasAuth = !!mergedHeaders['Authorization'];
+      // Lightweight diagnostics to help trace missing tokens in production
+      console.log(`🔄 API ${method} ${url} | auth: ${hasAuth ? 'present' : 'missing'}`);
+
       const response = await fetch(url, {
         ...options,
-        headers: {
-          ...this.getAuthHeaders(),
-          ...options.headers
-        }
+        headers: mergedHeaders
       });
       console.log('✅ API response:', response.status, response.statusText);
       return response;

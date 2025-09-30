@@ -46,7 +46,7 @@ export const Notifications: React.FC = () => {
   };
 
   // WebSocket: instant notifications and read-state updates
-  const { isConnected } = useWebSocket({
+  useWebSocket({
     enabled: !!currentUser,
     onNotificationCreated: (notif: Notification) => {
       if (!notif) return;
@@ -71,9 +71,24 @@ export const Notifications: React.FC = () => {
   useRealTimeUpdates({
     onNotificationsUpdate: handleNotificationsUpdate,
     shouldFetchNotifications: true,
-    interval: 30000, // Back off polling slightly; rely on WS for instant
-    enabled: !loading && !isConnected // Don't poll while loading or when WS is live
+    interval: 20000, // modest cadence to keep list fresh in production
+    enabled: !loading // Poll regardless of socket to cover missed WS events
   });
+
+  // Refresh when the tab becomes active/visible
+  useEffect(() => {
+    const onActivate = () => {
+      if (document.visibilityState === 'visible') {
+        fetchNotifications(1);
+      }
+    };
+    window.addEventListener('focus', onActivate);
+    document.addEventListener('visibilitychange', onActivate);
+    return () => {
+      window.removeEventListener('focus', onActivate);
+      document.removeEventListener('visibilitychange', onActivate);
+    };
+  }, []);
 
   const fetchNotifications = async (pageNum = 1) => {
     if (!currentUser) return;

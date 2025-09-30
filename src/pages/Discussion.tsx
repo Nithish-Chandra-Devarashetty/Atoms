@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { useRealTimeUpdates } from '../hooks/useRealTimeUpdates';
 
 interface Discussion {
   _id: string;
@@ -98,6 +99,32 @@ export const Discussion: React.FC = () => {
   useEffect(() => {
     console.log('🔗 Discussion WebSocket connection status:', isConnected ? 'Connected' : 'Disconnected');
   }, [isConnected]);
+
+  // Fallback polling when WebSocket is not connected
+  useRealTimeUpdates({
+    onDiscussionsUpdate: (items: any[]) => setDiscussions(items as any),
+    shouldFetchDiscussions: true,
+    discussionsSearchQuery: searchQuery,
+    discussionsSelectedTags: selectedTags,
+    interval: 12000,
+    // Always enable a modest polling cadence in production to cover missed WS events
+    enabled: !!currentUser
+  });
+
+  // Refresh when the tab gains focus or becomes visible (helps resume quickly after background)
+  useEffect(() => {
+    const onActivate = () => {
+      if (document.visibilityState === 'visible') {
+        fetchDiscussions();
+      }
+    };
+    window.addEventListener('focus', onActivate);
+    document.addEventListener('visibilitychange', onActivate);
+    return () => {
+      window.removeEventListener('focus', onActivate);
+      document.removeEventListener('visibilitychange', onActivate);
+    };
+  }, [searchQuery, selectedTags]);
 
   // Join all visible discussions for real-time updates
   useEffect(() => {
