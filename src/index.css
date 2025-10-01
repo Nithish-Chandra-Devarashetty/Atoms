@@ -4,12 +4,30 @@
 html, body, #root {
   width: 100%;
   min-width: 320px;
-  overflow-x: auto; /* allow horizontal scroll if Edge overflows to avoid cutting content */
+  min-height: 100%;
+  background-color: #0b1220; /* dark base so zoom never shows white gutters */
+  color-scheme: dark;
+}
+
+/* Prevent white gutters on zoom-induced subpixel overflow */
+body {
+  overflow-x: hidden;
 }
 
 /* Edge fix: ensure containers don’t clip right side due to transforms/filters */
 .container, .max-w-7xl, .max-w-4xl, .max-w-3xl, .max-w-2xl {
   overflow: visible;
+}
+
+/* Make media and large elements shrink safely to avoid causing horizontal scroll on zoom */
+img, video, canvas, svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Flex children may overflow when zoomed; allow them to shrink */
+.flex > * {
+  min-width: 0;
 }
 
 
