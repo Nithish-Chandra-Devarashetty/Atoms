@@ -1,22 +1,44 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
-html, body, #root {
-  width: 100%;
-  min-width: 320px;
-  min-height: 100%;
-  background-color: #0b1220; /* dark base so zoom never shows white gutters */
-  color-scheme: dark;
-}
 
-/* Prevent white gutters on zoom-induced subpixel overflow */
-body {
+/* Force full coverage at any zoom level - prevent white gutters */
+html {
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
   overflow-x: hidden;
 }
 
-/* Edge fix: ensure containers don’t clip right side due to transforms/filters */
+body {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  overflow-x: hidden;
+  position: relative;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* Edge fix: ensure containers don't clip right side due to transforms/filters */
 .container, .max-w-7xl, .max-w-4xl, .max-w-3xl, .max-w-2xl {
   overflow: visible;
+  max-width: 100%;
+}
+
+/* Ensure page wrappers cover full width at any zoom */
+.min-h-screen {
+  min-width: 100vw;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 /* Make media and large elements shrink safely to avoid causing horizontal scroll on zoom */
@@ -30,14 +52,18 @@ img, video, canvas, svg {
   min-width: 0;
 }
 
+/* Prevent gradient backgrounds from showing white gutters */
+[class*='bg-gradient'] {
+  background-attachment: fixed;
+  background-size: cover;
+  background-position: center;
+}
 
 /* Custom clip paths for modern shapes */
 @layer utilities {
-  /* Ensure text-5xl uses normal line-height across the app */
   .text-5xl {
     line-height: normal;
   }
-  /* Ensure text-6xl and text-7xl use normal line-height as well */
   .text-6xl {
     line-height: normal;
   }
